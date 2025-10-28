@@ -1,48 +1,49 @@
-// src/routes/MainRoutes.jsx
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 
 // Import Layout
-import MainLayout from '../components/layout/MainLayout';
+import MainLayout from '../components/layout/MainLayout.jsx';
 
 // Import các trang
-import MainPage from '../pages/Main/MainPage';
-import RoomsPage from '../pages/Main/RoomsPage'; // (Trang này bạn sẽ tạo sau)
-import RoomDetailPage from '../pages/Main/RoomDetailPage'; // (Trang này bạn sẽ tạo sau)
-import ContactPage from '../pages/Main/ContactPage'; // (Trang này bạn sẽ tạo sau)
-// ... import các trang khác ...
-import LoginPage from '../pages/Main/Auth/LoginPage';
-import RegisterPage from '../pages/Main/Auth/RegisterPage';
+import MainPage from '../page/Main/MainPage.jsx'; // Sửa đường dẫn đúng theo cấu trúc thư mục
+import RoomsPage from '../page/Main/RoomsPage.jsx';
+import RoomDetailPage from '../page/Main/RoomDetailPage.jsx';
+import BookingPage from '../page/Main/BookingPage.jsx';
+import PromotionsPage from '../page/Main/PromotionsPage.jsx';
+import ContactPage from '../page/Main/ContactPage.jsx';
+import ProfilePage from '../page/Main/ProfilePage.jsx';
+import LoginPage from '../page/Main/Auth/LoginPage.jsx';
+import RegisterPage from '../page/Main/Auth/RegisterPage.jsx';
+import NotFoundPage from '../page/NotFoundPage.jsx';
 
+// Component layout riêng cho trang Auth (không Header/Footer)
+const AuthLayout = ({ children }) => (
+  <div className="auth-container">{children}</div>
+);
 
 function MainRoutes() {
   return (
     <Routes>
-      {/* Tất cả các route bên trong đều dùng MainLayout */}
+      {/* Các trang chính dùng MainLayout */}
       <Route path="/" element={<MainLayout />}>
-        {/* Trang chủ */}
         <Route index element={<MainPage />} /> 
-        
-        {/* Các trang khác */}
         <Route path="rooms" element={<RoomsPage />} />
-        <Route path="rooms/:roomId" element={<RoomDetailPage />} /> 
+        <Route path="rooms/:slug" element={<RoomDetailPage />} /> 
+        <Route path="booking" element={<BookingPage />} />
+        <Route path="promotions" element={<PromotionsPage />} />
         <Route path="contact" element={<ContactPage />} />
-        {/* ... (thêm các trang khác như blog, services...) */}
+        <Route path="profile" element={<ProfilePage />} />
       </Route>
 
-      {/* Các trang Auth có thể có layout riêng hoặc dùng chung */}
-      {/* Ví dụ: Dùng chung MainLayout */}
-      <Route element={<MainLayout />}>
-        <Route path="login" element={<LoginPage />} />
-        <Route path="register" element={<RegisterPage />} />
-      </Route>
-
-      {/* Hoặc: Auth có layout riêng (không header/footer)
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      */}
+      {/* Các trang Đăng nhập / Đăng ký có thể dùng layout riêng */}
+      <Route path="/login" element={<AuthLayout><LoginPage /></AuthLayout>} />
+      <Route path="/register" element={<AuthLayout><RegisterPage /></AuthLayout>} />
+      
+      {/* 404 Page */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }
 
 export default MainRoutes;
+

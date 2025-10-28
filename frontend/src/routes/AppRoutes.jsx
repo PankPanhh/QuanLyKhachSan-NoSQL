@@ -1,8 +1,7 @@
-// src/routes/AppRoutes.jsx
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import MainRoutes from './MainRoutes';
-import AdminRoutes from './AdminRoutes';
+import MainRoutes from './MainRoutes.jsx';
+import AdminRoutes from './AdminRoutes.jsx';
 
 function AppRoutes() {
   return (
@@ -19,3 +18,4 @@ function AppRoutes() {
 }
 
 export default AppRoutes;
+

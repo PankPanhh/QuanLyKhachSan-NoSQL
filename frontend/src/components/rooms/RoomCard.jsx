@@ -1,9 +1,11 @@
-// src/components/rooms/RoomCard.jsx
+// Đây là code đã refactor từ file MainPage.jsx gốc của bạn
 import React from 'react';
+import { Link } from 'react-router-dom'; // Dùng Link
+import { formatCurrency } from '../../utils/formatCurrency';
 
-// Nhận props là một object 'room'
 function RoomCard({ room }) {
-  const { imageUrl, title, description, details, price, slug } = room;
+  // Destructure (bóc tách) dữ liệu từ prop
+  const { slug, imageUrl, title, description, details, price } = room;
 
   return (
     <>
@@ -11,36 +13,34 @@ function RoomCard({ room }) {
         <img src={imageUrl} alt={title} className="post-image img-fluid rounded-4" />
         <div className="product-description position-absolute p-5 text-start">
           <h4 className="display-6 fw-normal text-white">{title}</h4>
-          <p className="product-paragraph text-white">{description}</p>
+          <p className="product-paragraph text-white">{description.substring(0, 100)}...</p>
           <table>
             <tbody>
-              {/* Ví dụ render chi tiết từ props */}
               <tr className="text-white">
-                <td className="pe-2">Size:</td>
-                <td>{details.size}</td>
-              </tr>
-              <tr className="text-white">
-                <td className="pe-2">Capacity:</td>
+                <td className="pe-2">Sức chứa:</td>
                 <td>{details.capacity}</td>
               </tr>
               <tr className="text-white">
-                <td className="pe-2">Bed:</td>
+                <td className="pe-2">Giường:</td>
                 <td>{details.bed}</td>
               </tr>
               <tr className="text-white">
-                <td className="pe-2">Services:</td>
-                <td>{details.services}</td>
+                <td className="pe-2">Dịch vụ:</td>
+                <td>{details.services.substring(0, 30)}...</td>
               </tr>
             </tbody>
           </table>
-          <a href={`/rooms/${slug}`}> {/* Hoặc dùng <Link> */}
-            <p className="text-decoration-underline text-white m-0 mt-2">Browse Now</p>
-          </a>
+          {/* Dùng Link để điều hướng */}
+          <Link to={`/rooms/${slug}`}>
+            <p className="text-decoration-underline text-white m-0 mt-2">Xem chi tiết</p>
+          </Link>
         </div>
       </div>
       <div className="room-content text-center mt-3">
-        <h4 className="display-6 fw-normal"><a href={`/rooms/${slug}`}>{title}</a></h4>
-        <p><span className="text-primary fs-4">${price}</span>/night</p>
+        <h4 className="display-6 fw-normal">
+            <Link to={`/rooms/${slug}`}>{title}</Link>
+        </h4>
+        <p><span className="text-primary fs-4">{formatCurrency(price)}</span>/đêm</p>
       </div>
     </>
   );

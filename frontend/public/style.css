@@ -11,6 +11,125 @@ Version: 1.1
 This is main CSS file that contains custom style rules used in this template
 --------------------------------------------------------------*/
 
+/* Luxury Booking Form Enhancements */
+.react-datepicker-wrapper {
+  width: 100% !important;
+}
+
+.react-datepicker__input-container input {
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+  font-weight: 500 !important;
+  color: #2c3e50 !important;
+}
+
+.react-datepicker__input-container input:focus {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.react-datepicker {
+  border: 1px solid rgba(209, 104, 6, 0.2) !important;
+  border-radius: 15px !important;
+  box-shadow: 0 10px 30px rgba(209, 104, 6, 0.15) !important;
+  font-family: inherit !important;
+}
+
+.react-datepicker__header {
+  background: linear-gradient(135deg, #D16806 0%, #e67e22 100%) !important;
+  border-bottom: none !important;
+  border-radius: 15px 15px 0 0 !important;
+}
+
+.react-datepicker__current-month {
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.react-datepicker__navigation {
+  top: 12px !important;
+}
+
+.react-datepicker__navigation--previous {
+  border-right-color: white !important;
+}
+
+.react-datepicker__navigation--next {
+  border-left-color: white !important;
+}
+
+.react-datepicker__day-name {
+  color: white !important;
+  font-weight: 500 !important;
+}
+
+.react-datepicker__day {
+  color: #2c3e50 !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.react-datepicker__day:hover {
+  background: rgba(209, 104, 6, 0.1) !important;
+  color: #D16806 !important;
+}
+
+.react-datepicker__day--selected {
+  background: linear-gradient(135deg, #D16806 0%, #e67e22 100%) !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.react-datepicker__day--in-range {
+  background: rgba(209, 104, 6, 0.2) !important;
+  color: #D16806 !important;
+}
+
+.booking-submit-btn:hover .btn-arrow {
+  transform: translateX(4px);
+}
+
+/* Mobile Responsive for Booking Components */
+@media (max-width: 768px) {
+  .booking-sidebar {
+    position: static !important;
+    margin-top: 2rem;
+  }
+  
+  .booking-form-container {
+    padding: 15px !important;
+  }
+  
+  .booking-header {
+    padding: 20px 15px !important;
+  }
+  
+  .trust-indicators {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  
+  .room-info-card {
+    margin-bottom: 15px !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .date-picker-row .col-md-6 {
+    margin-bottom: 1rem;
+  }
+  
+  .booking-form-title {
+    font-size: 1.2rem !important;
+  }
+  
+  .booking-subtitle {
+    font-size: 0.8rem !important;
+  }
+}
+
 /*------------------------------------*\
     Table of contents
 \*------------------------------------*/

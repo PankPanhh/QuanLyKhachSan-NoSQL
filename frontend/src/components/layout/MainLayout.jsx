@@ -1,18 +1,20 @@
-// src/components/layout/MainLayout.jsx
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import Header from './Header';
-import Footer from './Footer';
+import Header from './Header'; // Import Header
+import Footer from './Footer'; // Import Footer
 
 function MainLayout() {
   return (
     <>
-      {/* Preloader có thể đặt ở đây hoặc trong index.html */}
-      {/* <div className="preloader">...</div> */}
+      {/* Preloader (nếu bạn muốn nó ở đây) */}
+      {/* <div className="preloader">
+         <div className="loader">...</div>
+      </div> 
+      */}
       
       <Header />
       
-      {/* 'main' là nơi nội dung các trang (ví dụ: MainPage) sẽ được render */}
+      {/* Nội dung của trang con sẽ được render tại đây */}
       <main>
         <Outlet />
       </main>
