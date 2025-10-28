@@ -1,0 +1,143 @@
+/* === Các class CSS chung === */
+
+/* === Glassmorphism Form Styles === */
+.form-control-glass {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+}
+.form-control-glass::placeholder { color: rgba(255, 255, 255, 0.7) !important; }
+.form-control-glass:focus {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: white !important;
+  box-shadow: none !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+.form-select-glass {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%e") !important;
+}
+.form-select-glass option { color: #333; }
+.form-select-glass:focus {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: white !important;
+  box-shadow: none !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+.date .text-body, .position-relative .text-body { color: white !important; }
+.react-datepicker-wrapper input.form-control-glass::placeholder { color: rgba(255, 255, 255, 0.7) !important; }
+
+/* === Floating Header Styles === */
+.navbar.absolute-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  background: transparent !important;
+  transition: background-color 0.3s ease, padding 0.3s ease;
+}
+.navbar.scrolled {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  background: white !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease, padding 0.3s ease;
+}
+
+/* Màu chữ cho header trong suốt */
+.absolute-top .navbar-nav .nav-link,
+.absolute-top .navbar-toggler,
+.absolute-top .search a,
+.absolute-top .account-buttons .dropdown-toggle {
+  color: white !important;
+}
+.absolute-top .search .form-control {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+}
+.absolute-top .search .form-control::placeholder {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+.absolute-top .account-buttons .btn-outline-light {
+    border-color: white !important;
+    color: white !important;
+}
+.absolute-top .account-buttons .btn-outline-light:hover {
+    background: white !important;
+    color: #333 !important;
+}
+
+/* Màu chữ cho header khi cuộn */
+.scrolled .navbar-nav .nav-link,
+.scrolled .navbar-toggler,
+.scrolled .search a,
+.scrolled .account-buttons .dropdown-toggle {
+  color: #333 !important;
+}
+.scrolled .search .form-control {
+  background: #f5f5ff !important; /* Một màu xám nhạt */
+  border-color: #ddd !important;
+  color: #333 !important;
+}
+.scrolled .search .form-control::placeholder {
+  color: #666 !important;
+}
+
+.letter-spacing-2 {
+  letter-spacing: 2px;
+}
+
+/* Thêm một số style cơ bản để đảm bảo template chạy */
+/* Bạn có thể đã có những thứ này từ thư viện (bootstrap) */
+:root {
+  --bs-gutter-x: 1.5rem;
+  --bs-gutter-y: 0;
+  --bs-breakpoint-xl: 1200px;
+}
+.padding-side {
+    padding-left: 60px;
+    padding-right: 60px;
+}
+.padding-large {
+    padding-top: 100px;
+    padding-bottom: 100px;
+}
+.padding-medium {
+    padding-top: 80px;
+    padding-bottom: 80px;
+}
+.padding-small {
+    padding-top: 60px;
+    padding-bottom: 60px;
+}
+@media (max-width: 991.98px) {
+  .padding-side {
+    padding-left: 30px;
+    padding-right: 30px;
+  }
+}
+@media (max-width: 767.98px) {
+  .padding-side {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  .padding-large {
+    padding-top: 60px;
+    padding-bottom: 60px;
+  }
+  .padding-medium {
+      padding-top: 40px;
+      padding-bottom: 40px;
+  }
+  .padding-small {
+      padding-top: 30px;
+      padding-bottom: 30px;
+  }
+}
