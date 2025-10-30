@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { FaUserCircle, FaSignOutAlt, FaSearch, FaBell, FaCog } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 // CSS cập nhật cho Giao diện Dark Mode
 const styles = {

@@ -154,7 +154,7 @@ function RoomCard({ room, onBook }) {
         </div>
         
         {/* Hover effect */}
-        <style jsx>{`
+        <style>{`
           .room-item:hover .post-image {
             transform: scale(1.05);
           }

@@ -101,6 +101,17 @@ function Header() {
                     </Link>
                   </li>
 
+                  <li className="nav-item px-3">
+                    <Link
+                      className={`nav-link p-0 ${
+                        isActive("/about") ? "active" : ""
+                      }`}
+                      to="/about"
+                    >
+                      About
+                    </Link>
+                  </li>
+
                   {/* ... (Dropdown Pages nếu cần) ... */}
 
                   {/* CẬP NHẬT: Hiển thị Đăng nhập/Đăng ký hoặc Tên user (Mobile) */}

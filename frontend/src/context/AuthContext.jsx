@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // <-- 1. THÊM IMPORT
 import { login as apiLogin, register as apiRegister } from '../services/userService';
 
 // 1. Tạo Context
@@ -8,58 +9,42 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
-  const [loading, setLoading] = useState(true); // Trạng thái loading khi check local storage
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate(); // <-- 2. KHỞI TẠO HOOK
 
   // 3. Effect: Tự động đăng nhập khi tải lại trang (nếu có token)
-// useEffect(() => {
-//   const storedToken = localStorage.getItem('token');
-//   const storedUser = localStorage.getItem('user');
+  useEffect(() => {
+    const DEV_BYPASS_LOGIN = true; // 🔧 Cho phép vào admin không cần đăng nhập
 
-//   if (storedToken && storedUser) {
-//     try {
-//       const parsedUser = JSON.parse(storedUser);
-//       setToken(storedToken);
-//       setUser(parsedUser);
-//     } catch (err) {
-//       console.error("User data in localStorage is invalid JSON:", err);
-//       localStorage.removeItem('user'); // Xóa dữ liệu hỏng để tránh lỗi sau
-//     }
-//   }
-//   setLoading(false);
-// }, []);
-
-useEffect(() => {
-  const DEV_BYPASS_LOGIN = true; // 🔧 Cho phép vào admin không cần đăng nhập
-
-  if (DEV_BYPASS_LOGIN) {
-    // Giả lập user admin và token
-    setUser({
-      IDNguoiDung: "NV_DEV",
-      HoTen: "Admin Developer",
-      isAdmin: true,
-      Email: "dev@admin.local",
-    });
-    setToken("dev-token");
-    setLoading(false);
-    return;
-  }
-
-  try {
-    const storedToken = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
-
-    if (storedToken && storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      setToken(storedToken);
-      setUser(parsedUser);
+    if (DEV_BYPASS_LOGIN) {
+      // Giả lập user admin và token
+      setUser({
+        IDNguoiDung: "NV_DEV",
+        HoTen: "Admin Developer",
+        isAdmin: true,
+        Email: "dev@admin.local",
+      });
+      setToken("dev-token");
+      setLoading(false);
+      return;
     }
-  } catch (err) {
-    console.error("Lỗi parse user:", err);
-    localStorage.removeItem("user");
-  } finally {
-    setLoading(false);
-  }
-}, []);
+
+    try {
+      const storedToken = localStorage.getItem("token");
+      const storedUser = localStorage.getItem("user");
+
+      if (storedToken && storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        setToken(storedToken);
+        setUser(parsedUser);
+      }
+    } catch (err) {
+      console.error("Lỗi parse user:", err);
+      localStorage.removeItem("user");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
 
   // 4. Hàm Login
@@ -102,12 +87,13 @@ useEffect(() => {
     }
   };
 
-  // 6. Hàm Logout
+  // 6. Hàm Logout (ĐÃ CẬP NHẬT)
   const logout = () => {
     setUser(null);
     setToken(null);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
+    navigate('/'); // <-- 3. THÊM ĐIỀU HƯỚNG VỀ TRANG CHỦ
   };
 
   // 7. Giá trị cung cấp cho các component con

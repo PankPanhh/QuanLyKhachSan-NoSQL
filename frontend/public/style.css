@@ -10,6 +10,17 @@ Version: 1.1
 /*--------------------------------------------------------------
 This is main CSS file that contains custom style rules used in this template
 --------------------------------------------------------------*/
+
+.custom-logo-link {
+  display: inline-block; /* hoặc flex nếu muốn canh giữa */
+  text-decoration: none; /* bỏ gạch chân nếu có */
+}
+
+.custom-logo {
+  width: 200px; /* điều chỉnh kích thước ảnh */
+  height: auto;
+}
+
 .navbar-brand .logo {
     height: 50px;
     margin-left: 150px;

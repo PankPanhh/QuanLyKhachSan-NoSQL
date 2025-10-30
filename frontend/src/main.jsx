@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { BrowserRouter } from 'react-router-dom';
 // Import CSS (nếu bạn có file CSS chung, ví dụ: index.css)
 // import './index.css'; 
 
@@ -15,6 +16,8 @@ import 'swiper/css/navigation';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter> {/* 2. BỌC BÊN NGOÀI APP */}
+      <App />
+    </BrowserRouter>
   </React.StrictMode>
 );
