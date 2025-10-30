@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import MainRoutes from "./MainRoutes.jsx";
 import AdminRoutes from "./AdminRoutes.jsx";
 

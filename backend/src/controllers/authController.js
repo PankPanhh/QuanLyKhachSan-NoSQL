@@ -56,6 +56,7 @@ export const loginUser = async (req, res, next) => {
 
     // Tim user trong database
     const user = await User.findOne({ Email });
+    
     if (!user) {
       return res.status(400).json({ message: 'Email hoac mat khau khong dung' });
     }
@@ -67,9 +68,13 @@ export const loginUser = async (req, res, next) => {
 
     // Kiem tra password
     const isPasswordMatch = await user.matchPassword(MatKhau);
+    
     if (!isPasswordMatch) {
       return res.status(400).json({ message: 'Email hoac mat khau khong dung' });
     }
+
+    // Generate token
+    const token = generateToken(user._id);
 
     res.status(200).json({
       message: 'Dang nhap thanh cong',
@@ -77,9 +82,10 @@ export const loginUser = async (req, res, next) => {
       HoTen: user.HoTen,
       Email: user.Email,
       VaiTro: user.VaiTro,
-      token: generateToken(user._id),
+      token: token,
     });
   } catch (error) {
+    console.error('❌ Login error:', error.message);
     next(error);
   }
 };

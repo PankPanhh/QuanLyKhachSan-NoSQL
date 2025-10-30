@@ -6,11 +6,32 @@ class ApiClient {
 
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
+    const userInfoString = localStorage.getItem('userInfo'); 
+    const token = localStorage.getItem('token'); 
+    
+    const headers = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+
+    // Nếu có token, đính kèm vào header Authorization
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    if (userInfoString) {
+      try {
+        const userInfo = JSON.parse(userInfoString);
+        if (userInfo.token) {
+          headers['Authorization'] = `Bearer ${userInfo.token}`;
+        }
+      } catch (e) {
+        console.error("Không thể parse userInfo từ localStorage", e);
+      }
+    }
+    
     const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers,
       ...options,
     };
 
@@ -33,6 +54,27 @@ class ApiClient {
 
   async get(endpoint) {
     return this.request(endpoint);
+  }
+
+  // sửa phòng
+  async post(endpoint, body) {
+    return this.request(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async put(endpoint, body) {
+    return this.request(endpoint, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async delete(endpoint) {
+    return this.request(endpoint, {
+      method: 'DELETE',
+    });
   }
 }
 

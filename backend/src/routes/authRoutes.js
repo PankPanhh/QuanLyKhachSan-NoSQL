@@ -10,9 +10,9 @@ router.post(
   '/register',
   [
     // Kiem tra du lieu dau vao
-    body('fullName').notEmpty().withMessage('Ho ten la bat buoc'),
-    body('email').isEmail().withMessage('Email khong hop le'),
-    body('password')
+    body('HoTen').notEmpty().withMessage('Ho ten la bat buoc'),
+    body('Email').isEmail().withMessage('Email khong hop le'),
+    body('MatKhau')
       .isLength({ min: 6 })
       .withMessage('Mat khau phai co it nhat 6 ky tu'),
   ],
@@ -23,8 +23,8 @@ router.post(
 router.post(
   '/login',
   [
-    body('email').isEmail().withMessage('Email khong hop le'),
-    body('password').notEmpty().withMessage('Mat khau la bat buoc'),
+    body('Email').isEmail().withMessage('Email khong hop le'),
+    body('MatKhau').notEmpty().withMessage('Mat khau la bat buoc'),
   ],
   validateRequest,
   loginUser

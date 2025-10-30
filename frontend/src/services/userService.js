@@ -2,8 +2,10 @@ import api from './api'; // Import mock API
 
 export const login = async (email, password) => {
   try {
-    // Gọi API giả lập
-    const data = await api.post('/login', { email, password });
+    const data = await api.post('/auth/login', { 
+      Email: email, 
+      MatKhau: password 
+    });
     return data;
   } catch (error) {
     console.error('Lỗi khi đăng nhập:', error.message);
@@ -13,8 +15,11 @@ export const login = async (email, password) => {
 
 export const register = async (name, email, password) => {
   try {
-    // Gọi API giả lập
-    const data = await api.post('/register', { name, email, password });
+    const data = await api.post('/auth/register', { 
+      HoTen: name, 
+      Email: email, 
+      MatKhau: password 
+    });
     return data;
   } catch (error) {
     console.error('Lỗi khi đăng ký:', error.message);

@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
 
   // 3. Effect: Tự động đăng nhập khi tải lại trang (nếu có token)
   useEffect(() => {
-    const DEV_BYPASS_LOGIN = true; // 🔧 Cho phép vào admin không cần đăng nhập
+    const DEV_BYPASS_LOGIN = false; // 🔧 Tắt bypass để test login thực tế
 
     if (DEV_BYPASS_LOGIN) {
       // Giả lập user admin và token
@@ -53,10 +53,22 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       const data = await apiLogin(email, password); // Gọi API service
       
-      setUser(data.user);
+      console.log('Login response data:', data); // Debug log
+      
+      // Backend trả về user info trực tiếp, không có field 'user'
+      const userInfo = {
+        _id: data._id,
+        IDNguoiDung: data.IDNguoiDung,
+        HoTen: data.HoTen,
+        Email: data.Email,
+        VaiTro: data.VaiTro,
+        isAdmin: data.VaiTro === 'Admin' || data.VaiTro === 'NhanVien'
+      };
+      
+      setUser(userInfo);
       setToken(data.token);
       
-      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('user', JSON.stringify(userInfo));
       localStorage.setItem('token', data.token);
       
       setLoading(false);
@@ -73,10 +85,22 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       const data = await apiRegister(name, email, password); // Gọi API service
       
-      setUser(data.user);
-      setToken(data.token);
+      console.log('Register response data:', data); // Debug log
       
-      localStorage.setItem('user', JSON.stringify(data.user));
+      // Backend trả về user info trực tiếp, không có field 'user'
+      const userInfo = {
+        _id: data._id,
+        IDNguoiDung: data.IDNguoiDung,
+        HoTen: data.HoTen,
+        Email: data.Email,
+        VaiTro: data.VaiTro,
+        isAdmin: data.VaiTro === 'Admin' || data.VaiTro === 'NhanVien'
+      };
+      
+      setUser(userInfo);
+      setToken(data.token);
+
+      localStorage.setItem('user', JSON.stringify(userInfo));
       localStorage.setItem('token', data.token);
 
       setLoading(false);
@@ -89,11 +113,22 @@ export const AuthProvider = ({ children }) => {
 
   // 6. Hàm Logout (ĐÃ CẬP NHẬT)
   const logout = () => {
+    console.log('Logout function called'); // Debug log
+    console.log('Current URL before logout:', window.location.href); // Debug log
+    
     setUser(null);
     setToken(null);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
-    navigate('/'); // <-- 3. THÊM ĐIỀU HƯỚNG VỀ TRANG CHỦ
+    localStorage.removeItem('userInfo'); // Xóa thêm userInfo nếu có
+    
+    console.log('About to navigate to home page'); // Debug log
+    
+    // Thử sử dụng navigate với replace
+    navigate('/', { replace: true });
+    
+    // Nếu vẫn có vấn đề, có thể uncommment dòng dưới
+    // window.location.href = '/';
   };
 
   // 7. Giá trị cung cấp cho các component con

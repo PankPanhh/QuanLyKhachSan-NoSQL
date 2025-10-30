@@ -79,5 +79,11 @@ userSchema.pre('save', async function (next) {
   }
 });
 
+// Method de kiem tra mat khau
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  const bcrypt = await import('bcryptjs');
+  return await bcrypt.default.compare(enteredPassword, this.MatKhau);
+};
+
 const User = mongoose.model('NguoiDung', userSchema, 'NguoiDung');
 export default User;

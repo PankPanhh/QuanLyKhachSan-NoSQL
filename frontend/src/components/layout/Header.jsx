@@ -118,12 +118,19 @@ function Header() {
                   {user ? (
                     <>
                       <li className="nav-item px-3 d-lg-none">
-                        <span className="nav-link p-0">Chào, {user.name}</span>
+                        <span className="nav-link p-0">Chào, {user.HoTen || user.name}</span>
                       </li>
                       <li className="nav-item px-3 d-lg-none">
-                        <a className="nav-link p-0" href="#" onClick={logout}>
+                        <button 
+                          className="nav-link p-0 btn btn-link" 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            logout();
+                          }}
+                          style={{ border: 'none', background: 'none', textDecoration: 'none' }}
+                        >
                           Đăng xuất
-                        </a>
+                        </button>
                       </li>
                     </>
                   ) : (
@@ -160,7 +167,7 @@ function Header() {
                       data-bs-toggle="dropdown"
                       aria-expanded="false"
                     >
-                      <FaUser className="me-1" /> Chào, {user.name}
+                      <FaUser className="me-1" /> Chào, {user.HoTen || user.name}
                     </a>
                     <ul
                       className="dropdown-menu dropdown-menu-end"
@@ -182,9 +189,16 @@ function Header() {
                         <hr className="dropdown-divider" />
                       </li>
                       <li>
-                        <a href="#" className="dropdown-item" onClick={logout}>
+                        <button 
+                          className="dropdown-item btn btn-link" 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            logout();
+                          }}
+                          style={{ border: 'none', background: 'none', textAlign: 'left', width: '100%' }}
+                        >
                           Đăng xuất
-                        </a>
+                        </button>
                       </li>
                     </ul>
                   </>
