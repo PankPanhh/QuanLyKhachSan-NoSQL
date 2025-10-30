@@ -9,7 +9,7 @@ import { FaCalendarCheck, FaStar, FaWifi, FaCoffee, FaCar, FaSwimmer } from 'rea
 function RoomDetailPage() {
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { slug } = useParams(); // Lấy slug từ URL
+  const { id } = useParams(); // Lấy _id từ URL thay vì slug
 
   useEffect(() => {
     // Cuộn lên đầu trang khi load
@@ -18,11 +18,8 @@ function RoomDetailPage() {
     const fetchRoom = async () => {
       try {
         setLoading(true);
-        // Chuyển đổi slug thành ID (vì mock API đang dùng ID)
-        // Trong API thật, bạn nên fetch bằng slug
-        const mockId = slug === 'grand-deluxe' ? 1 : (slug === 'sweet-family' ? 2 : 3);
-        const data = await getRoomById(mockId);
-        setRoom(data);
+        const data = await getRoomById(id); // Gọi API thật với _id
+        setRoom(data); // Sử dụng trực tiếp Vietnamese schema
       } catch (error) {
         console.error("Lỗi khi tải chi tiết phòng:", error);
       } finally {
@@ -30,10 +27,10 @@ function RoomDetailPage() {
       }
     };
     
-    if (slug) {
-      fetchRoom();
+    if (id) {
+      fetchRoom(); // Sửa lỗi: gọi fetchRoom() thay vì getRoomById(id)
     }
-  }, [slug]);
+  }, [id]);
 
   return (
     <div className="container padding-large">
@@ -86,112 +83,53 @@ function RoomDetailPage() {
                     top: 0,
                     left: 0,
                     right: 0,
-                    bottom: 0,
-                    background: 'url("data:image/svg+xml,%3Csvg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.08"%3E%3Ccircle cx="20" cy="20" r="1"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-                    opacity: 0.5
+                    height: '100%',
+                    background: 'radial-gradient(circle at 50% 0, rgba(255,255,255,0.1), transparent 70%)',
+                    pointerEvents: 'none'
                   }}></div>
                   
-                  <div style={{ position: 'relative', zIndex: 1 }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: '20px',
+                    position: 'relative',
+                    zIndex: 1
+                  }}>
                     <div style={{
+                      fontSize: '24px',
+                      fontWeight: 'bold',
+                      color: 'white',
+                      textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                    }}>
+                      Đặt phòng ngay
+                    </div>
+                    <div style={{
+                      fontSize: '16px',
+                      color: 'rgba(255,255,255,0.9)',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '12px',
-                      marginBottom: '8px'
+                      gap: '5px'
                     }}>
-                      <div style={{
-                        width: '35px',
-                        height: '35px',
-                        background: 'rgba(255, 255, 255, 0.2)',
-                        borderRadius: '10px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '18px'
-                      }}>
-                        🏨
-                      </div>
-                      <h3 style={{
-                        color: 'white',
-                        margin: '0',
-                        fontSize: '22px',
-                        fontWeight: '700'
-                      }}>
-                        Đặt phòng ngay
-                      </h3>
+                      <FaStar style={{ color: '#FFD700' }} /> 4.8
                     </div>
-                    <p style={{
-                      color: 'rgba(255, 255, 255, 0.95)',
-                      margin: '0',
-                      fontSize: '14px',
-                      textAlign: 'center',
-                      fontWeight: '500'
-                    }}>
-                      Đảm bảo giá tốt nhất - Hủy miễn phí
-                    </p>
+                  </div>
+                  
+                  <div style={{ position: 'relative', zIndex: 1 }}>
+                    {/* Form đặt phòng */}
+                    <BookingForm roomId={room._id} />
                   </div>
                 </div>
                 
-                <div style={{ 
-                  padding: '25px 30px',
+                {/* Trust indicators */}
+                <div style={{
+                  padding: '30px 30px 25px',
                   position: 'relative',
                   zIndex: 1
                 }}>
-                  <BookingForm roomId={room.id} />
-                </div>
-              </div>
-
-              {/* Trust Indicators */}
-              <div style={{
-                marginTop: '25px',
-                padding: '25px',
-                background: 'linear-gradient(135deg, rgba(209, 104, 6, 0.03) 0%, rgba(230, 126, 34, 0.02) 100%)',
-                borderRadius: '18px',
-                border: '1px solid rgba(209, 104, 6, 0.12)',
-                position: 'relative',
-                overflow: 'hidden'
-              }}>
-                {/* Background pattern */}
-                <div style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  background: 'url("data:image/svg+xml,%3Csvg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23D16806" fill-opacity="0.03"%3E%3Ccircle cx="15" cy="15" r="1"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-                  pointerEvents: 'none'
-                }}></div>
-                
-                <div style={{ position: 'relative', zIndex: 1 }}>
                   <div style={{
-                    textAlign: 'center',
-                    marginBottom: '20px'
-                  }}>
-                    <div style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      background: 'rgba(209, 104, 6, 0.1)',
-                      padding: '8px 16px',
-                      borderRadius: '25px',
-                      marginBottom: '15px'
-                    }}>
-                      <span style={{ fontSize: '16px' }}>✨</span>
-                      <h6 style={{ 
-                        color: '#D16806', 
-                        margin: '0', 
-                        fontSize: '14px', 
-                        fontWeight: '700',
-                        letterSpacing: '0.5px'
-                      }}>
-                        CAM KẾT CHẤT LƯỢNG
-                      </h6>
-                    </div>
-                  </div>
-                  
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: '1fr 1fr',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
                     gap: '15px',
                     marginBottom: '15px'
                   }}>

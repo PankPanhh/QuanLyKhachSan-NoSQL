@@ -1,0 +1,51 @@
+[{
+  "_id": {
+    "$oid": "68fde1a7974ccf0d1cc47324"
+  },
+  "MaDatPhong": "DP001",
+  "IDKhachHang": "KH001",
+  "MaPhong": "P203",
+  "NgayDat": {
+    "$date": "2025-10-26T14:30:00.000Z"
+  },
+  "NgayNhanPhong": {
+    "$date": "2025-11-01T14:00:00.000Z"
+  },
+  "NgayTraPhong": {
+    "$date": "2025-11-03T12:00:00.000Z"
+  },
+  "SoNguoi": 2,
+  "TienCoc": 500000,
+  "TrangThai": "Đang chờ",
+  "GhiChu": "Yêu cầu view biển",
+  "DichVuSuDung": [
+    {
+      "MaDichVu": "DV003",
+      "SoLuong": 1,
+      "ThanhTien": 500000
+    }
+  ],
+  "HoaDon": {
+    "MaHoaDon": "HD001",
+    "NgayLap": null,
+    "TongTienPhong": 3000000,
+    "TongTienDichVu": 500000,
+    "GiamGia": 600000,
+    "TongTien": 2900000,
+    "TinhTrang": "Chưa thanh toán",
+    "GhiChu": "Áp dụng KM_HE20",
+    "LichSuThanhToan": [
+      {
+        "MaThanhToan": "TT001",
+        "PhuongThuc": "Chuyển khoản",
+        "SoTien": 500000,
+        "NgayThanhToan": {
+          "$date": "2025-10-26T14:35:00.000Z"
+        },
+        "TrangThai": "Thành công",
+        "GhiChu": "Chuyển khoản VCB"
+      }
+    ]
+  },
+  "DanhGia": null
+}]

@@ -1,5 +1,5 @@
 import Booking from '../models/Booking.js';
-import { Room } from '../models/Room.js';
+import Room from '../models/Room.js';
 import { calculateBookingTotal } from '../utils/calculateTotal.js';
 // import { sendEmail } from '../services/emailService.js';
 

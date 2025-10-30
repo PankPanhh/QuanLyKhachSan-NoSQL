@@ -1,0 +1,43 @@
+[{
+  "_id": {
+    "$oid": "68fde192974ccf0d1cc4731a"
+  },
+  "IDNguoiDung": "NV001",
+  "HoTen": "Nguyễn Thị Mai",
+  "NgaySinh": {
+    "$date": "1990-05-15T00:00:00.000Z"
+  },
+  "GioiTinh": "Nữ",
+  "SoDienThoai": "0901234567",
+  "Email": "admin@hotel.com",
+  "MatKhau": "hashed_password_admin",
+  "DiaChi": "100 Đường XYZ, Quận 1, TP. HCM",
+  "VaiTro": "NhanVien",
+  "TrangThai": "Hoạt động",
+  "NgayDangKy": {
+    "$date": "2025-01-01T00:00:00.000Z"
+  },
+  "AnhDaiDien": "nv001.jpg"
+},
+{
+  "_id": {
+    "$oid": "68fde192974ccf0d1cc4731b"
+  },
+  "IDNguoiDung": "KH001",
+  "HoTen": "Trần Văn An",
+  "NgaySinh": {
+    "$date": "1995-10-10T00:00:00.000Z"
+  },
+  "GioiTinh": "Nam",
+  "SoDienThoai": "0987654321",
+  "Email": "an.tran@gmail.com",
+  "MatKhau": "hashed_password_kh",
+  "DiaChi": "123 Đường ABC, Quận 3, TP. HCM",
+  "VaiTro": "KhachHang",
+  "TrangThai": "Hoạt động",
+  "NgayDangKy": {
+    "$date": "2025-10-20T00:00:00.000Z"
+  },
+  "AnhDaiDien": "kh001.jpg",
+  "HangThanhVien": "Gold"
+}]

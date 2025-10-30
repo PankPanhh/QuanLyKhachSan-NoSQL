@@ -56,9 +56,15 @@ function MainPage() {
     const fetchRooms = async () => {
       try {
         const rooms = await getAllRooms(); // Gọi từ service
-        setFeaturedRooms(rooms.slice(0, 3)); // Chỉ lấy 3 phòng đầu
+        if (Array.isArray(rooms)) {
+          setFeaturedRooms(rooms.slice(0, 3)); // Chỉ lấy 3 phòng đầu
+        } else {
+          console.warn('MainPage.fetchRooms: expected array, got', rooms);
+          setFeaturedRooms([]);
+        }
       } catch (error) {
         console.error("Không thể tải phòng:", error);
+        setFeaturedRooms([]);
       }
     };
     
