@@ -3,32 +3,38 @@ import { Outlet } from 'react-router-dom';
 import SidebarAdmin from './SidebarAdmin';
 import TopbarAdmin from './TopbarAdmin';
 
-// CSS cơ bản cho Admin Layout (bạn nên chuyển ra file CSS riêng)
+// CSS cập nhật cho Giao diện Dark Mode giống hệt ảnh
 const styles = {
   adminLayout: {
     display: 'flex',
     minHeight: '100vh',
+    backgroundColor: '#0f1734', // Nền tối chính (ngoài card)
+    color: '#ffffff', 
   },
   sidebar: {
-    width: '250px',
+    width: '280px', // Rộng hơn một chút
     flexShrink: 0,
-    backgroundColor: '#2c3e50', // Màu tối cho sidebar
+    backgroundColor: '#111c44', // Nền card/sidebar
     color: 'white',
+    borderRight: '1px solid #1f2a4f', // Viền mờ
   },
   mainContent: {
     flexGrow: 1,
     display: 'flex',
     flexDirection: 'column',
+    overflow: 'auto', // Cho phép cuộn nội dung
   },
   topbar: {
-    height: '60px',
-    backgroundColor: '#ffffff',
-    borderBottom: '1px solid #ddd',
+    height: '70px', // Cao hơn một chút
+    backgroundColor: '#111c44', // Nền topbar
+    borderBottom: '1px solid #1f2a4f', // Viền mờ
+    color: '#ffffff',
+    padding: '0 2rem',
   },
   pageContent: {
     flexGrow: 1,
     padding: '2rem',
-    backgroundColor: '#f4f6f9',
+    backgroundColor: '#0f1734', // Nền nội dung chính
   }
 };
 
@@ -45,7 +51,6 @@ function AdminLayout() {
         </header>
         
         <main style={styles.pageContent}>
-          {/* Nội dung các trang admin (Dashboard, RoomsManager...) */}
           <Outlet />
         </main>
       </div>

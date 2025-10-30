@@ -3,7 +3,6 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { getRoomImageUrl } from '../../config/constants';
-import { FaBed, FaUsers } from 'react-icons/fa';
 
 function RoomCard({ room, onBook }) {
   const navigate = useNavigate();
@@ -30,51 +29,156 @@ function RoomCard({ room, onBook }) {
     else navigate(`/booking?room=${room._id}`);
   };
 
+  // Tạo services string từ amenities
+  const servicesText = mappedRoom.amenities.length > 0 
+    ? mappedRoom.amenities.join(', ') 
+    : 'Dịch vụ cơ bản';
+
+  // Tính toán độ dài tổng thể của nội dung để điều chỉnh font size
+  const totalContentLength = mappedRoom.title.length + mappedRoom.description.length + servicesText.length;
+  const isLongContent = totalContentLength > 200;
+  const hasExtraStatus = mappedRoom.status !== 'Trống';
+  
+  // Điều chỉnh font size dựa trên độ dài nội dung
+  const getFontSize = (baseSize, isTitle = false) => {
+    if (isLongContent && hasExtraStatus) {
+      return isTitle ? 'h5' : 'small';
+    } else if (isLongContent) {
+      return isTitle ? 'h4' : '';
+    }
+    return isTitle ? 'display-6' : '';
+  };
+
+  const getTableFontSize = () => {
+    if (isLongContent && hasExtraStatus) return { fontSize: '0.8rem' };
+    if (isLongContent) return { fontSize: '0.9rem' };
+    return {};
+  };
+
   return (
-    <div className="card h-100 shadow-sm border-0 overflow-hidden">
-      <img 
-        src={mappedRoom.imageUrl} 
-        alt={mappedRoom.title} 
-        className="card-img-top" 
-        style={{ height: '200px', objectFit: 'cover' }} 
-      />
-      <div className="card-body d-flex flex-column">
-        <h5 className="card-title">{mappedRoom.title}</h5>
-        <p className="card-text text-muted small mb-3">
-          {mappedRoom.description.length > 100 
-            ? `${mappedRoom.description.substring(0, 100)}...` 
-            : mappedRoom.description}
-        </p>
+    <>
+      <div className="room-item position-relative rounded-4 overflow-hidden" style={{ minHeight: '400px' }}>
+        <img 
+          src={mappedRoom.imageUrl} 
+          alt={mappedRoom.title} 
+          className="post-image w-100 h-100" 
+          style={{ 
+            objectFit: 'cover', 
+            transition: 'transform 0.3s ease',
+            position: 'absolute',
+            top: 0,
+            left: 0
+          }}
+        />
+        {/* Overlay backdrop để đảm bảo text luôn đọc được */}
+        <div 
+          className="position-absolute top-0 start-0 w-100 h-100 rounded-4"
+          style={{ 
+            // background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%)',
+            transition: 'background 0.3s ease',
+            zIndex: 1
+          }}
+        ></div>
         
-        {/* Chi tiết ngắn gọn */}
-        <div className="d-flex justify-content-between mb-3 text-muted small">
-          <span><FaUsers /> {mappedRoom.maxGuests}</span>
-          <span><FaBed /> {mappedRoom.bedType}</span>
+        <div className="product-description position-absolute p-4 text-start d-flex flex-column justify-content-end h-100 w-100" style={{ zIndex: 2 }}>
+          <div className="content-wrapper">
+            <h4 className={`${getFontSize('', true)} fw-normal text-white mb-2`} 
+                style={{ 
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                  lineHeight: isLongContent ? '1.2' : '1.4'
+                }}>
+              {mappedRoom.title}
+            </h4>
+            <p className={`product-paragraph text-white mb-2 ${getFontSize('')}`} 
+               style={{ 
+                 textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                 lineHeight: '1.3'
+               }}>
+              {mappedRoom.description.length > (isLongContent ? 80 : 100) 
+                ? `${mappedRoom.description.substring(0, isLongContent ? 80 : 100)}...` 
+                : mappedRoom.description}
+            </p>
+            <table className="mb-2" style={getTableFontSize()}>
+              <tbody>
+                <tr className="text-white">
+                  <td className="pe-3" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>Sức chứa:</td>
+                  <td style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>{mappedRoom.maxGuests} người</td>
+                </tr>
+                <tr className="text-white">
+                  <td className="pe-3" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>Giường:</td>
+                  <td style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>{mappedRoom.bedType}</td>
+                </tr>
+                <tr className="text-white">
+                  <td className="pe-3" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>Dịch vụ:</td>
+                  <td style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
+                    {servicesText.length > (isLongContent ? 20 : 30) 
+                      ? `${servicesText.substring(0, isLongContent ? 20 : 30)}...` 
+                      : servicesText}
+                  </td>
+                </tr>
+                {mappedRoom.status !== 'Trống' && (
+                  <tr className="text-white">
+                    <td className="pe-3" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>Trạng thái:</td>
+                    <td><span className="badge bg-warning" style={{ fontSize: isLongContent ? '0.7rem' : '0.8rem' }}>{mappedRoom.status}</span></td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            
+            <div className="d-flex gap-2 align-items-center flex-wrap">
+              {/* Dùng Link để điều hướng */}
+              <Link to={`/room/${room._id}`} className="text-decoration-none">
+                <p className={`text-decoration-underline text-white m-0 ${isLongContent ? 'small' : ''}`} 
+                   style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
+                  Xem chi tiết
+                </p>
+              </Link>
+              
+              {/* Nút đặt phòng nếu phòng trống */}
+              {mappedRoom.status === 'Trống' && (
+                <button 
+                  className={`btn btn-light ${isLongContent ? 'btn-sm' : 'btn-sm'}`}
+                  onClick={handleBook}
+                  style={{ 
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                    border: '1px solid white',
+                    backdropFilter: 'blur(5px)',
+                    fontSize: isLongContent ? '0.75rem' : '0.875rem'
+                  }}
+                >
+                  Đặt ngay
+                </button>
+              )}
+            </div>
+          </div>
         </div>
-
-        {/* Giá + Khuyến mãi */}
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h4 className="text-primary mb-0">{formatCurrency(mappedRoom.price)}/đêm</h4>
-          {mappedRoom.promotions.length > 0 && (
-            <span className="badge bg-danger">
-              KM
-            </span>
-          )}
-        </div>
-
-        {/* Buttons */}
-        <div className="d-flex gap-2 mt-auto">
-          <Link to={`/room/${room._id}`} className="btn btn-outline-primary flex-fill">
-            Xem chi tiết
+        
+        {/* Hover effect */}
+        <style jsx>{`
+          .room-item:hover .post-image {
+            transform: scale(1.05);
+          }
+          .room-item:hover .position-absolute:first-of-type {
+            background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%) !important;
+          }
+        `}</style>
+      </div>
+      <div className="room-content text-center mt-3">
+        <h4 className="display-6 fw-normal">
+          <Link to={`/room/${room._id}`} className="text-decoration-none text-dark">
+            {mappedRoom.title}
           </Link>
-          {mappedRoom.status === 'Trống' && (
-            <button className="btn btn-primary flex-fill" onClick={handleBook}>
-              Đặt ngay
-            </button>
+        </h4>
+        <div className="d-flex justify-content-center align-items-center gap-2">
+          <p className="mb-0">
+            <span className="text-primary fs-4">{formatCurrency(mappedRoom.price)}</span>/đêm
+          </p>
+          {mappedRoom.promotions.length > 0 && (
+            <span className="badge bg-danger">KM</span>
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

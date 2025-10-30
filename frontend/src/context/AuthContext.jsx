@@ -11,16 +11,56 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true); // Trạng thái loading khi check local storage
 
   // 3. Effect: Tự động đăng nhập khi tải lại trang (nếu có token)
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
+// useEffect(() => {
+//   const storedToken = localStorage.getItem('token');
+//   const storedUser = localStorage.getItem('user');
+
+//   if (storedToken && storedUser) {
+//     try {
+//       const parsedUser = JSON.parse(storedUser);
+//       setToken(storedToken);
+//       setUser(parsedUser);
+//     } catch (err) {
+//       console.error("User data in localStorage is invalid JSON:", err);
+//       localStorage.removeItem('user'); // Xóa dữ liệu hỏng để tránh lỗi sau
+//     }
+//   }
+//   setLoading(false);
+// }, []);
+
+useEffect(() => {
+  const DEV_BYPASS_LOGIN = true; // 🔧 Cho phép vào admin không cần đăng nhập
+
+  if (DEV_BYPASS_LOGIN) {
+    // Giả lập user admin và token
+    setUser({
+      IDNguoiDung: "NV_DEV",
+      HoTen: "Admin Developer",
+      isAdmin: true,
+      Email: "dev@admin.local",
+    });
+    setToken("dev-token");
+    setLoading(false);
+    return;
+  }
+
+  try {
+    const storedToken = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
 
     if (storedToken && storedUser) {
+      const parsedUser = JSON.parse(storedUser);
       setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+      setUser(parsedUser);
     }
-    setLoading(false); // Kết thúc loading
-  }, []);
+  } catch (err) {
+    console.error("Lỗi parse user:", err);
+    localStorage.removeItem("user");
+  } finally {
+    setLoading(false);
+  }
+}, []);
+
 
   // 4. Hàm Login
   const login = async (email, password) => {

@@ -17,16 +17,9 @@ import AdminPage from '../page/Admin/AdminPage.jsx';
 
 // Component bảo vệ Route
 const ProtectedRoute = ({ children }) => {
-  const { user } = useContext(AuthContext);
-  
-  // Kiểm tra nếu có user VÀ user là admin
-  if (!user || !user.isAdmin) {
-    // Nếu không, chuyển hướng về trang đăng nhập
-    return <Navigate to="/login" replace />;
-  }
-
-  return children;
+  return children; // Không kiểm tra user, luôn cho truy cập
 };
+
 
 function AdminRoutes() {
   return (
