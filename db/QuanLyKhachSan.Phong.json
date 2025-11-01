@@ -1,109 +1,93 @@
 [{
   "_id": {
-    "$oid": "68fde19e974ccf0d1cc4731c"
+    "$oid": "6905540ecbf04293e5dbee94"
   },
-  "LoaiTaiSan": "TienNghi",
-  "MaTienNghi": "TN001",
-  "TenTienNghi": "Wi-Fi",
-  "MoTa": "Tốc độ Wi-Fi 100Mbps",
-  "TrangThai": "Hoạt động",
-  "NgayCapNhat": {
-    "$date": "2025-10-01T00:00:00.000Z"
-  }
+  "MaPhong": "P101",
+  "TenPhong": "Phòng Standard City View",
+  "LoaiPhong": "Standard",
+  "Tang": 1,
+  "GiaPhong": 800000,
+  "TinhTrang": "Trống",
+  "SoGiuong": 1,
+  "LoaiGiuong": "Queen",
+  "DienTich": 25,
+  "MoTa": "Phòng tiêu chuẩn, hướng thành phố.",
+  "HinhAnh": "standard_p101.jpg",
+  "TienNghi": [
+    {
+      "MaTienNghi": "TN001",
+      "TenTienNghi": "Wi-Fi",
+      "TrangThai": "Hoạt động"
+    },
+    {
+      "MaTienNghi": "TN002",
+      "TenTienNghi": "TV",
+      "TrangThai": "Hoạt động"
+    },
+    {
+      "MaTienNghi": "TN004",
+      "TenTienNghi": "Điều hòa",
+      "TrangThai": "Hoạt động"
+    }
+  ],
+  "DichVu": [
+    {
+      "MaDichVu": "DV001",
+      "TenDichVu": "Ăn sáng",
+      "GiaDichVu": 100000,
+      "DonViTinh": "Suất"
+    }
+  ],
+  "KhuyenMai": []
 },
 {
   "_id": {
-    "$oid": "68fde19e974ccf0d1cc4731d"
+    "$oid": "6905540ecbf04293e5dbee95"
   },
-  "LoaiTaiSan": "TienNghi",
-  "MaTienNghi": "TN002",
-  "TenTienNghi": "TV",
-  "MoTa": "TV 43 inch",
-  "TrangThai": "Hoạt động",
-  "NgayCapNhat": {
-    "$date": "2025-10-01T00:00:00.000Z"
-  }
+  "MaPhong": "P102",
+  "TenPhong": "Phòng Standard Twin",
+  "LoaiPhong": "Standard",
+  "Tang": 1,
+  "GiaPhong": 850000,
+  "TinhTrang": "Đang sử dụng",
+  "SoGiuong": 2,
+  "LoaiGiuong": "Twin",
+  "DienTich": 28,
+  "MoTa": "Phòng hai giường đơn, phù hợp bạn bè hoặc đồng nghiệp.",
+  "HinhAnh": "standard_p102.jpg",
+  "TienNghi": [
+    {
+      "MaTienNghi": "TN001",
+      "TenTienNghi": "Wi-Fi",
+      "TrangThai": "Hoạt động"
+    },
+    {
+      "MaTienNghi": "TN002",
+      "TenTienNghi": "TV",
+      "TrangThai": "Hoạt động"
+    },
+    {
+      "MaTienNghi": "TN005",
+      "TenTienNghi": "Minibar",
+      "TrangThai": "Hoạt động"
+    }
+  ],
+  "DichVu": [
+    {
+      "MaDichVu": "DV002",
+      "TenDichVu": "Giặt là",
+      "GiaDichVu": 50000,
+      "DonViTinh": "Kg"
+    }
+  ],
+  "KhuyenMai": []
 },
 {
   "_id": {
-    "$oid": "68fde19e974ccf0d1cc4731e"
+    "$oid": "6905540ecbf04293e5dbee96"
   },
-  "LoaiTaiSan": "TienNghi",
-  "MaTienNghi": "TN003",
-  "TenTienNghi": "Bồn tắm",
-  "TrangThai": "Hoạt động",
-  "NgayCapNhat": {
-    "$date": "2025-10-01T00:00:00.000Z"
-  }
-},
-{
-  "_id": {
-    "$oid": "68fde19e974ccf0d1cc4731f"
-  },
-  "LoaiTaiSan": "TienNghi",
-  "MaTienNghi": "TN004",
-  "TenTienNghi": "Điều hòa",
-  "TrangThai": "Hoạt động",
-  "NgayCapNhat": {
-    "$date": "2025-10-01T00:00:00.000Z"
-  }
-},
-{
-  "_id": {
-    "$oid": "68fde19e974ccf0d1cc47320"
-  },
-  "LoaiTaiSan": "TienNghi",
-  "MaTienNghi": "TN005",
-  "TenTienNghi": "Minibar",
-  "TrangThai": "Hoạt động",
-  "NgayCapNhat": {
-    "$date": "2025-10-01T00:00:00.000Z"
-  }
-},
-{
-  "_id": {
-    "$oid": "68fde19e974ccf0d1cc47321"
-  },
-  "LoaiTaiSan": "DichVu",
-  "MaDichVu": "DV003",
-  "TenDichVu": "Spa thư giãn toàn thân",
-  "LoaiDichVu": "Chăm sóc sức khỏe",
-  "GiaDichVu": 500000,
-  "DonViTinh": "Lần",
-  "MoTa": "Gồm massage toàn thân, xông hơi và dưỡng da 60 phút",
-  "TinhTrang": "Hoạt động",
-  "HinhAnh": "spa_thu_gian.jpg",
-  "NguoiPhuTrach": "NV001",
-  "NgayCapNhat": {
-    "$date": "2025-10-20T00:00:00.000Z"
-  }
-},
-{
-  "_id": {
-    "$oid": "68fde19e974ccf0d1cc47322"
-  },
-  "LoaiTaiSan": "KhuyenMai",
-  "MaKhuyenMai": "KM_HE20",
-  "TenChuongTrinh": "Giảm 20% mùa hè",
-  "MoTa": "Giảm 20% cho tất cả phòng Deluxe",
-  "LoaiKhuyenMai": "Theo phần trăm",
-  "GiaTri": 20,
-  "NgayBatDau": {
-    "$date": "2025-06-01T00:00:00.000Z"
-  },
-  "NgayKetThuc": {
-    "$date": "2025-08-31T00:00:00.000Z"
-  },
-  "DieuKien": "Chỉ áp dụng cho phòng Deluxe",
-  "TrangThai": "Đang hoạt động"
-},
-{
-  "_id": {
-    "$oid": "69032ee65c735eb90d67ec4b"
-  },
-  "LoaiTaiSan": "Phong",
-  "MaPhong": "P202",
-  "TenPhong": "Phòng Deluxe Vườn",
+  "MaPhong": "P201",
+  "TenPhong": "Phòng Deluxe City View",
   "LoaiPhong": "Deluxe",
   "Tang": 2,
   "GiaPhong": 1300000,
@@ -111,205 +95,89 @@
   "SoGiuong": 1,
   "LoaiGiuong": "King",
   "DienTich": 30,
-  "MoTa": "Phòng hướng vườn yên tĩnh, có ban công riêng.",
-  "HinhAnh": "deluxe_p202.jpg",
-  "MaTienNghi": [
-    "TN001",
-    "TN002",
-    "TN003",
-    "TN004",
-    "TN005"
+  "MoTa": "Phòng hướng thành phố, trang trí sang trọng.",
+  "HinhAnh": "deluxe_p201.jpg",
+  "TienNghi": [
+    {
+      "MaTienNghi": "TN001",
+      "TenTienNghi": "Wi-Fi"
+    },
+    {
+      "MaTienNghi": "TN002",
+      "TenTienNghi": "TV 43 inch"
+    },
+    {
+      "MaTienNghi": "TN003",
+      "TenTienNghi": "Bồn tắm"
+    },
+    {
+      "MaTienNghi": "TN004",
+      "TenTienNghi": "Điều hòa"
+    }
   ],
-  "MaKhuyenMai": [
-    "KM_HE20"
+  "DichVu": [
+    {
+      "MaDichVu": "DV003",
+      "TenDichVu": "Spa thư giãn",
+      "GiaDichVu": 500000,
+      "DonViTinh": "Lần"
+    }
   ],
-  "updatedAt": {
-    "$date": "2025-10-31T13:11:58.597Z"
-  }
+  "KhuyenMai": [
+    {
+      "MaKhuyenMai": "KM_HE20",
+      "TenChuongTrinh": "Giảm 20% mùa hè",
+      "GiaTri": 20
+    }
+  ]
 },
 {
   "_id": {
-    "$oid": "69032ee65c735eb90d67ec4c"
+    "$oid": "6905540ecbf04293e5dbee97"
   },
-  "LoaiTaiSan": "Phong",
-  "MaPhong": "P301",
-  "TenPhong": "Phòng Suite Gia Đình",
-  "LoaiPhong": "Suite",
-  "Tang": 3,
-  "GiaPhong": 2200000,
-  "TinhTrang": "Trống",
+  "MaPhong": "P202",
+  "TenPhong": "Phòng Deluxe Family",
+  "LoaiPhong": "Deluxe",
+  "Tang": 2,
+  "GiaPhong": 1600000,
+  "TinhTrang": "Đang dọn",
   "SoGiuong": 2,
   "LoaiGiuong": "Queen",
-  "DienTich": 55,
-  "MoTa": "Phòng rộng cho gia đình, gồm 2 giường, phòng khách và khu bếp nhỏ.",
-  "HinhAnh": "suite_family_p301.jpg",
-  "MaTienNghi": [
-    "TN001",
-    "TN002",
-    "TN003",
-    "TN004",
-    "TN005"
+  "DienTich": 40,
+  "MoTa": "Phòng gia đình, thoáng rộng, có ban công.",
+  "HinhAnh": "deluxe_p202.jpg",
+  "TienNghi": [
+    {
+      "MaTienNghi": "TN001",
+      "TenTienNghi": "Wi-Fi"
+    },
+    {
+      "MaTienNghi": "TN002",
+      "TenTienNghi": "TV"
+    },
+    {
+      "MaTienNghi": "TN003",
+      "TenTienNghi": "Bồn tắm"
+    },
+    {
+      "MaTienNghi": "TN005",
+      "TenTienNghi": "Minibar"
+    }
   ],
-  "MaKhuyenMai": []
-},
-{
-  "_id": {
-    "$oid": "69032ee65c735eb90d67ec4d"
-  },
-  "LoaiTaiSan": "Phong",
-  "MaPhong": "P401",
-  "TenPhong": "Phòng Premium Biển Xanh",
-  "LoaiPhong": "Premium",
-  "Tang": 4,
-  "GiaPhong": 2800000,
-  "TinhTrang": "Trống",
-  "SoGiuong": 1,
-  "LoaiGiuong": "King",
-  "DienTich": 45,
-  "MoTa": "Phòng sang trọng hướng biển, thiết kế hiện đại, bao gồm minibar miễn phí.",
-  "HinhAnh": "premium_p401.jpg",
-  "MaTienNghi": [
-    "TN001",
-    "TN002",
-    "TN003",
-    "TN004",
-    "TN005"
+  "DichVu": [
+    {
+      "MaDichVu": "DV004",
+      "TenDichVu": "Xe đưa đón sân bay",
+      "GiaDichVu": 200000,
+      "DonViTinh": "Lượt"
+    }
   ],
-  "MaKhuyenMai": [
-    "KM_HE20"
-  ]
+  "KhuyenMai": []
 },
 {
   "_id": {
-    "$oid": "69032ee65c735eb90d67ec4e"
+    "$oid": "6905540ecbf04293e5dbee98"
   },
-  "LoaiTaiSan": "Phong",
-  "MaPhong": "P402",
-  "TenPhong": "Phòng Suite VIP View Toàn Cảnh",
-  "LoaiPhong": "Suite",
-  "Tang": 4,
-  "GiaPhong": 3500000,
-  "TinhTrang": "Trống",
-  "SoGiuong": 1,
-  "LoaiGiuong": "King",
-  "DienTich": 60,
-  "MoTa": "Phòng cao cấp view toàn cảnh biển và thành phố, bao gồm dịch vụ spa miễn phí.",
-  "HinhAnh": "suite_vip_p402.jpg",
-  "MaTienNghi": [
-    "TN001",
-    "TN002",
-    "TN003",
-    "TN004",
-    "TN005"
-  ],
-  "MaKhuyenMai": [
-    "KM_HE20"
-  ]
-},
-{
-  "_id": {
-    "$oid": "6904a8ea6a6dec7d5d978a63"
-  },
-  "LoaiTaiSan": "TienNghi",
-  "MaTienNghi": "TN001",
-  "TenTienNghi": "Wi-Fi",
-  "MoTa": "Tốc độ Wi-Fi 100Mbps",
-  "TrangThai": "Hoạt động",
-  "NgayCapNhat": {
-    "$date": "2025-10-01T00:00:00.000Z"
-  }
-},
-{
-  "_id": {
-    "$oid": "6904a8ea6a6dec7d5d978a64"
-  },
-  "LoaiTaiSan": "TienNghi",
-  "MaTienNghi": "TN002",
-  "TenTienNghi": "TV",
-  "MoTa": "TV 43 inch",
-  "TrangThai": "Hoạt động",
-  "NgayCapNhat": {
-    "$date": "2025-10-01T00:00:00.000Z"
-  }
-},
-{
-  "_id": {
-    "$oid": "6904a8ea6a6dec7d5d978a65"
-  },
-  "LoaiTaiSan": "TienNghi",
-  "MaTienNghi": "TN003",
-  "TenTienNghi": "Bồn tắm",
-  "TrangThai": "Hoạt động",
-  "NgayCapNhat": {
-    "$date": "2025-10-01T00:00:00.000Z"
-  }
-},
-{
-  "_id": {
-    "$oid": "6904a8ea6a6dec7d5d978a66"
-  },
-  "LoaiTaiSan": "TienNghi",
-  "MaTienNghi": "TN004",
-  "TenTienNghi": "Điều hòa",
-  "TrangThai": "Hoạt động",
-  "NgayCapNhat": {
-    "$date": "2025-10-01T00:00:00.000Z"
-  }
-},
-{
-  "_id": {
-    "$oid": "6904a8ea6a6dec7d5d978a67"
-  },
-  "LoaiTaiSan": "TienNghi",
-  "MaTienNghi": "TN005",
-  "TenTienNghi": "Minibar",
-  "TrangThai": "Hoạt động",
-  "NgayCapNhat": {
-    "$date": "2025-10-01T00:00:00.000Z"
-  }
-},
-{
-  "_id": {
-    "$oid": "6904a8ea6a6dec7d5d978a68"
-  },
-  "LoaiTaiSan": "DichVu",
-  "MaDichVu": "DV003",
-  "TenDichVu": "Spa thư giãn toàn thân",
-  "LoaiDichVu": "Chăm sóc sức khỏe",
-  "GiaDichVu": 500000,
-  "DonViTinh": "Lần",
-  "MoTa": "Gồm massage toàn thân, xông hơi và dưỡng da 60 phút",
-  "TinhTrang": "Hoạt động",
-  "HinhAnh": "spa_thu_gian.jpg",
-  "NguoiPhuTrach": "NV001",
-  "NgayCapNhat": {
-    "$date": "2025-10-20T00:00:00.000Z"
-  }
-},
-{
-  "_id": {
-    "$oid": "6904a8ea6a6dec7d5d978a69"
-  },
-  "LoaiTaiSan": "KhuyenMai",
-  "MaKhuyenMai": "KM_HE20",
-  "TenChuongTrinh": "Giảm 20% mùa hè",
-  "MoTa": "Giảm 20% cho tất cả phòng Deluxe",
-  "LoaiKhuyenMai": "Theo phần trăm",
-  "GiaTri": 20,
-  "NgayBatDau": {
-    "$date": "2025-06-01T00:00:00.000Z"
-  },
-  "NgayKetThuc": {
-    "$date": "2025-08-31T00:00:00.000Z"
-  },
-  "DieuKien": "Chỉ áp dụng cho phòng Deluxe",
-  "TrangThai": "Đang hoạt động"
-},
-{
-  "_id": {
-    "$oid": "6904a8ea6a6dec7d5d978a6a"
-  },
-  "LoaiTaiSan": "Phong",
   "MaPhong": "P203",
   "TenPhong": "Phòng Deluxe Hướng Biển",
   "LoaiPhong": "Deluxe",
@@ -319,142 +187,248 @@
   "SoGiuong": 1,
   "LoaiGiuong": "King",
   "DienTich": 35,
-  "MoTa": "Phòng view biển, ban công rộng",
+  "MoTa": "Phòng view biển, ban công rộng.",
   "HinhAnh": "deluxe_p203.jpg",
-  "MaTienNghi": [
-    "TN001",
-    "TN002",
-    "TN003",
-    "TN004",
-    "TN005"
+  "TienNghi": [
+    {
+      "MaTienNghi": "TN001",
+      "TenTienNghi": "Wi-Fi"
+    },
+    {
+      "MaTienNghi": "TN002",
+      "TenTienNghi": "TV"
+    },
+    {
+      "MaTienNghi": "TN003",
+      "TenTienNghi": "Bồn tắm"
+    },
+    {
+      "MaTienNghi": "TN004",
+      "TenTienNghi": "Điều hòa"
+    },
+    {
+      "MaTienNghi": "TN005",
+      "TenTienNghi": "Minibar"
+    }
   ],
-  "MaKhuyenMai": [
-    "KM_HE20"
+  "DichVu": [
+    {
+      "MaDichVu": "DV003",
+      "TenDichVu": "Spa thư giãn toàn thân",
+      "GiaDichVu": 500000,
+      "DonViTinh": "Lần"
+    }
+  ],
+  "KhuyenMai": [
+    {
+      "MaKhuyenMai": "KM_HE20",
+      "TenChuongTrinh": "Giảm 20% mùa hè",
+      "GiaTri": 20
+    }
   ]
 },
 {
   "_id": {
-    "$oid": "6904a9356a6dec7d5d978a6b"
+    "$oid": "6905540ecbf04293e5dbee99"
   },
-  "LoaiTaiSan": "Phong",
-  "MaPhong": "P101",
-  "TenPhong": "Phòng Standard 1 Giường Đơn",
-  "LoaiPhong": "Standard",
-  "Tang": 1,
-  "GiaPhong": 800000,
-  "TinhTrang": "Trống",
-  "SoGiuong": 1,
-  "LoaiGiuong": "Single",
-  "DienTich": 20,
-  "MoTa": "Phòng gọn gàng, phù hợp cho khách đi công tác ngắn ngày",
-  "HinhAnh": "standard_p101.jpg",
-  "MaTienNghi": [
-    "TN001",
-    "TN002",
-    "TN004"
-  ],
-  "MaKhuyenMai": []
-},
-{
-  "_id": {
-    "$oid": "6904a9356a6dec7d5d978a6c"
-  },
-  "LoaiTaiSan": "Phong",
-  "MaPhong": "P102",
-  "TenPhong": "Phòng Standard 2 Giường Đơn",
-  "LoaiPhong": "Standard",
-  "Tang": 1,
-  "GiaPhong": 900000,
-  "TinhTrang": "Đang dọn dẹp",
-  "SoGiuong": 2,
-  "LoaiGiuong": "Twin",
-  "DienTich": 25,
-  "MoTa": "Phòng tiêu chuẩn với 2 giường đơn, phù hợp bạn bè hoặc đồng nghiệp",
-  "HinhAnh": "standard_p102.jpg",
-  "MaTienNghi": [
-    "TN001",
-    "TN002",
-    "TN004"
-  ],
-  "MaKhuyenMai": []
-},
-{
-  "_id": {
-    "$oid": "6904a9356a6dec7d5d978a6d"
-  },
-  "LoaiTaiSan": "Phong",
-  "MaPhong": "P204",
-  "TenPhong": "Phòng Superior City View",
-  "LoaiPhong": "Superior",
-  "Tang": 2,
-  "GiaPhong": 1200000,
-  "TinhTrang": "Trống",
-  "SoGiuong": 1,
-  "LoaiGiuong": "Queen",
-  "DienTich": 28,
-  "MoTa": "Phòng hướng phố, thiết kế hiện đại, có bàn làm việc và minibar",
-  "HinhAnh": "superior_p204.jpg",
-  "MaTienNghi": [
-    "TN001",
-    "TN002",
-    "TN004",
-    "TN005"
-  ],
-  "MaKhuyenMai": [
-    "KM_HE20"
-  ]
-},
-{
-  "_id": {
-    "$oid": "6904a9356a6dec7d5d978a6e"
-  },
-  "LoaiTaiSan": "Phong",
   "MaPhong": "P301",
+  "TenPhong": "Phòng Suite Hướng Biển",
+  "LoaiPhong": "Suite",
+  "Tang": 3,
+  "GiaPhong": 2500000,
+  "TinhTrang": "Đang sử dụng",
+  "SoGiuong": 1,
+  "LoaiGiuong": "King",
+  "DienTich": 50,
+  "MoTa": "Phòng cao cấp, view biển toàn cảnh, có phòng khách riêng.",
+  "HinhAnh": "suite_p301.jpg",
+  "TienNghi": [
+    {
+      "MaTienNghi": "TN001",
+      "TenTienNghi": "Wi-Fi tốc độ cao"
+    },
+    {
+      "MaTienNghi": "TN002",
+      "TenTienNghi": "TV 55 inch"
+    },
+    {
+      "MaTienNghi": "TN003",
+      "TenTienNghi": "Bồn tắm Jacuzzi"
+    },
+    {
+      "MaTienNghi": "TN005",
+      "TenTienNghi": "Minibar cao cấp"
+    }
+  ],
+  "DichVu": [
+    {
+      "MaDichVu": "DV005",
+      "TenDichVu": "Ăn tối tại phòng",
+      "GiaDichVu": 300000,
+      "DonViTinh": "Suất"
+    }
+  ],
+  "KhuyenMai": [
+    {
+      "MaKhuyenMai": "KM_VIP10",
+      "TenChuongTrinh": "Giảm 10% cho khách VIP",
+      "GiaTri": 10
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "6905540ecbf04293e5dbee9a"
+  },
+  "MaPhong": "P302",
   "TenPhong": "Phòng Suite Gia Đình",
   "LoaiPhong": "Suite",
   "Tang": 3,
-  "GiaPhong": 2200000,
-  "TinhTrang": "Đã đặt",
+  "GiaPhong": 2600000,
+  "TinhTrang": "Bảo trì",
   "SoGiuong": 2,
-  "LoaiGiuong": "King + Single",
-  "DienTich": 45,
-  "MoTa": "Phòng rộng rãi, có phòng khách riêng, bồn tắm và minibar",
-  "HinhAnh": "suite_p301.jpg",
-  "MaTienNghi": [
-    "TN001",
-    "TN002",
-    "TN003",
-    "TN004",
-    "TN005"
+  "LoaiGiuong": "Queen",
+  "DienTich": 55,
+  "MoTa": "Phòng rộng rãi cho gia đình, có bếp mini và phòng khách.",
+  "HinhAnh": "suite_p302.jpg",
+  "TienNghi": [
+    {
+      "MaTienNghi": "TN001",
+      "TenTienNghi": "Wi-Fi"
+    },
+    {
+      "MaTienNghi": "TN002",
+      "TenTienNghi": "TV"
+    },
+    {
+      "MaTienNghi": "TN004",
+      "TenTienNghi": "Điều hòa"
+    },
+    {
+      "MaTienNghi": "TN006",
+      "TenTienNghi": "Bếp mini"
+    }
   ],
-  "MaKhuyenMai": [
-    "KM_HE20"
-  ]
+  "DichVu": [
+    {
+      "MaDichVu": "DV002",
+      "TenDichVu": "Giặt là",
+      "GiaDichVu": 50000,
+      "DonViTinh": "Kg"
+    }
+  ],
+  "KhuyenMai": []
 },
 {
   "_id": {
-    "$oid": "6904a9356a6dec7d5d978a6f"
+    "$oid": "6905540ecbf04293e5dbee9b"
   },
-  "LoaiTaiSan": "Phong",
-  "MaPhong": "P501",
-  "TenPhong": "Phòng VIP Penthouse Hướng Biển",
-  "LoaiPhong": "VIP",
-  "Tang": 5,
-  "GiaPhong": 3500000,
+  "MaPhong": "P401",
+  "TenPhong": "Phòng Superior Twin",
+  "LoaiPhong": "Superior",
+  "Tang": 4,
+  "GiaPhong": 1100000,
+  "TinhTrang": "Hư",
+  "SoGiuong": 2,
+  "LoaiGiuong": "Twin",
+  "DienTich": 28,
+  "MoTa": "Phòng hai giường đơn, thiết bị hiện đại, đang sửa điều hòa.",
+  "HinhAnh": "superior_p401.jpg",
+  "TienNghi": [
+    {
+      "MaTienNghi": "TN001",
+      "TenTienNghi": "Wi-Fi"
+    },
+    {
+      "MaTienNghi": "TN002",
+      "TenTienNghi": "TV"
+    }
+  ],
+  "DichVu": [],
+  "KhuyenMai": []
+},
+{
+  "_id": {
+    "$oid": "6905540ecbf04293e5dbee9c"
+  },
+  "MaPhong": "P402",
+  "TenPhong": "Phòng Superior King",
+  "LoaiPhong": "Superior",
+  "Tang": 4,
+  "GiaPhong": 1150000,
   "TinhTrang": "Trống",
   "SoGiuong": 1,
   "LoaiGiuong": "King",
-  "DienTich": 60,
-  "MoTa": "Phòng cao cấp nhất, có ban công lớn, tầm nhìn toàn cảnh biển",
-  "HinhAnh": "vip_p501.jpg",
-  "MaTienNghi": [
-    "TN001",
-    "TN002",
-    "TN003",
-    "TN004",
-    "TN005"
+  "DienTich": 30,
+  "MoTa": "Phòng rộng rãi, giường lớn, gần thang máy.",
+  "HinhAnh": "superior_p402.jpg",
+  "TienNghi": [
+    {
+      "MaTienNghi": "TN001",
+      "TenTienNghi": "Wi-Fi"
+    },
+    {
+      "MaTienNghi": "TN004",
+      "TenTienNghi": "Điều hòa"
+    },
+    {
+      "MaTienNghi": "TN005",
+      "TenTienNghi": "Minibar"
+    }
   ],
-  "MaKhuyenMai": [
-    "KM_HE20"
+  "DichVu": [],
+  "KhuyenMai": []
+},
+{
+  "_id": {
+    "$oid": "6905540ecbf04293e5dbee9d"
+  },
+  "MaPhong": "P501",
+  "TenPhong": "Phòng Suite Tổng Thống",
+  "LoaiPhong": "Suite",
+  "Tang": 5,
+  "GiaPhong": 5000000,
+  "TinhTrang": "Đang sử dụng",
+  "SoGiuong": 2,
+  "LoaiGiuong": "King",
+  "DienTich": 80,
+  "MoTa": "Phòng cao cấp nhất, có hồ bơi riêng và phòng họp nhỏ.",
+  "HinhAnh": "suite_p501.jpg",
+  "TienNghi": [
+    {
+      "MaTienNghi": "TN001",
+      "TenTienNghi": "Wi-Fi tốc độ cao"
+    },
+    {
+      "MaTienNghi": "TN002",
+      "TenTienNghi": "TV 65 inch"
+    },
+    {
+      "MaTienNghi": "TN003",
+      "TenTienNghi": "Bồn tắm Jacuzzi"
+    },
+    {
+      "MaTienNghi": "TN004",
+      "TenTienNghi": "Điều hòa trung tâm"
+    },
+    {
+      "MaTienNghi": "TN007",
+      "TenTienNghi": "Hồ bơi riêng"
+    }
+  ],
+  "DichVu": [
+    {
+      "MaDichVu": "DV006",
+      "TenDichVu": "Quản gia riêng",
+      "GiaDichVu": 1000000,
+      "DonViTinh": "Ngày"
+    }
+  ],
+  "KhuyenMai": [
+    {
+      "MaKhuyenMai": "KM_LUX15",
+      "TenChuongTrinh": "Giảm 15% khách VIP",
+      "GiaTri": 15
+    }
   ]
 }]

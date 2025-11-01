@@ -1,6 +1,27 @@
 [{
   "_id": {
-    "$oid": "68fde192974ccf0d1cc4731a"
+    "$oid": "6904a7f0ed97c57b7af4dc19"
+  },
+  "IDNguoiDung": "KH1761912816827",
+  "HoTen": "Nguyen Phuong Anh",
+  "Email": "nguyenphuonganh061024@gmail.com",
+  "MatKhau": "$2a$10$qbHLuyV5Psqe6hl59ZFXbe36gAmZEJM4PZx1AYqN2xkq0NmoAuYPe",
+  "VaiTro": "Admin",
+  "TrangThai": "Hoạt động",
+  "NgayDangKy": {
+    "$date": "2025-10-31T12:13:36.833Z"
+  },
+  "createdAt": {
+    "$date": "2025-10-31T12:13:36.840Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-31T12:13:36.840Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "69055823cbf04293e5dbee9e"
   },
   "IDNguoiDung": "NV001",
   "HoTen": "Nguyễn Thị Mai",
@@ -10,7 +31,7 @@
   "GioiTinh": "Nữ",
   "SoDienThoai": "0901234567",
   "Email": "admin@hotel.com",
-  "MatKhau": "hashed_password_admin",
+  "MatKhau": "$2a$10$U69H3zvhX1psXlvZj3cJJeXYh2Q0Qk5OHm3aYToA1W9t7P4yLCZgK",
   "DiaChi": "100 Đường XYZ, Quận 1, TP. HCM",
   "VaiTro": "NhanVien",
   "TrangThai": "Hoạt động",
@@ -21,7 +42,91 @@
 },
 {
   "_id": {
-    "$oid": "68fde192974ccf0d1cc4731b"
+    "$oid": "69055823cbf04293e5dbee9f"
+  },
+  "IDNguoiDung": "NV002",
+  "HoTen": "Trần Văn Bình",
+  "NgaySinh": {
+    "$date": "1992-03-22T00:00:00.000Z"
+  },
+  "GioiTinh": "Nam",
+  "SoDienThoai": "0908881234",
+  "Email": "binh.tran@hotel.com",
+  "MatKhau": "$2a$10$U69H3zvhX1psXlvZj3cJJeXYh2Q0Qk5OHm3aYToA1W9t7P4yLCZgK",
+  "DiaChi": "22 Lê Lợi, Q.1, TP. HCM",
+  "VaiTro": "NhanVien",
+  "TrangThai": "Hoạt động",
+  "NgayDangKy": {
+    "$date": "2025-02-10T00:00:00.000Z"
+  },
+  "AnhDaiDien": "nv002.jpg"
+},
+{
+  "_id": {
+    "$oid": "69055823cbf04293e5dbeea0"
+  },
+  "IDNguoiDung": "NV003",
+  "HoTen": "Lê Minh Huy",
+  "NgaySinh": {
+    "$date": "1994-08-18T00:00:00.000Z"
+  },
+  "GioiTinh": "Nam",
+  "SoDienThoai": "0912555123",
+  "Email": "huy.le@hotel.com",
+  "MatKhau": "$2a$10$U69H3zvhX1psXlvZj3cJJeXYh2Q0Qk5OHm3aYToA1W9t7P4yLCZgK",
+  "DiaChi": "56 Nguyễn Trãi, Q.5, TP. HCM",
+  "VaiTro": "NhanVien",
+  "TrangThai": "Hoạt động",
+  "NgayDangKy": {
+    "$date": "2025-03-15T00:00:00.000Z"
+  },
+  "AnhDaiDien": "nv003.jpg"
+},
+{
+  "_id": {
+    "$oid": "69055823cbf04293e5dbeea1"
+  },
+  "IDNguoiDung": "NV004",
+  "HoTen": "Phạm Hoàng Anh",
+  "NgaySinh": {
+    "$date": "1991-12-05T00:00:00.000Z"
+  },
+  "GioiTinh": "Nữ",
+  "SoDienThoai": "0909777333",
+  "Email": "anh.pham@hotel.com",
+  "MatKhau": "$2a$10$U69H3zvhX1psXlvZj3cJJeXYh2Q0Qk5OHm3aYToA1W9t7P4yLCZgK",
+  "DiaChi": "200 Nguyễn Văn Cừ, Q.5, TP. HCM",
+  "VaiTro": "NhanVien",
+  "TrangThai": "Hoạt động",
+  "NgayDangKy": {
+    "$date": "2025-04-20T00:00:00.000Z"
+  },
+  "AnhDaiDien": "nv004.jpg"
+},
+{
+  "_id": {
+    "$oid": "69055823cbf04293e5dbeea2"
+  },
+  "IDNguoiDung": "NV005",
+  "HoTen": "Võ Quốc Bảo",
+  "NgaySinh": {
+    "$date": "1993-06-30T00:00:00.000Z"
+  },
+  "GioiTinh": "Nam",
+  "SoDienThoai": "0934009876",
+  "Email": "bao.vo@hotel.com",
+  "MatKhau": "$2a$10$U69H3zvhX1psXlvZj3cJJeXYh2Q0Qk5OHm3aYToA1W9t7P4yLCZgK",
+  "DiaChi": "145 Pasteur, Q.3, TP. HCM",
+  "VaiTro": "NhanVien",
+  "TrangThai": "Hoạt động",
+  "NgayDangKy": {
+    "$date": "2025-05-01T00:00:00.000Z"
+  },
+  "AnhDaiDien": "nv005.jpg"
+},
+{
+  "_id": {
+    "$oid": "69055823cbf04293e5dbeea3"
   },
   "IDNguoiDung": "KH001",
   "HoTen": "Trần Văn An",
@@ -31,8 +136,8 @@
   "GioiTinh": "Nam",
   "SoDienThoai": "0987654321",
   "Email": "an.tran@gmail.com",
-  "MatKhau": "hashed_password_kh",
-  "DiaChi": "123 Đường ABC, Quận 3, TP. HCM",
+  "MatKhau": "$2a$10$U69H3zvhX1psXlvZj3cJJeXYh2Q0Qk5OHm3aYToA1W9t7P4yLCZgK",
+  "DiaChi": "123 Đường ABC, Q.3, TP. HCM",
   "VaiTro": "KhachHang",
   "TrangThai": "Hoạt động",
   "NgayDangKy": {
@@ -40,4 +145,92 @@
   },
   "AnhDaiDien": "kh001.jpg",
   "HangThanhVien": "Gold"
+},
+{
+  "_id": {
+    "$oid": "69055823cbf04293e5dbeea4"
+  },
+  "IDNguoiDung": "KH002",
+  "HoTen": "Lê Thị Hồng",
+  "NgaySinh": {
+    "$date": "1998-02-22T00:00:00.000Z"
+  },
+  "GioiTinh": "Nữ",
+  "SoDienThoai": "0971222333",
+  "Email": "hong.le@gmail.com",
+  "MatKhau": "$2a$10$U69H3zvhX1psXlvZj3cJJeXYh2Q0Qk5OHm3aYToA1W9t7P4yLCZgK",
+  "DiaChi": "45 Bà Huyện Thanh Quan, Q.3, TP. HCM",
+  "VaiTro": "KhachHang",
+  "TrangThai": "Hoạt động",
+  "NgayDangKy": {
+    "$date": "2025-09-10T00:00:00.000Z"
+  },
+  "AnhDaiDien": "kh002.jpg",
+  "HangThanhVien": "Silver"
+},
+{
+  "_id": {
+    "$oid": "69055823cbf04293e5dbeea5"
+  },
+  "IDNguoiDung": "KH003",
+  "HoTen": "Phạm Minh Tuấn",
+  "NgaySinh": {
+    "$date": "1988-04-12T00:00:00.000Z"
+  },
+  "GioiTinh": "Nam",
+  "SoDienThoai": "0903334444",
+  "Email": "tuan.pham@gmail.com",
+  "MatKhau": "$2a$10$U69H3zvhX1psXlvZj3cJJeXYh2Q0Qk5OHm3aYToA1W9t7P4yLCZgK",
+  "DiaChi": "89 Võ Văn Tần, Q.1, TP. HCM",
+  "VaiTro": "KhachHang",
+  "TrangThai": "Hoạt động",
+  "NgayDangKy": {
+    "$date": "2025-08-01T00:00:00.000Z"
+  },
+  "AnhDaiDien": "kh003.jpg",
+  "HangThanhVien": "Platinum"
+},
+{
+  "_id": {
+    "$oid": "69055823cbf04293e5dbeea6"
+  },
+  "IDNguoiDung": "KH004",
+  "HoTen": "Ngô Lan Chi",
+  "NgaySinh": {
+    "$date": "1997-12-01T00:00:00.000Z"
+  },
+  "GioiTinh": "Nữ",
+  "SoDienThoai": "0911444555",
+  "Email": "chi.ngo@gmail.com",
+  "MatKhau": "$2a$10$U69H3zvhX1psXlvZj3cJJeXYh2Q0Qk5OHm3aYToA1W9t7P4yLCZgK",
+  "DiaChi": "12 Nguyễn Đình Chiểu, Q.3, TP. HCM",
+  "VaiTro": "KhachHang",
+  "TrangThai": "Hoạt động",
+  "NgayDangKy": {
+    "$date": "2025-07-18T00:00:00.000Z"
+  },
+  "AnhDaiDien": "kh004.jpg",
+  "HangThanhVien": "Gold"
+},
+{
+  "_id": {
+    "$oid": "69055823cbf04293e5dbeea7"
+  },
+  "IDNguoiDung": "KH005",
+  "HoTen": "Đỗ Nhật Nam",
+  "NgaySinh": {
+    "$date": "1999-06-05T00:00:00.000Z"
+  },
+  "GioiTinh": "Nam",
+  "SoDienThoai": "0968009999",
+  "Email": "nam.do@gmail.com",
+  "MatKhau": "$2a$10$U69H3zvhX1psXlvZj3cJJeXYh2Q0Qk5OHm3aYToA1W9t7P4yLCZgK",
+  "DiaChi": "78 Nguyễn Huệ, Q.1, TP. HCM",
+  "VaiTro": "KhachHang",
+  "TrangThai": "Hoạt động",
+  "NgayDangKy": {
+    "$date": "2025-06-25T00:00:00.000Z"
+  },
+  "AnhDaiDien": "kh005.jpg",
+  "HangThanhVien": "Silver"
 }]
