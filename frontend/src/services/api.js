@@ -71,6 +71,33 @@ class ApiClient {
     });
   }
 
+  // PUT with FormData (don't set Content-Type, browser will add boundary)
+  async putFormData(endpoint, formData) {
+    const url = `${this.baseURL}${endpoint}`;
+    const token = localStorage.getItem('token');
+
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || `HTTP ${response.status}`);
+    }
+
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      return text;
+    }
+  }
+
   async delete(endpoint) {
     return this.request(endpoint, {
       method: 'DELETE',

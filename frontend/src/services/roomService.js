@@ -100,6 +100,19 @@ export const adminUpdateRoom = async (id, roomData) => {
   }
 };
 
+export const adminUploadRoomImage = async (id, file) => {
+  try {
+    const form = new FormData();
+    form.append('image', file);
+    const response = await api.putFormData(`${ADMIN_ENDPOINT}/${id}/image`, form);
+    // response expected shape: { success: true, data: { HinhAnh: filename } }
+    return response;
+  } catch (error) {
+    console.error('Lỗi khi upload ảnh phòng (admin):', error.message || error);
+    throw error;
+  }
+};
+
 export const adminDeleteRoom = async (id) => {
   try {
     // Sửa lỗi 404: Dùng ADMIN_ENDPOINT

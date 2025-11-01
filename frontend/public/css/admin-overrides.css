@@ -1,0 +1,26 @@
+/* Admin overrides to mimic Sneat appearance (loaded only on Admin pages) */
+
+/* Sidebar width and look */
+.layout-menu { width: 260px; }
+.layout-menu .app-brand-link { padding: 1rem 1.25rem; }
+.menu-inner .menu-link { padding: 10px 12px; border-radius: 8px; color: #516076; display:flex; align-items:center; }
+.menu-inner .menu-link.active { background: rgba(105,108,255,0.12); color: #7367f0; font-weight:600; }
+.menu-inner .menu-link.active i { color: #7367f0; }
+.menu-inner .menu-link::before { content: ''; width: 4px; height: 36px; border-radius:4px; margin-right:10px; opacity:0; transition:opacity .2s; }
+.menu-inner .menu-link.active::before { background: linear-gradient(180deg,#7367f0,#8f6efc); opacity:1; }
+
+/* Topbar search */
+#layout-navbar { background: transparent; box-shadow: 0 6px 20px rgba(99,102,241,0.06); border-radius: 12px; padding: 10px 18px; }
+#layout-navbar .form-control { background: #fff; border-radius: 10px; padding: 12px 16px; border: 1px solid #eef2f6; }
+
+/* Cards */
+.card { border-radius: 12px; box-shadow: 0 6px 20px rgba(15,23,42,0.04); }
+
+/* Content spacing */
+.content-wrapper .container-xxl { padding-top: 20px; padding-bottom: 28px; }
+
+/* Make avatar round and small */
+.avatar img { object-fit: cover; }
+
+/* Hide buy-now floating button if present */
+.buy-now { display: none !important; }
