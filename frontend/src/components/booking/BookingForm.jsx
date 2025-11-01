@@ -81,6 +81,11 @@ function BookingForm({ roomId = null }) {
     navigate("/booking");
   };
 
+  const handleViewDetails = (room) => {
+    setShowModal(false);
+    navigate(`/room/${room._id}`); // Route chi tiết phòng là /room/:id
+  };
+
   return (
     <>
       <form
@@ -198,7 +203,7 @@ function BookingForm({ roomId = null }) {
       {/* MODAL HIỂN THỊ PHÒNG TRỐNG */}
       <div
         className={`modal fade ${showModal ? "show" : ""}`}
-        style={{ display: showModal ? "block" : "none" }}
+        style={{ display: showModal ? "block" : "none", zIndex: 2000 }}
         tabIndex="-1"
       >
         <div className="modal-dialog modal-lg">
@@ -222,6 +227,14 @@ function BookingForm({ roomId = null }) {
                   {availableRooms.map((room) => (
                     <div key={room._id} className="col-md-6 mb-3">
                       <div className="card">
+                        {room.HinhAnh && (
+                          <img
+                            src={`http://localhost:5000/assets/images/room/${room.HinhAnh}`}
+                            className="card-img-top"
+                            alt={room.TenPhong}
+                            style={{ height: "200px", objectFit: "cover" }}
+                          />
+                        )}
                         <div className="card-body">
                           <h6 className="card-title">{room.TenPhong}</h6>
                           <p className="card-text">Loại: {room.LoaiPhong}</p>
@@ -231,12 +244,20 @@ function BookingForm({ roomId = null }) {
                           <p className="card-text">
                             Số giường: {room.SoGiuong}
                           </p>
-                          <button
-                            className="btn btn-primary"
-                            onClick={() => handleSelectRoom(room)}
-                          >
-                            Chọn phòng
-                          </button>
+                          <div className="d-flex gap-2">
+                            <button
+                              className="btn btn-primary"
+                              onClick={() => handleSelectRoom(room)}
+                            >
+                              Chọn phòng
+                            </button>
+                            <button
+                              className="btn btn-outline-secondary"
+                              onClick={() => handleViewDetails(room)}
+                            >
+                              Chi tiết
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -256,7 +277,12 @@ function BookingForm({ roomId = null }) {
           </div>
         </div>
       </div>
-      {showModal && <div className="modal-backdrop fade show"></div>}
+      {showModal && (
+        <div
+          className="modal-backdrop fade show"
+          style={{ zIndex: 1990 }}
+        ></div>
+      )}
     </>
   );
 }

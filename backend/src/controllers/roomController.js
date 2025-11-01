@@ -9,8 +9,8 @@ export const getAllRooms = async (req, res) => {
     const limit = Number(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    // Filter theo schema mới với tên field Vietnamese
-    const filter = { LoaiTaiSan: "Phong" }; // Chỉ lấy phòng, không lấy tiện nghi
+    // Filter: chỉ lấy document có MaPhong -> thực sự là phòng (không phải tiện nghi)
+    const filter = { MaPhong: { $exists: true } };
     if (req.query.LoaiPhong) filter.LoaiPhong = req.query.LoaiPhong;
     if (req.query.Tang) filter.Tang = Number(req.query.Tang);
     if (req.query.TinhTrang) filter.TinhTrang = req.query.TinhTrang;
@@ -21,10 +21,13 @@ export const getAllRooms = async (req, res) => {
       filter.GiaPhong.$lte = Number(req.query.maxPrice);
     }
 
+    console.log("getAllRooms filter:", JSON.stringify(filter));
     const [items, count] = await Promise.all([
       Room.find(filter).skip(skip).limit(limit).lean(),
       Room.countDocuments(filter),
     ]);
+
+    console.log("getAllRooms found:", items.length);
 
     const pages = Math.max(1, Math.ceil(count / limit));
 
@@ -129,8 +132,6 @@ export const getAvailableRooms = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
 
-    console.log("getAvailableRooms called with:", { startDate, endDate });
-
     if (!startDate || !endDate) {
       return res.status(400).json({
         success: false,
@@ -155,15 +156,12 @@ export const getAvailableRooms = async (req, res) => {
       });
     }
 
-    // Các trạng thái đặt phòng active (đang chiếm phòng)
     const activeStatuses = ["Đang chờ", "Đã xác nhận"];
 
-    console.log("Running aggregation...");
-
-    const availableRooms = await Room.aggregate([
+    const pipeline = [
       {
         $match: {
-          LoaiTaiSan: "Phong",
+          MaPhong: { $exists: true },
           TinhTrang: "Trống",
         },
       },
@@ -176,21 +174,29 @@ export const getAvailableRooms = async (req, res) => {
         },
       },
       {
-        $match: {
-          $or: [
-            { bookings: { $size: 0 } }, // Không có đặt phòng nào
-            {
-              bookings: {
-                $not: {
-                  $elemMatch: {
-                    TrangThai: { $in: activeStatuses },
-                    NgayNhanPhong: { $lt: end },
-                    NgayTraPhong: { $gt: start },
+        $addFields: {
+          isAvailable: {
+            $not: {
+              $anyElementTrue: {
+                $map: {
+                  input: "$bookings",
+                  as: "booking",
+                  in: {
+                    $and: [
+                      { $in: ["$$booking.TrangThai", activeStatuses] },
+                      { $lt: ["$$booking.NgayNhanPhong", end] },
+                      { $gt: ["$$booking.NgayTraPhong", start] },
+                    ],
                   },
                 },
               },
             },
-          ],
+          },
+        },
+      },
+      {
+        $match: {
+          isAvailable: true,
         },
       },
       {
@@ -205,9 +211,30 @@ export const getAvailableRooms = async (req, res) => {
           HinhAnh: 1,
         },
       },
-    ]);
+    ];
 
-    console.log("Available rooms:", availableRooms);
+    console.log("--- Running Aggregation Pipeline ---");
+    const availableRooms = await Room.aggregate(pipeline);
+    console.log(`Found ${availableRooms.length} available rooms.`);
+
+    // Log từng bước để debug
+    const step1 = await Room.aggregate([pipeline[0]]).exec();
+    console.log(`Step 1 ($match TinhTrang): Found ${step1.length} rooms.`);
+
+    const step2 = await Room.aggregate(pipeline.slice(0, 2)).exec();
+    console.log(
+      `Step 2 ($lookup): Found ${step2.length} rooms, check bookings field.`
+    );
+    // console.log(JSON.stringify(step2.slice(0, 2), null, 2)); // Log sample data after lookup
+
+    const step3 = await Room.aggregate(pipeline.slice(0, 3)).exec();
+    console.log(
+      `Step 3 ($addFields isAvailable): Found ${step3.length} rooms.`
+    );
+    // console.log(JSON.stringify(step3.filter(r => !r.isAvailable).slice(0, 2), null, 2)); // Log unavailable rooms
+
+    const step4 = await Room.aggregate(pipeline.slice(0, 4)).exec();
+    console.log(`Step 4 ($match isAvailable): Found ${step4.length} rooms.`);
 
     return res.status(200).json({
       success: true,
