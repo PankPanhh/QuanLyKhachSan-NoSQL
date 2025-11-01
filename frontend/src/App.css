@@ -40,3 +40,28 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Admin Menu Active State */
+.menu-inner .menu-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.menu-inner a.menu-link.active {
+  background-color: rgba(105, 108, 255, 0.1);
+  color: #696cff;
+  font-weight: 600;
+}
+
+.menu-inner a.menu-link.active i {
+  color: #696cff;
+}
+
+.menu-item {
+  position: relative;
+}
+
+.menu-item a.menu-link:hover {
+  background-color: rgba(105, 108, 255, 0.05);
+}

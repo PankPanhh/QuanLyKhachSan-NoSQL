@@ -1,152 +1,77 @@
-import React from "react";
-import { NavLink } from "react-router-dom"; // Dùng NavLink
-import {
-  FaTachometerAlt,
-  FaHotel,
-  FaBook,
-  FaUsers,
-  FaQuestionCircle,
-} from "react-icons/fa";
-
-// CSS cập nhật cho Giao diện Dark Mode
-const styles = {
-  sidebarContainer: {
-    display: "flex",
-    flexDirection: "column",
-    height: "100%",
-  },
-  logo: {
-    padding: "1.9rem 1rem", // Tăng padding
-    textAlign: "center",
-    fontSize: "1.5rem",
-    fontWeight: "bold",
-    color: "#fff",
-    borderBottom: "1px solid #1f2a4f",
-  },
-  nav: {
-    listStyle: "none",
-    padding: 0,
-    margin: 0,
-    marginTop: "1rem",
-    flexGrow: 1,
-  },
-  navItem: {
-    margin: "0.5rem 1rem",
-  },
-  navLink: {
-    display: "flex",
-    alignItems: "center",
-    padding: "0.75rem 1rem",
-    color: "#a0aec0", // Màu chữ xám nhạt (inactive)
-    textDecoration: "none",
-    borderRadius: "8px",
-    transition: "background-color 0.2s, color 0.2s",
-  },
-  navIcon: {
-    marginRight: "0.75rem",
-    fontSize: "0.9rem", // Icon nhỏ hơn
-  },
-  helpSection: {
-    marginTop: "auto",
-    padding: "1.5rem",
-    margin: "1rem",
-    // Nền xanh trong suốt từ ảnh
-    backgroundColor: "rgba(59, 130, 246, 0.1)",
-    borderRadius: "10px",
-    textAlign: "center",
-    border: "1px solid #3b82f6",
-  },
-  helpIcon: {
-    color: "#3b82f6",
-    fontSize: "1.5rem",
-    marginBottom: "0.5rem",
-  },
-  upgradeButton: {
-    display: "block",
-    width: "100%",
-    padding: "0.75rem",
-    marginTop: "1rem",
-    backgroundColor: "#3b82f6",
-    color: "white",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontWeight: "bold",
-    textTransform: "uppercase",
-  },
-};
-
-// Style cho link đang active
-const activeStyle = {
-  backgroundColor: "#3b82f6",
-  color: "#ffffff",
-  fontWeight: "bold",
-};
+import React, { useState } from "react";
+import { NavLink } from "react-router-dom";
 
 function SidebarAdmin() {
+  const [openLayouts, setOpenLayouts] = useState(false);
   return (
-    <div style={styles.sidebarContainer}>
-      <div style={styles.logo}>
-        {/* Đổi logo giống ảnh */}
-        <NavLink to="/admin" className="custom-logo-link">
-          <img
-            src="/images/main-logo.png"
-            className="custom-logo"
-            alt="Main Logo"
-          />
+    <aside id="layout-menu" className="layout-menu menu-vertical menu bg-menu-theme">
+      <div className="app-brand demo">
+        <NavLink to="/admin" className="app-brand-link">
+          <span className="app-brand-logo demo">
+            <img 
+              src="/images/main-logo.png" 
+              alt="Main Logo" 
+              style={{ width: '150px' }} // Bạn có thể điều chỉnh kích thước nếu cần
+            />
+          </span>
         </NavLink>
+
+        <a href="javascript:void(0);" className="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
+          <i className="bx bx-chevron-left bx-sm align-middle"></i>
+        </a>
       </div>
-      <ul style={styles.nav}>
-        {/*
-          Sử dụng NavLink và hàm style để tự động 
-          thêm activeStyle khi link được chọn
-        */}
-        <li style={styles.navItem}>
-          <NavLink
-            to="/admin/dashboard"
-            style={({ isActive }) => ({
-              ...styles.navLink,
-              ...(isActive ? activeStyle : {}),
-            })}
-          >
-            <FaTachometerAlt style={styles.navIcon} /> Dashboard
+
+      <div className="menu-inner-shadow"></div>
+
+      <ul className="menu-inner py-1">
+        {/* Dashboard */}
+        <li className="menu-item">
+          <NavLink to="/admin/dashboard" className={({ isActive }) => `menu-link${isActive ? ' active' : ''}`}>
+            <i className="menu-icon tf-icons bx bx-home-circle"></i>
+            <div data-i18n="Analytics">Dashboard</div>
           </NavLink>
         </li>
-        <li style={styles.navItem}>
-          <NavLink
-            to="/admin/rooms"
-            style={({ isActive }) => ({
-              ...styles.navLink,
-              ...(isActive ? activeStyle : {}),
-            })}
-          >
-            <FaHotel style={styles.navIcon} /> Quản lý Phòng
+
+        {/* Header: Pages */}
+        <li className="menu-header small text-uppercase">
+          <span className="menu-header-text">Pages</span>
+        </li>
+
+        {/* Rooms */}
+        <li className="menu-item">
+          <NavLink to="/admin/rooms" className={({ isActive }) => `menu-link${isActive ? ' active' : ''}`}>
+            <i className="menu-icon tf-icons bx bx-bed"></i>
+            <div data-i18n="Rooms">Quản lý Phòng</div>
           </NavLink>
         </li>
-        <li style={styles.navItem}>
-          <NavLink
-            to="/admin/bookings"
-            style={({ isActive }) => ({
-              ...styles.navLink,
-              ...(isActive ? activeStyle : {}),
-            })}
-          >
-            <FaBook style={styles.navIcon} /> Quản lý Đặt phòng
+
+        {/* Bookings */}
+        <li className="menu-item">
+          <NavLink to="/admin/bookings" className={({ isActive }) => `menu-link${isActive ? ' active' : ''}`}>
+            <i className="menu-icon tf-icons bx bx-book-alt"></i>
+            <div data-i18n="Bookings">Quản lý Đặt phòng</div>
           </NavLink>
         </li>
-        <li style={styles.navItem}>
-          <NavLink
-            to="/admin/users"
-            style={({ isActive }) => ({
-              ...styles.navLink,
-              ...(isActive ? activeStyle : {}),
-            })}
-          >
-            <FaUsers style={styles.navIcon} /> Quản lý Người dùng
+
+        {/* Users */}
+        <li className="menu-item">
+          <NavLink to="/admin/users" className={({ isActive }) => `menu-link${isActive ? ' active' : ''}`}>
+            <i className="menu-icon tf-icons bx bx-user"></i>
+            <div data-i18n="Users">Quản lý Người dùng</div>
           </NavLink>
         </li>
+
+        {/* Header: Components */}
+        <li className="menu-header small text-uppercase"><span className="menu-header-text">Components</span></li>
+        <li className="menu-item"><a href="#" className="menu-link"><i className="menu-icon tf-icons bx bx-collection"></i><div>Cards</div></a></li>
+        <li className="menu-item"><a href="#" className="menu-link"><i className="menu-icon tf-icons bx bx-box"></i><div>User interface</div></a></li>
+
+        {/* Header: Forms & Tables */}
+        <li className="menu-header small text-uppercase"><span className="menu-header-text">Forms &amp; Tables</span></li>
+        <li className="menu-item"><a href="#" className="menu-link"><i className="menu-icon tf-icons bx bx-detail"></i><div>Form Elements</div></a></li>
+        <li className="menu-item"><a href="#" className="menu-link"><i className="menu-icon tf-icons bx bx-table"></i><div>Tables</div></a></li>
       </ul>
-    </div>
+    </aside>
   );
 }
 

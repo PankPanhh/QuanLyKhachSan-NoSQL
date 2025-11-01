@@ -40,6 +40,18 @@ app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
 // 3. Static Files - Serve images từ assets
+// Serve room images with no-cache so overwritten files are fetched immediately by browsers
+app.use(
+  '/assets/images/room',
+  express.static(path.join(__dirname, 'assets', 'images', 'room'), {
+    setHeaders: (res, filePath) => {
+      // Force browsers to always revalidate / not aggressively cache room images
+      res.setHeader('Cache-Control', 'no-store, max-age=0');
+    },
+  })
+);
+
+// Fallback static serving for other assets
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
 // --- API Routes ---
