@@ -1,75 +1,29 @@
+// models/Room.js
 import mongoose from 'mongoose';
 
-const amenitySchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  icon: { type: String }, // Ten icon (vi du: 'wifi', 'pool')
-});
-
-const promotionSchema = new mongoose.Schema({
-  code: { type: String, unique: true },
-  description: { type: String, required: true },
-  discountPercent: { type: Number, min: 0, max: 100 },
-  startDate: { type: Date },
-  endDate: { type: Date },
-  isActive: { type: Boolean, default: true },
-});
-
-const serviceSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  description: { type: String },
-  price: { type: Number, required: true, min: 0 },
-});
-
-const roomSchema = new mongoose.Schema(
-  {
-    title: {
-      type: String,
-      required: [true, 'Tieu de phong la bat buoc'],
-    },
-    description: {
-      type: String,
-      required: true,
-    },
-    roomType: {
-      type: String,
-      required: true, // Vi du: 'Standard', 'Deluxe', 'Suite'
-    },
-    pricePerNight: {
-      type: Number,
-      required: [true, 'Gia phong la bat buoc'],
-      min: 0,
-    },
-    maxGuests: {
-      type: Number,
-      required: true,
-      min: 1,
-    },
-    bedType: {
-      type: String, // Vi du: 'Single', 'Double', 'Queen', 'King'
-    },
-    status: {
-      type: String,
-      enum: ['Available', 'Booked', 'Maintenance'],
-      default: 'Available',
-    },
-    images: [
-      {
-        url: { type: String, required: true },
-        altText: { type: String },
-      },
-    ],
-    amenities: [amenitySchema], // Nhúng schema tiện nghi
-    promotions: [promotionSchema], // Nhúng schema khuyến mãi
-    extraServices: [serviceSchema], // Nhúng schema dịch vụ
+const roomSchema = new mongoose.Schema({
+  MaPhong: { type: String, unique: true, required: true }, // P203
+  TenPhong: { type: String, required: true }, // Phòng Deluxe Hướng Biển
+  LoaiPhong: { type: String, required: true }, // Deluxe, Standard, Suite
+  Tang: { type: Number, required: true }, // 2
+  GiaPhong: { type: Number, required: true, min: 0 }, // 1500000
+  TinhTrang: { 
+    type: String, 
+    enum: ['Trống', 'Đã đặt', 'Đang sử dụng', 'Bảo trì'], 
+    default: 'Trống' 
   },
-  {
-    timestamps: true,
-  }
-);
+  SoGiuong: { type: Number, required: true, min: 1 },
+  LoaiGiuong: { type: String }, // King, Queen, Twin
+  DienTich: { type: Number }, // 35 (m2)
+  MoTa: { type: String },
+  HinhAnh: { type: String },
+  
+  // References to amenities and promotions by their codes
+  MaTienNghi: [{ type: String }], // ["TN001", "TN002", ...]
+  MaKhuyenMai: [{ type: String }], // ["KM_HE20", ...]
+  
+  // Additional fields for compatibility with frontend
+  LoaiTaiSan: { type: String, default: 'Phong' },
+}, { timestamps: true });
 
-const Room = mongoose.model('Room', roomSchema);
-const Amenity = mongoose.model('Amenity', amenitySchema);
-const Promotion = mongoose.model('Promotion', promotionSchema);
-const Service = mongoose.model('Service', serviceSchema);
-
-export { Room, Amenity, Promotion, Service };
+export default mongoose.model('Phong', roomSchema, 'Phong');

@@ -1,22 +1,27 @@
-import express from 'express';
+import express from "express";
 import {
   getAllRooms,
   getRoomById,
   createRoom,
   updateRoom,
   deleteRoom,
-} from '../controllers/roomController.js';
-import { protect, authorize } from '../middleware/authMiddleware.js';
+  getAvailableRooms,
+} from "../controllers/roomController.js";
+import { protect, authorize } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.route('/')
+router
+  .route("/")
   .get(getAllRooms) // Public
-  .post(protect, authorize('Admin'), createRoom); // Private (Admin)
+  .post(protect, authorize("Admin"), createRoom); // Private (Admin)
 
-router.route('/:id')
+router.route("/available").get(getAvailableRooms); // Public
+
+router
+  .route("/:id")
   .get(getRoomById) // Public
-  .put(protect, authorize('Admin'), updateRoom) // Private (Admin)
-  .delete(protect, authorize('Admin'), deleteRoom); // Private (Admin)
+  .put(protect, authorize("Admin"), updateRoom) // Private (Admin)
+  .delete(protect, authorize("Admin"), deleteRoom); // Private (Admin)
 
 export default router;

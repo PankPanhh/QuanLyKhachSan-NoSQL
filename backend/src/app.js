@@ -1,7 +1,13 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { loadEnv } from './config/dotenv.js';
 import { errorHandler } from './middleware/errorHandler.js';
+
+// Để sử dụng __dirname với ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Tải biến môi trường (cần cho CORS và các routes)
 loadEnv();
@@ -23,7 +29,8 @@ const app = express();
 // Cần cấu hình cho phép frontend (ví dụ: http://localhost:5173)
 const corsOptions = {
   // Nên lấy từ biến môi trường FRONTEND_URL
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173', 
+  // In development, allow any origin for convenience. In production, set FRONTEND_URL.
+  origin: process.env.NODE_ENV === 'production' ? (process.env.FRONTEND_URL || 'http://localhost:5173') : true,
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
@@ -31,6 +38,9 @@ app.use(cors(corsOptions));
 // 2. Body Parsers
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+
+// 3. Static Files - Serve images từ assets
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
 // --- API Routes ---
 app.get('/', (req, res) => {

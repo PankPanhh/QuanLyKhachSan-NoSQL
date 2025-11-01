@@ -11,6 +11,21 @@ Version: 1.1
 This is main CSS file that contains custom style rules used in this template
 --------------------------------------------------------------*/
 
+.custom-logo-link {
+  display: inline-block; /* hoặc flex nếu muốn canh giữa */
+  text-decoration: none; /* bỏ gạch chân nếu có */
+}
+
+.custom-logo {
+  width: 200px; /* điều chỉnh kích thước ảnh */
+  height: auto;
+}
+
+.navbar-brand .logo {
+    height: 50px;
+    margin-left: 150px;
+}
+
 /* Luxury Booking Form Enhancements */
 .react-datepicker-wrapper {
   width: 100% !important;
@@ -278,20 +293,6 @@ a:hover {
 --------------------------------------------------------------*/
 /* - Section Padding
 --------------------------------------------------------------*/
-.padding-small {
-  padding-top: 5em;
-  padding-bottom: 5em;
-}
-
-.padding-medium {
-  padding-top: 8em;
-  padding-bottom: 8em;
-}
-
-.padding-large {
-  padding-top: 8em;
-  padding-bottom: 8em;
-}
 
 .padding-side {
   padding-left: 6rem;

@@ -15,7 +15,7 @@ export const protect = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
       // Lay thong tin user tu token (tru mat khau) va gan vao req
-      req.user = await User.findById(decoded.id).select('-password');
+      req.user = await User.findById(decoded.id).select('-MatKhau');
       
       if (!req.user) {
          return res.status(401).json({ message: 'Nguoi dung khong ton tai' });
@@ -37,9 +37,9 @@ export const protect = async (req, res, next) => {
 // '...roles' la mot array cac vai tro duoc phep (vi du: 'Admin', 'NhanVien')
 export const authorize = (...roles) => {
   return (req, res, next) => {
-    if (!req.user || !roles.includes(req.user.role)) {
+    if (!req.user || !roles.includes(req.user.VaiTro)) {
       return res.status(403).json({ 
-        message: `Vai tro '${req.user.role}' khong duoc phep truy cap tai nguyen nay` 
+        message: `Vai tro '${req.user.VaiTro}' khong duoc phep truy cap tai nguyen nay` 
       });
     }
     next(); // Duoc phep
