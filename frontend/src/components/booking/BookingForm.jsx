@@ -113,7 +113,9 @@ function BookingForm({ roomId = null }) {
       checkOutDate,
       rooms,
       guests,
-      room: room._id, // hoặc room.MaPhong
+      // store both object and id to make downstream components flexible
+      room: room,
+      roomId: room._id || room.id,
     });
     setShowModal(false);
     navigate("/booking");
