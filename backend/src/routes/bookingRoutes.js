@@ -4,11 +4,16 @@ import {
   getMyBookings,
   getBookingById,
   cancelBooking,
+  confirmBooking,
   getAllBookings,
+  testData,
 } from "../controllers/bookingController.js";
 import { protect, authorize } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
+
+// Test route without auth
+router.get("/test", testData);
 
 // Yeu cau dang nhap cho tat ca
 router.use(protect);
@@ -28,6 +33,8 @@ router
     res.send("Admin update booking (TODO)")
   ); // Admin cap nhat
 
-router.put("/:id/cancel", cancelBooking); // Admin hoac chu booking tu huy
-
+router.put("/:id/cancel", authorize("Admin"), cancelBooking); // Admin hoac chu booking tu huy
+// Admin actions: confirm / cancel - require Admin role
+router.patch("/:id/confirm", authorize("Admin"), confirmBooking);
+router.patch("/:id/cancel", authorize("Admin"), cancelBooking);
 export default router;

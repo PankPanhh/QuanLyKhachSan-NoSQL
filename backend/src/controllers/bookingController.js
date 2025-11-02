@@ -1,7 +1,36 @@
 import Booking from "../models/Booking.js";
 import Room from "../models/Room.js";
 import { calculateBookingTotal } from "../utils/calculateTotal.js";
+import mongoose from "mongoose";
 // import { sendEmail } from '../services/emailService.js';
+
+// @desc    Test endpoint to check data
+// @route   GET /api/v1/bookings/test
+// @access  Public
+export const testData = async (req, res, next) => {
+  try {
+    const simpleBookings = await Booking.find({}).limit(5);
+    const userCount = await mongoose
+      .model(
+        "NguoiDung",
+        new mongoose.Schema({}, { strict: false }),
+        "NguoiDung"
+      )
+      .countDocuments();
+    const roomCount = await mongoose
+      .model("Phong", new mongoose.Schema({}, { strict: false }), "Phong")
+      .countDocuments();
+
+    res.status(200).json({
+      simpleBookingsCount: simpleBookings.length,
+      userCount,
+      roomCount,
+      sampleBooking: simpleBookings[0] || null,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 // @desc    Tao don dat phong moi
 // @route   POST /api/v1/bookings
@@ -206,14 +235,123 @@ export const getBookingById = async (req, res, next) => {
 // @route   PUT /api/v1/bookings/:id/cancel
 // @access  Private (Chu booking hoac Admin)
 export const cancelBooking = async (req, res, next) => {
-  // TODO: Logic huy booking
-  res.send(`CANCEL Booking: ${req.params.id}`);
+  try {
+    const { id } = req.params;
+    // Try find by _id first
+    const booking = await Booking.findById(id);
+    if (!booking) {
+      // fallback: try find by MaDatPhong
+      const byMa = await Booking.findOne({ MaDatPhong: id });
+      if (!byMa) {
+        return res.status(404).json({ message: "Booking not found" });
+      }
+      // use byMa
+      byMa.TrangThai = "Đã hủy"; // set to 'Đã hủy' when cancelled
+      await byMa.save();
+      return res.status(200).json({ success: true, data: byMa });
+    }
+
+    booking.TrangThai = "Đã hủy"; // set to 'Đã hủy' when cancelled
+    await booking.save();
+    return res.status(200).json({ success: true, data: booking });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Admin confirm booking (set to 'Đang sử dụng')
+// @route   PATCH /api/v1/bookings/:id/confirm
+// @access  Private (Admin)
+export const confirmBooking = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const booking = await Booking.findById(id);
+    if (!booking) {
+      const byMa = await Booking.findOne({ MaDatPhong: id });
+      if (!byMa) {
+        return res.status(404).json({ message: "Booking not found" });
+      }
+      byMa.TrangThai = "Đang sử dụng";
+      await byMa.save();
+      return res.status(200).json({ success: true, data: byMa });
+    }
+
+    booking.TrangThai = "Đang sử dụng";
+    await booking.save();
+    return res.status(200).json({ success: true, data: booking });
+  } catch (error) {
+    next(error);
+  }
 };
 
 // @desc    Lay tat ca booking (Admin)
 // @route   GET /api/v1/bookings
 // @access  Private (Admin)
 export const getAllBookings = async (req, res, next) => {
-  // TODO: Logic lay tat ca booking (Admin)
-  res.send("GET All Bookings (Admin)");
+  try {
+    // Đầu tiên thử lấy bookings đơn giản mà không aggregation
+    const simpleBookings = await Booking.find({}).sort({ createdAt: -1 });
+    console.log("Simple bookings count:", simpleBookings.length);
+    console.log("First booking sample:", simpleBookings[0]);
+
+    // Nếu có bookings, thử aggregation
+    if (simpleBookings.length > 0) {
+      const bookings = await Booking.aggregate([
+        {
+          $lookup: {
+            from: "NguoiDung",
+            localField: "IDKhachHang",
+            foreignField: "IDNguoiDung",
+            as: "KhachHang",
+          },
+        },
+        {
+          $unwind: {
+            path: "$KhachHang",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "Phong",
+            localField: "MaPhong",
+            foreignField: "MaPhong",
+            as: "Phong",
+          },
+        },
+        {
+          $unwind: {
+            path: "$Phong",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $sort: { createdAt: -1 },
+        },
+      ]);
+
+      console.log("Aggregation result count:", bookings.length);
+      console.log("First aggregated booking:", bookings[0]);
+      console.log("Aggregation result type:", typeof bookings);
+      console.log("Is array:", Array.isArray(bookings));
+
+      const bookingsArray = Array.isArray(bookings) ? bookings : [];
+
+      res.status(200).json({
+        success: true,
+        count: bookingsArray.length,
+        data: bookingsArray,
+      });
+    } else {
+      // Không có bookings, trả về empty array
+      res.status(200).json({
+        success: true,
+        count: 0,
+        data: [],
+      });
+    }
+  } catch (error) {
+    console.error("Error in getAllBookings:", error);
+    next(error);
+  }
 };

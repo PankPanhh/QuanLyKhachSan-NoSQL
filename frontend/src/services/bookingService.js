@@ -131,6 +131,36 @@ export const getUserBookings = async (userId) => {
 };
 
 export const adminGetAllBookings = async () => {
-  console.log("Đang lấy tất cả booking (giả lập) cho admin");
-  return []; // Trả về mảng rỗng
+  try {
+    const response = await api.get("/bookings");
+    const data = response.data || response;
+    return Array.isArray(data) ? data : data.data || [];
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách bookings:", error);
+    throw error;
+  }
+};
+
+export const adminConfirmBooking = async (id) => {
+  try {
+    const response = await api.request(`/bookings/${id}/confirm`, {
+      method: "PATCH",
+    });
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi xác nhận booking:", error);
+    throw error;
+  }
+};
+
+export const adminCancelBooking = async (id) => {
+  try {
+    const response = await api.request(`/bookings/${id}/cancel`, {
+      method: "PATCH",
+    });
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi hủy booking:", error);
+    throw error;
+  }
 };

@@ -2,7 +2,7 @@
 import mongoose from "mongoose";
 import fs from "fs/promises";
 import path from "path";
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from "url";
 import Room from "../models/Room.js";
 
 // Controller: Lấy danh sách phòng (công khai, có phân trang cơ bản)
@@ -17,17 +17,24 @@ export const getAllRooms = async (req, res) => {
     if (req.query.LoaiPhong) filter.LoaiPhong = req.query.LoaiPhong;
     if (req.query.Tang) filter.Tang = Number(req.query.Tang);
     if (req.query.TinhTrang) filter.TinhTrang = req.query.TinhTrang;
-    if (req.query.minPrice) filter.GiaPhong = { $gte: Number(req.query.minPrice) };
+    if (req.query.minPrice)
+      filter.GiaPhong = { $gte: Number(req.query.minPrice) };
     if (req.query.maxPrice) {
       filter.GiaPhong = filter.GiaPhong || {};
       filter.GiaPhong.$lte = Number(req.query.maxPrice);
     }
 
-    console.log(`getAllRooms start - filter=${JSON.stringify(filter)} page=${page} limit=${limit}`);
+    console.log(
+      `getAllRooms start - filter=${JSON.stringify(
+        filter
+      )} page=${page} limit=${limit}`
+    );
 
     // Helper: wrap a promise with a timeout so slow DB queries don't hang the request
     const withTimeout = (p, ms = 7000) => {
-      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('DB query timeout')), ms));
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("DB query timeout")), ms)
+      );
       return Promise.race([p, timeout]);
     };
 
@@ -37,16 +44,37 @@ export const getAllRooms = async (req, res) => {
 
     let items, count;
     try {
-      [items, count] = await Promise.all([withTimeout(findPromise), withTimeout(countPromise)]);
+      [items, count] = await Promise.all([
+        withTimeout(findPromise),
+        withTimeout(countPromise),
+      ]);
     } catch (err) {
-      console.error('getAllRooms DB error or timeout:', err && err.message ? err.message : err);
-      if (err && err.message && err.message.includes('DB query timeout')) {
-        return res.status(504).json({ success: false, message: 'Database timeout when fetching rooms' });
+      console.error(
+        "getAllRooms DB error or timeout:",
+        err && err.message ? err.message : err
+      );
+      if (err && err.message && err.message.includes("DB query timeout")) {
+        return res
+          .status(504)
+          .json({
+            success: false,
+            message: "Database timeout when fetching rooms",
+          });
       }
-      return res.status(500).json({ success: false, message: 'Lỗi server khi truy vấn phòng', error: err.message || String(err) });
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message: "Lỗi server khi truy vấn phòng",
+          error: err.message || String(err),
+        });
     }
 
-    console.log(`getAllRooms success - found=${Array.isArray(items) ? items.length : 0} total=${count}`);
+    console.log(
+      `getAllRooms success - found=${
+        Array.isArray(items) ? items.length : 0
+      } total=${count}`
+    );
 
     const pages = Math.max(1, Math.ceil(count / limit));
 
@@ -175,7 +203,7 @@ export const getAvailableRooms = async (req, res) => {
       });
     }
 
-    const activeStatuses = ["Đang chờ", "Đã xác nhận"];
+    const activeStatuses = ["Đang chờ", "Đang sử dụng"];
 
     const pipeline = [
       {
@@ -274,38 +302,50 @@ export const uploadRoomImage = async (req, res) => {
   try {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ success: false, message: "ID không hợp lệ" });
+      return res
+        .status(400)
+        .json({ success: false, message: "ID không hợp lệ" });
     }
 
     const room = await Room.findById(id);
     if (!room) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy phòng" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy phòng" });
     }
 
     if (!req.file || !req.file.buffer) {
-      return res.status(400).json({ success: false, message: "Không có tệp ảnh được gửi" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Không có tệp ảnh được gửi" });
     }
 
+    // Determine target filename: keep existing filename if present, otherwise use uploaded originalname
+    const existingFilename =
+      room.HinhAnh && room.HinhAnh.trim() ? room.HinhAnh.trim() : null;
+    // sanitize filename to avoid path traversal
+    const rawName = existingFilename || req.file.originalname;
+    const filename = path.basename(rawName);
 
-  // Determine target filename: keep existing filename if present, otherwise use uploaded originalname
-  const existingFilename = room.HinhAnh && room.HinhAnh.trim() ? room.HinhAnh.trim() : null;
-  // sanitize filename to avoid path traversal
-  const rawName = existingFilename || req.file.originalname;
-  const filename = path.basename(rawName);
+    // Resolve images/room directory under backend/src/assets (this matches static /assets mapping)
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename); // backend/src/controllers
+    const imagesRoomDir = path.join(
+      __dirname,
+      "..",
+      "assets",
+      "images",
+      "room"
+    );
 
-  // Resolve images/room directory under backend/src/assets (this matches static /assets mapping)
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename); // backend/src/controllers
-  const imagesRoomDir = path.join(__dirname, '..', 'assets', 'images', 'room');
+    // Ensure images/room dir exists
+    await fs.mkdir(imagesRoomDir, { recursive: true });
 
-  // Ensure images/room dir exists
-  await fs.mkdir(imagesRoomDir, { recursive: true });
-
-  const destPath = path.join(imagesRoomDir, filename);
+    const destPath = path.join(imagesRoomDir, filename);
 
     // Write file buffer to destination (this will overwrite existing file)
-      await fs.writeFile(destPath, req.file.buffer);
-      console.log(`uploadRoomImage: wrote file to ${destPath}`);
+    await fs.writeFile(destPath, req.file.buffer);
+    console.log(`uploadRoomImage: wrote file to ${destPath}`);
 
     // If room didn't have HinhAnh set, update it to the new filename
     if (!existingFilename) {
@@ -313,9 +353,21 @@ export const uploadRoomImage = async (req, res) => {
       await room.save();
     }
 
-    return res.status(200).json({ success: true, message: 'Ảnh phòng đã được cập nhật', data: { HinhAnh: filename } });
+    return res
+      .status(200)
+      .json({
+        success: true,
+        message: "Ảnh phòng đã được cập nhật",
+        data: { HinhAnh: filename },
+      });
   } catch (error) {
-    console.error('Lỗi uploadRoomImage:', error);
-    return res.status(500).json({ success: false, message: 'Lỗi server khi upload ảnh', error: error.message });
+    console.error("Lỗi uploadRoomImage:", error);
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Lỗi server khi upload ảnh",
+        error: error.message,
+      });
   }
 };
