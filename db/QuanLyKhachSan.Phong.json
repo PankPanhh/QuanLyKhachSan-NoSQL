@@ -6,9 +6,9 @@
   "TenPhong": "Phòng Standard City View",
   "LoaiPhong": "Standard",
   "Tang": 1,
-  "GiaPhong": 800000,
+  "GiaPhong": 700000,
   "TinhTrang": "Trống",
-  "SoGiuong": 1,
+  "SoGiuong": 2,
   "LoaiGiuong": "Queen",
   "DienTich": 25,
   "MoTa": "Phòng tiêu chuẩn, hướng thành phố.",
@@ -17,28 +17,88 @@
     {
       "MaTienNghi": "TN001",
       "TenTienNghi": "Wi-Fi",
-      "TrangThai": "Hoạt động"
+      "TrangThai": "Hoạt động",
+      "_id": {
+        "$oid": "6905652d815970cb431f60e5"
+      }
     },
     {
       "MaTienNghi": "TN002",
       "TenTienNghi": "TV",
-      "TrangThai": "Hoạt động"
+      "TrangThai": "Hoạt động",
+      "_id": {
+        "$oid": "6905652d815970cb431f60e6"
+      }
     },
     {
       "MaTienNghi": "TN004",
       "TenTienNghi": "Điều hòa",
-      "TrangThai": "Hoạt động"
+      "TrangThai": "Hoạt động",
+      "_id": {
+        "$oid": "6905652d815970cb431f60e7"
+      }
     }
   ],
   "DichVu": [
     {
       "MaDichVu": "DV001",
-      "TenDichVu": "Ăn sáng",
+      "TenDichVu": "Ăn sáng buffet",
       "GiaDichVu": 100000,
-      "DonViTinh": "Suất"
+      "DonViTinh": "Lần",
+      "_id": {
+        "$oid": "6906cd66111030344ccc584d"
+      }
+    },
+    {
+      "MaDichVu": "DV002",
+      "TenDichVu": "Giặt là",
+      "GiaDichVu": 50000,
+      "DonViTinh": "Kg",
+      "_id": {
+        "$oid": "6906cd66111030344ccc584e"
+      }
+    },
+    {
+      "MaDichVu": "DV003",
+      "TenDichVu": "Spa thư giãn toàn thân",
+      "GiaDichVu": 500000,
+      "DonViTinh": "Lần",
+      "_id": {
+        "$oid": "6906cd66111030344ccc584f"
+      }
+    },
+    {
+      "MaDichVu": "DV004",
+      "TenDichVu": "Xe đưa đón sân bay",
+      "GiaDichVu": 300000,
+      "DonViTinh": "Chuyến",
+      "_id": {
+        "$oid": "6906cd66111030344ccc5850"
+      }
+    },
+    {
+      "MaDichVu": "DV006",
+      "TenDichVu": "Thuê xe du lịch",
+      "GiaDichVu": 800000,
+      "DonViTinh": "Ngày",
+      "_id": {
+        "$oid": "6906cd66111030344ccc5851"
+      }
+    },
+    {
+      "MaDichVu": "DV007",
+      "TenDichVu": "Quản gia riêng",
+      "GiaDichVu": 1200000,
+      "DonViTinh": "Ngày",
+      "_id": {
+        "$oid": "6906cd66111030344ccc5852"
+      }
     }
   ],
-  "KhuyenMai": []
+  "KhuyenMai": [],
+  "updatedAt": {
+    "$date": "2025-11-02T03:17:58.627Z"
+  }
 },
 {
   "_id": {
@@ -49,7 +109,7 @@
   "LoaiPhong": "Standard",
   "Tang": 1,
   "GiaPhong": 850000,
-  "TinhTrang": "Đang sử dụng",
+  "TinhTrang": "Đang dọn dẹp",
   "SoGiuong": 2,
   "LoaiGiuong": "Twin",
   "DienTich": 28,
@@ -74,13 +134,70 @@
   ],
   "DichVu": [
     {
+      "MaDichVu": "DV001",
+      "TenDichVu": "Ăn sáng buffet",
+      "GiaDichVu": 100000,
+      "DonViTinh": "Lần",
+      "HinhAnhDichVu": "an_sang_buffet.jpg",
+      "MoTaDichVu": "Bữa sáng tự chọn phong phú với hơn 20 món Á - Âu, phục vụ tại nhà hàng tầng trệt.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
       "MaDichVu": "DV002",
       "TenDichVu": "Giặt là",
       "GiaDichVu": 50000,
-      "DonViTinh": "Kg"
+      "DonViTinh": "Kg",
+      "HinhAnhDichVu": "giat_la.jpg",
+      "MoTaDichVu": "Dịch vụ giặt ủi nhanh trong ngày, hỗ trợ lấy và trả tận phòng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV003",
+      "TenDichVu": "Spa thư giãn toàn thân",
+      "GiaDichVu": 500000,
+      "DonViTinh": "Lần",
+      "HinhAnhDichVu": "spa_thu_gian.jpg",
+      "MoTaDichVu": "Liệu trình massage thư giãn 60 phút với tinh dầu cao cấp giúp giảm căng thẳng, phục hồi năng lượng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV004",
+      "TenDichVu": "Xe đưa đón sân bay",
+      "GiaDichVu": 300000,
+      "DonViTinh": "Chuyến",
+      "HinhAnhDichVu": "xe_dua_don.jpg",
+      "MoTaDichVu": "Dịch vụ đưa đón sân bay bằng xe riêng, đặt trước 24h.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV006",
+      "TenDichVu": "Thuê xe du lịch",
+      "GiaDichVu": 800000,
+      "DonViTinh": "Ngày",
+      "HinhAnhDichVu": "thue_xe_du_lich.jpg",
+      "MoTaDichVu": "Dịch vụ thuê xe 4-7 chỗ, tài xế chuyên nghiệp, linh hoạt theo nhu cầu khách hàng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV007",
+      "TenDichVu": "Quản gia riêng",
+      "GiaDichVu": 1200000,
+      "DonViTinh": "Ngày",
+      "HinhAnhDichVu": "quan_gia_rieng.jpg",
+      "MoTaDichVu": "Nhân viên quản gia riêng hỗ trợ 24/7 cho khách VIP, bao gồm dọn dẹp và phục vụ cá nhân.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
     }
   ],
-  "KhuyenMai": []
+  "KhuyenMai": [],
+  "updatedAt": {
+    "$date": "2025-11-02T02:58:45.554Z"
+  }
 },
 {
   "_id": {
@@ -117,10 +234,64 @@
   ],
   "DichVu": [
     {
+      "MaDichVu": "DV001",
+      "TenDichVu": "Ăn sáng buffet",
+      "GiaDichVu": 100000,
+      "DonViTinh": "Lần",
+      "HinhAnhDichVu": "an_sang_buffet.jpg",
+      "MoTaDichVu": "Bữa sáng tự chọn phong phú với hơn 20 món Á - Âu, phục vụ tại nhà hàng tầng trệt.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV002",
+      "TenDichVu": "Giặt là",
+      "GiaDichVu": 50000,
+      "DonViTinh": "Kg",
+      "HinhAnhDichVu": "giat_la.jpg",
+      "MoTaDichVu": "Dịch vụ giặt ủi nhanh trong ngày, hỗ trợ lấy và trả tận phòng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
       "MaDichVu": "DV003",
-      "TenDichVu": "Spa thư giãn",
+      "TenDichVu": "Spa thư giãn toàn thân",
       "GiaDichVu": 500000,
-      "DonViTinh": "Lần"
+      "DonViTinh": "Lần",
+      "HinhAnhDichVu": "spa_thu_gian.jpg",
+      "MoTaDichVu": "Liệu trình massage thư giãn 60 phút với tinh dầu cao cấp giúp giảm căng thẳng, phục hồi năng lượng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV004",
+      "TenDichVu": "Xe đưa đón sân bay",
+      "GiaDichVu": 300000,
+      "DonViTinh": "Chuyến",
+      "HinhAnhDichVu": "xe_dua_don.jpg",
+      "MoTaDichVu": "Dịch vụ đưa đón sân bay bằng xe riêng, đặt trước 24h.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV006",
+      "TenDichVu": "Thuê xe du lịch",
+      "GiaDichVu": 800000,
+      "DonViTinh": "Ngày",
+      "HinhAnhDichVu": "thue_xe_du_lich.jpg",
+      "MoTaDichVu": "Dịch vụ thuê xe 4-7 chỗ, tài xế chuyên nghiệp, linh hoạt theo nhu cầu khách hàng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV007",
+      "TenDichVu": "Quản gia riêng",
+      "GiaDichVu": 1200000,
+      "DonViTinh": "Ngày",
+      "HinhAnhDichVu": "quan_gia_rieng.jpg",
+      "MoTaDichVu": "Nhân viên quản gia riêng hỗ trợ 24/7 cho khách VIP, bao gồm dọn dẹp và phục vụ cá nhân.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
     }
   ],
   "KhuyenMai": [
@@ -129,7 +300,10 @@
       "TenChuongTrinh": "Giảm 20% mùa hè",
       "GiaTri": 20
     }
-  ]
+  ],
+  "updatedAt": {
+    "$date": "2025-11-02T02:58:45.554Z"
+  }
 },
 {
   "_id": {
@@ -140,7 +314,7 @@
   "LoaiPhong": "Deluxe",
   "Tang": 2,
   "GiaPhong": 1600000,
-  "TinhTrang": "Đang dọn",
+  "TinhTrang": "Trống",
   "SoGiuong": 2,
   "LoaiGiuong": "Queen",
   "DienTich": 40,
@@ -166,13 +340,70 @@
   ],
   "DichVu": [
     {
+      "MaDichVu": "DV001",
+      "TenDichVu": "Ăn sáng buffet",
+      "GiaDichVu": 100000,
+      "DonViTinh": "Lần",
+      "HinhAnhDichVu": "an_sang_buffet.jpg",
+      "MoTaDichVu": "Bữa sáng tự chọn phong phú với hơn 20 món Á - Âu, phục vụ tại nhà hàng tầng trệt.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV002",
+      "TenDichVu": "Giặt là",
+      "GiaDichVu": 50000,
+      "DonViTinh": "Kg",
+      "HinhAnhDichVu": "giat_la.jpg",
+      "MoTaDichVu": "Dịch vụ giặt ủi nhanh trong ngày, hỗ trợ lấy và trả tận phòng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV003",
+      "TenDichVu": "Spa thư giãn toàn thân",
+      "GiaDichVu": 500000,
+      "DonViTinh": "Lần",
+      "HinhAnhDichVu": "spa_thu_gian.jpg",
+      "MoTaDichVu": "Liệu trình massage thư giãn 60 phút với tinh dầu cao cấp giúp giảm căng thẳng, phục hồi năng lượng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
       "MaDichVu": "DV004",
       "TenDichVu": "Xe đưa đón sân bay",
-      "GiaDichVu": 200000,
-      "DonViTinh": "Lượt"
+      "GiaDichVu": 300000,
+      "DonViTinh": "Chuyến",
+      "HinhAnhDichVu": "xe_dua_don.jpg",
+      "MoTaDichVu": "Dịch vụ đưa đón sân bay bằng xe riêng, đặt trước 24h.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV006",
+      "TenDichVu": "Thuê xe du lịch",
+      "GiaDichVu": 800000,
+      "DonViTinh": "Ngày",
+      "HinhAnhDichVu": "thue_xe_du_lich.jpg",
+      "MoTaDichVu": "Dịch vụ thuê xe 4-7 chỗ, tài xế chuyên nghiệp, linh hoạt theo nhu cầu khách hàng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV007",
+      "TenDichVu": "Quản gia riêng",
+      "GiaDichVu": 1200000,
+      "DonViTinh": "Ngày",
+      "HinhAnhDichVu": "quan_gia_rieng.jpg",
+      "MoTaDichVu": "Nhân viên quản gia riêng hỗ trợ 24/7 cho khách VIP, bao gồm dọn dẹp và phục vụ cá nhân.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
     }
   ],
-  "KhuyenMai": []
+  "KhuyenMai": [],
+  "updatedAt": {
+    "$date": "2025-11-02T02:58:45.554Z"
+  }
 },
 {
   "_id": {
@@ -213,10 +444,64 @@
   ],
   "DichVu": [
     {
+      "MaDichVu": "DV001",
+      "TenDichVu": "Ăn sáng buffet",
+      "GiaDichVu": 100000,
+      "DonViTinh": "Lần",
+      "HinhAnhDichVu": "an_sang_buffet.jpg",
+      "MoTaDichVu": "Bữa sáng tự chọn phong phú với hơn 20 món Á - Âu, phục vụ tại nhà hàng tầng trệt.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV002",
+      "TenDichVu": "Giặt là",
+      "GiaDichVu": 50000,
+      "DonViTinh": "Kg",
+      "HinhAnhDichVu": "giat_la.jpg",
+      "MoTaDichVu": "Dịch vụ giặt ủi nhanh trong ngày, hỗ trợ lấy và trả tận phòng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
       "MaDichVu": "DV003",
       "TenDichVu": "Spa thư giãn toàn thân",
       "GiaDichVu": 500000,
-      "DonViTinh": "Lần"
+      "DonViTinh": "Lần",
+      "HinhAnhDichVu": "spa_thu_gian.jpg",
+      "MoTaDichVu": "Liệu trình massage thư giãn 60 phút với tinh dầu cao cấp giúp giảm căng thẳng, phục hồi năng lượng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV004",
+      "TenDichVu": "Xe đưa đón sân bay",
+      "GiaDichVu": 300000,
+      "DonViTinh": "Chuyến",
+      "HinhAnhDichVu": "xe_dua_don.jpg",
+      "MoTaDichVu": "Dịch vụ đưa đón sân bay bằng xe riêng, đặt trước 24h.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV006",
+      "TenDichVu": "Thuê xe du lịch",
+      "GiaDichVu": 800000,
+      "DonViTinh": "Ngày",
+      "HinhAnhDichVu": "thue_xe_du_lich.jpg",
+      "MoTaDichVu": "Dịch vụ thuê xe 4-7 chỗ, tài xế chuyên nghiệp, linh hoạt theo nhu cầu khách hàng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV007",
+      "TenDichVu": "Quản gia riêng",
+      "GiaDichVu": 1200000,
+      "DonViTinh": "Ngày",
+      "HinhAnhDichVu": "quan_gia_rieng.jpg",
+      "MoTaDichVu": "Nhân viên quản gia riêng hỗ trợ 24/7 cho khách VIP, bao gồm dọn dẹp và phục vụ cá nhân.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
     }
   ],
   "KhuyenMai": [
@@ -225,7 +510,10 @@
       "TenChuongTrinh": "Giảm 20% mùa hè",
       "GiaTri": 20
     }
-  ]
+  ],
+  "updatedAt": {
+    "$date": "2025-11-02T02:58:45.554Z"
+  }
 },
 {
   "_id": {
@@ -262,10 +550,64 @@
   ],
   "DichVu": [
     {
-      "MaDichVu": "DV005",
-      "TenDichVu": "Ăn tối tại phòng",
+      "MaDichVu": "DV001",
+      "TenDichVu": "Ăn sáng buffet",
+      "GiaDichVu": 100000,
+      "DonViTinh": "Lần",
+      "HinhAnhDichVu": "an_sang_buffet.jpg",
+      "MoTaDichVu": "Bữa sáng tự chọn phong phú với hơn 20 món Á - Âu, phục vụ tại nhà hàng tầng trệt.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV002",
+      "TenDichVu": "Giặt là",
+      "GiaDichVu": 50000,
+      "DonViTinh": "Kg",
+      "HinhAnhDichVu": "giat_la.jpg",
+      "MoTaDichVu": "Dịch vụ giặt ủi nhanh trong ngày, hỗ trợ lấy và trả tận phòng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV003",
+      "TenDichVu": "Spa thư giãn toàn thân",
+      "GiaDichVu": 500000,
+      "DonViTinh": "Lần",
+      "HinhAnhDichVu": "spa_thu_gian.jpg",
+      "MoTaDichVu": "Liệu trình massage thư giãn 60 phút với tinh dầu cao cấp giúp giảm căng thẳng, phục hồi năng lượng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV004",
+      "TenDichVu": "Xe đưa đón sân bay",
       "GiaDichVu": 300000,
-      "DonViTinh": "Suất"
+      "DonViTinh": "Chuyến",
+      "HinhAnhDichVu": "xe_dua_don.jpg",
+      "MoTaDichVu": "Dịch vụ đưa đón sân bay bằng xe riêng, đặt trước 24h.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV006",
+      "TenDichVu": "Thuê xe du lịch",
+      "GiaDichVu": 800000,
+      "DonViTinh": "Ngày",
+      "HinhAnhDichVu": "thue_xe_du_lich.jpg",
+      "MoTaDichVu": "Dịch vụ thuê xe 4-7 chỗ, tài xế chuyên nghiệp, linh hoạt theo nhu cầu khách hàng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV007",
+      "TenDichVu": "Quản gia riêng",
+      "GiaDichVu": 1200000,
+      "DonViTinh": "Ngày",
+      "HinhAnhDichVu": "quan_gia_rieng.jpg",
+      "MoTaDichVu": "Nhân viên quản gia riêng hỗ trợ 24/7 cho khách VIP, bao gồm dọn dẹp và phục vụ cá nhân.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
     }
   ],
   "KhuyenMai": [
@@ -274,7 +616,10 @@
       "TenChuongTrinh": "Giảm 10% cho khách VIP",
       "GiaTri": 10
     }
-  ]
+  ],
+  "updatedAt": {
+    "$date": "2025-11-02T02:58:45.554Z"
+  }
 },
 {
   "_id": {
@@ -285,7 +630,7 @@
   "LoaiPhong": "Suite",
   "Tang": 3,
   "GiaPhong": 2600000,
-  "TinhTrang": "Bảo trì",
+  "TinhTrang": "Trống",
   "SoGiuong": 2,
   "LoaiGiuong": "Queen",
   "DienTich": 55,
@@ -311,13 +656,70 @@
   ],
   "DichVu": [
     {
+      "MaDichVu": "DV001",
+      "TenDichVu": "Ăn sáng buffet",
+      "GiaDichVu": 100000,
+      "DonViTinh": "Lần",
+      "HinhAnhDichVu": "an_sang_buffet.jpg",
+      "MoTaDichVu": "Bữa sáng tự chọn phong phú với hơn 20 món Á - Âu, phục vụ tại nhà hàng tầng trệt.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
       "MaDichVu": "DV002",
       "TenDichVu": "Giặt là",
       "GiaDichVu": 50000,
-      "DonViTinh": "Kg"
+      "DonViTinh": "Kg",
+      "HinhAnhDichVu": "giat_la.jpg",
+      "MoTaDichVu": "Dịch vụ giặt ủi nhanh trong ngày, hỗ trợ lấy và trả tận phòng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV003",
+      "TenDichVu": "Spa thư giãn toàn thân",
+      "GiaDichVu": 500000,
+      "DonViTinh": "Lần",
+      "HinhAnhDichVu": "spa_thu_gian.jpg",
+      "MoTaDichVu": "Liệu trình massage thư giãn 60 phút với tinh dầu cao cấp giúp giảm căng thẳng, phục hồi năng lượng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV004",
+      "TenDichVu": "Xe đưa đón sân bay",
+      "GiaDichVu": 300000,
+      "DonViTinh": "Chuyến",
+      "HinhAnhDichVu": "xe_dua_don.jpg",
+      "MoTaDichVu": "Dịch vụ đưa đón sân bay bằng xe riêng, đặt trước 24h.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV006",
+      "TenDichVu": "Thuê xe du lịch",
+      "GiaDichVu": 800000,
+      "DonViTinh": "Ngày",
+      "HinhAnhDichVu": "thue_xe_du_lich.jpg",
+      "MoTaDichVu": "Dịch vụ thuê xe 4-7 chỗ, tài xế chuyên nghiệp, linh hoạt theo nhu cầu khách hàng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV007",
+      "TenDichVu": "Quản gia riêng",
+      "GiaDichVu": 1200000,
+      "DonViTinh": "Ngày",
+      "HinhAnhDichVu": "quan_gia_rieng.jpg",
+      "MoTaDichVu": "Nhân viên quản gia riêng hỗ trợ 24/7 cho khách VIP, bao gồm dọn dẹp và phục vụ cá nhân.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
     }
   ],
-  "KhuyenMai": []
+  "KhuyenMai": [],
+  "updatedAt": {
+    "$date": "2025-11-02T02:58:45.554Z"
+  }
 },
 {
   "_id": {
@@ -344,8 +746,72 @@
       "TenTienNghi": "TV"
     }
   ],
-  "DichVu": [],
-  "KhuyenMai": []
+  "DichVu": [
+    {
+      "MaDichVu": "DV001",
+      "TenDichVu": "Ăn sáng buffet",
+      "GiaDichVu": 100000,
+      "DonViTinh": "Lần",
+      "HinhAnhDichVu": "an_sang_buffet.jpg",
+      "MoTaDichVu": "Bữa sáng tự chọn phong phú với hơn 20 món Á - Âu, phục vụ tại nhà hàng tầng trệt.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV002",
+      "TenDichVu": "Giặt là",
+      "GiaDichVu": 50000,
+      "DonViTinh": "Kg",
+      "HinhAnhDichVu": "giat_la.jpg",
+      "MoTaDichVu": "Dịch vụ giặt ủi nhanh trong ngày, hỗ trợ lấy và trả tận phòng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV003",
+      "TenDichVu": "Spa thư giãn toàn thân",
+      "GiaDichVu": 500000,
+      "DonViTinh": "Lần",
+      "HinhAnhDichVu": "spa_thu_gian.jpg",
+      "MoTaDichVu": "Liệu trình massage thư giãn 60 phút với tinh dầu cao cấp giúp giảm căng thẳng, phục hồi năng lượng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV004",
+      "TenDichVu": "Xe đưa đón sân bay",
+      "GiaDichVu": 300000,
+      "DonViTinh": "Chuyến",
+      "HinhAnhDichVu": "xe_dua_don.jpg",
+      "MoTaDichVu": "Dịch vụ đưa đón sân bay bằng xe riêng, đặt trước 24h.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV006",
+      "TenDichVu": "Thuê xe du lịch",
+      "GiaDichVu": 800000,
+      "DonViTinh": "Ngày",
+      "HinhAnhDichVu": "thue_xe_du_lich.jpg",
+      "MoTaDichVu": "Dịch vụ thuê xe 4-7 chỗ, tài xế chuyên nghiệp, linh hoạt theo nhu cầu khách hàng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV007",
+      "TenDichVu": "Quản gia riêng",
+      "GiaDichVu": 1200000,
+      "DonViTinh": "Ngày",
+      "HinhAnhDichVu": "quan_gia_rieng.jpg",
+      "MoTaDichVu": "Nhân viên quản gia riêng hỗ trợ 24/7 cho khách VIP, bao gồm dọn dẹp và phục vụ cá nhân.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    }
+  ],
+  "KhuyenMai": [],
+  "updatedAt": {
+    "$date": "2025-11-02T02:58:45.554Z"
+  }
 },
 {
   "_id": {
@@ -376,8 +842,72 @@
       "TenTienNghi": "Minibar"
     }
   ],
-  "DichVu": [],
-  "KhuyenMai": []
+  "DichVu": [
+    {
+      "MaDichVu": "DV001",
+      "TenDichVu": "Ăn sáng buffet",
+      "GiaDichVu": 100000,
+      "DonViTinh": "Lần",
+      "HinhAnhDichVu": "an_sang_buffet.jpg",
+      "MoTaDichVu": "Bữa sáng tự chọn phong phú với hơn 20 món Á - Âu, phục vụ tại nhà hàng tầng trệt.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV002",
+      "TenDichVu": "Giặt là",
+      "GiaDichVu": 50000,
+      "DonViTinh": "Kg",
+      "HinhAnhDichVu": "giat_la.jpg",
+      "MoTaDichVu": "Dịch vụ giặt ủi nhanh trong ngày, hỗ trợ lấy và trả tận phòng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV003",
+      "TenDichVu": "Spa thư giãn toàn thân",
+      "GiaDichVu": 500000,
+      "DonViTinh": "Lần",
+      "HinhAnhDichVu": "spa_thu_gian.jpg",
+      "MoTaDichVu": "Liệu trình massage thư giãn 60 phút với tinh dầu cao cấp giúp giảm căng thẳng, phục hồi năng lượng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV004",
+      "TenDichVu": "Xe đưa đón sân bay",
+      "GiaDichVu": 300000,
+      "DonViTinh": "Chuyến",
+      "HinhAnhDichVu": "xe_dua_don.jpg",
+      "MoTaDichVu": "Dịch vụ đưa đón sân bay bằng xe riêng, đặt trước 24h.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV006",
+      "TenDichVu": "Thuê xe du lịch",
+      "GiaDichVu": 800000,
+      "DonViTinh": "Ngày",
+      "HinhAnhDichVu": "thue_xe_du_lich.jpg",
+      "MoTaDichVu": "Dịch vụ thuê xe 4-7 chỗ, tài xế chuyên nghiệp, linh hoạt theo nhu cầu khách hàng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV007",
+      "TenDichVu": "Quản gia riêng",
+      "GiaDichVu": 1200000,
+      "DonViTinh": "Ngày",
+      "HinhAnhDichVu": "quan_gia_rieng.jpg",
+      "MoTaDichVu": "Nhân viên quản gia riêng hỗ trợ 24/7 cho khách VIP, bao gồm dọn dẹp và phục vụ cá nhân.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    }
+  ],
+  "KhuyenMai": [],
+  "updatedAt": {
+    "$date": "2025-11-02T02:58:45.554Z"
+  }
 },
 {
   "_id": {
@@ -388,7 +918,7 @@
   "LoaiPhong": "Suite",
   "Tang": 5,
   "GiaPhong": 5000000,
-  "TinhTrang": "Đang sử dụng",
+  "TinhTrang": "Trống",
   "SoGiuong": 2,
   "LoaiGiuong": "King",
   "DienTich": 80,
@@ -418,10 +948,64 @@
   ],
   "DichVu": [
     {
+      "MaDichVu": "DV001",
+      "TenDichVu": "Ăn sáng buffet",
+      "GiaDichVu": 100000,
+      "DonViTinh": "Lần",
+      "HinhAnhDichVu": "an_sang_buffet.jpg",
+      "MoTaDichVu": "Bữa sáng tự chọn phong phú với hơn 20 món Á - Âu, phục vụ tại nhà hàng tầng trệt.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV002",
+      "TenDichVu": "Giặt là",
+      "GiaDichVu": 50000,
+      "DonViTinh": "Kg",
+      "HinhAnhDichVu": "giat_la.jpg",
+      "MoTaDichVu": "Dịch vụ giặt ủi nhanh trong ngày, hỗ trợ lấy và trả tận phòng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV003",
+      "TenDichVu": "Spa thư giãn toàn thân",
+      "GiaDichVu": 500000,
+      "DonViTinh": "Lần",
+      "HinhAnhDichVu": "spa_thu_gian.jpg",
+      "MoTaDichVu": "Liệu trình massage thư giãn 60 phút với tinh dầu cao cấp giúp giảm căng thẳng, phục hồi năng lượng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV004",
+      "TenDichVu": "Xe đưa đón sân bay",
+      "GiaDichVu": 300000,
+      "DonViTinh": "Chuyến",
+      "HinhAnhDichVu": "xe_dua_don.jpg",
+      "MoTaDichVu": "Dịch vụ đưa đón sân bay bằng xe riêng, đặt trước 24h.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
       "MaDichVu": "DV006",
+      "TenDichVu": "Thuê xe du lịch",
+      "GiaDichVu": 800000,
+      "DonViTinh": "Ngày",
+      "HinhAnhDichVu": "thue_xe_du_lich.jpg",
+      "MoTaDichVu": "Dịch vụ thuê xe 4-7 chỗ, tài xế chuyên nghiệp, linh hoạt theo nhu cầu khách hàng.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV007",
       "TenDichVu": "Quản gia riêng",
-      "GiaDichVu": 1000000,
-      "DonViTinh": "Ngày"
+      "GiaDichVu": 1200000,
+      "DonViTinh": "Ngày",
+      "HinhAnhDichVu": "quan_gia_rieng.jpg",
+      "MoTaDichVu": "Nhân viên quản gia riêng hỗ trợ 24/7 cho khách VIP, bao gồm dọn dẹp và phục vụ cá nhân.",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "08:00 - 22:00"
     }
   ],
   "KhuyenMai": [
@@ -430,5 +1014,8 @@
       "TenChuongTrinh": "Giảm 15% khách VIP",
       "GiaTri": 15
     }
-  ]
+  ],
+  "updatedAt": {
+    "$date": "2025-11-02T02:58:45.554Z"
+  }
 }]

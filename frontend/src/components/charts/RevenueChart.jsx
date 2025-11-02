@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -9,14 +9,21 @@ import {
   CartesianGrid,
 } from "recharts";
 
-// Dữ liệu giả mới với 2 key
-const data = [
-  { name: "Thg 5", Sales: 4000, Profit: 2400 },
-  { name: "Thg 6", Sales: 3000, Profit: 2000 },
-  { name: "Thg 7", Sales: 4500, Profit: 3000 },
-  { name: "Thg 8", Sales: 3800, Profit: 2500 },
-  { name: "Thg 9", Sales: 5200, Profit: 4000 },
-  { name: "Thg 10", Sales: 6000, Profit: 3800 },
+import { getMonthlyRevenue } from "../../services/reportService";
+
+const VN_MONTH = [
+  "Thg 1",
+  "Thg 2",
+  "Thg 3",
+  "Thg 4",
+  "Thg 5",
+  "Thg 6",
+  "Thg 7",
+  "Thg 8",
+  "Thg 9",
+  "Thg 10",
+  "Thg 11",
+  "Thg 12",
 ];
 
 // Style cho tooltip
@@ -26,12 +33,39 @@ const tooltipStyle = {
   color: "#ffffff",
 };
 
-function RevenueChart() {
+function RevenueChart({ year = new Date().getFullYear() }) {
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const rows = await getMonthlyRevenue(year);
+        const mapped = rows.map((r) => ({
+          name: VN_MONTH[new Date(r.month).getMonth()],
+          Sales: r.revenue,
+          Profit: r.revenue, // if no profit data, show same
+        }));
+        // Ensure 12 months
+        if (mapped.length < 12) {
+          const mMap = new Map(mapped.map((m) => [m.name, m]));
+          const full = VN_MONTH.map(
+            (label) => mMap.get(label) || { name: label, Sales: 0, Profit: 0 }
+          );
+          setData(full);
+        } else setData(mapped);
+      } catch (e) {
+        console.error("Failed to load monthly revenue", e);
+        setData(
+          VN_MONTH.map((label) => ({ name: label, Sales: 0, Profit: 0 }))
+        );
+      }
+    })();
+  }, [year]);
   return (
     <ResponsiveContainer width="100%" height="100%" minHeight={300}>
       <AreaChart
         data={data}
-        margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
+        margin={{ top: 5, right: 10, left: 48, bottom: 20 }}
       >
         {/* Định nghĩa gradient cho màu xanh */}
         <defs>
@@ -42,7 +76,11 @@ function RevenueChart() {
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="#1f2a4f" />
         <XAxis dataKey="name" stroke="#a0aec0" />
-        <YAxis stroke="#a0aec0" />
+        <YAxis
+          stroke="#a0aec0"
+          tickFormatter={(v) => v.toLocaleString("vi-VN")}
+          width={60}
+        />
         <Tooltip
           contentStyle={tooltipStyle}
           labelStyle={{ color: "#a0aec0" }}
@@ -56,14 +94,7 @@ function RevenueChart() {
           fillOpacity={1}
           fill="url(#colorSales)"
         />
-        {/* Đường màu tím */}
-        <Area
-          type="monotone"
-          dataKey="Profit"
-          stroke="#8884d8"
-          strokeWidth={3}
-          fillOpacity={0} // Không tô màu
-        />
+        {/* Có thể tắt đường phụ nếu không dùng */}
       </AreaChart>
     </ResponsiveContainer>
   );

@@ -82,6 +82,14 @@ function Header() {
                   </li>
                   <li className="nav-item px-3">
                     <Link
+                      className={`nav-link p-0 ${isActive("/services") ? "active" : ""}`}
+                      to="/services"
+                    >
+                      Dịch vụ
+                    </Link>
+                  </li>
+                  <li className="nav-item px-3">
+                    <Link
                       className={`nav-link p-0 ${
                         isActive("/promotions") ? "active" : ""
                       }`}

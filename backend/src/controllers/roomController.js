@@ -1,176 +1,19 @@
-// controllers/roomController.js
+import Room from "../models/Room.js";
 import mongoose from "mongoose";
 import fs from "fs/promises";
 import path from "path";
-import { fileURLToPath } from "url";
-import Room from "../models/Room.js";
+import Booking from "../models/Booking.js";
 
-// Controller: Lấy danh sách phòng (công khai, có phân trang cơ bản)
-export const getAllRooms = async (req, res) => {
+// GET /api/v1/rooms - list rooms
+export const getAllRooms = async (req, res, next) => {
   try {
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
-
-    // Filter: chỉ lấy document có MaPhong -> thực sự là phòng (không phải tiện nghi)
-    const filter = { MaPhong: { $exists: true } };
-    if (req.query.LoaiPhong) filter.LoaiPhong = req.query.LoaiPhong;
-    if (req.query.Tang) filter.Tang = Number(req.query.Tang);
-    if (req.query.TinhTrang) filter.TinhTrang = req.query.TinhTrang;
-    if (req.query.minPrice)
-      filter.GiaPhong = { $gte: Number(req.query.minPrice) };
-    if (req.query.maxPrice) {
-      filter.GiaPhong = filter.GiaPhong || {};
-      filter.GiaPhong.$lte = Number(req.query.maxPrice);
-    }
-
-    console.log(
-      `getAllRooms start - filter=${JSON.stringify(
-        filter
-      )} page=${page} limit=${limit}`
-    );
-
-    // Helper: wrap a promise with a timeout so slow DB queries don't hang the request
-    const withTimeout = (p, ms = 7000) => {
-      const timeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("DB query timeout")), ms)
-      );
-      return Promise.race([p, timeout]);
-    };
-
-    // Execute DB queries but fail fast if they exceed the timeout
-    const findPromise = Room.find(filter).skip(skip).limit(limit).lean().exec();
-    const countPromise = Room.countDocuments(filter).exec();
-
-    let items, count;
-    try {
-      [items, count] = await Promise.all([
-        withTimeout(findPromise),
-        withTimeout(countPromise),
-      ]);
-    } catch (err) {
-      console.error(
-        "getAllRooms DB error or timeout:",
-        err && err.message ? err.message : err
-      );
-      if (err && err.message && err.message.includes("DB query timeout")) {
-        return res
-          .status(504)
-          .json({
-            success: false,
-            message: "Database timeout when fetching rooms",
-          });
-      }
-      return res
-        .status(500)
-        .json({
-          success: false,
-          message: "Lỗi server khi truy vấn phòng",
-          error: err.message || String(err),
-        });
-    }
-
-    console.log(
-      `getAllRooms success - found=${
-        Array.isArray(items) ? items.length : 0
-      } total=${count}`
-    );
-
-    const pages = Math.max(1, Math.ceil(count / limit));
-
-    return res.status(200).json({ success: true, data: items, pages });
+    const rooms = await Room.find({}).sort({ TenPhong: 1 }).lean();
+    return res.status(200).json(rooms);
   } catch (error) {
-    console.error("Lỗi getAllRooms:", error);
+    console.error("Error getAllRooms:", error);
     return res
       .status(500)
       .json({ success: false, message: "Lỗi server", error: error.message });
-  }
-};
-
-// Controller: tạo phòng (Admin)
-export const createRoom = async (req, res) => {
-  try {
-    const payload = req.body;
-    // Đảm bảo có LoaiTaiSan = 'Phong'
-    payload.LoaiTaiSan = "Phong";
-    const room = await Room.create(payload);
-    return res.status(201).json({ success: true, data: room });
-  } catch (error) {
-    console.error("Lỗi createRoom:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Lỗi server", error: error.message });
-  }
-};
-
-// Controller: cập nhật phòng (Admin)
-export const updateRoom = async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id))
-      return res
-        .status(400)
-        .json({ success: false, message: "ID không hợp lệ" });
-    const updated = await Room.findByIdAndUpdate(id, req.body, { new: true });
-    return res.status(200).json({ success: true, data: updated });
-  } catch (error) {
-    console.error("Lỗi updateRoom:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Lỗi server", error: error.message });
-  }
-};
-
-// Controller: xóa phòng (Admin)
-export const deleteRoom = async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id))
-      return res
-        .status(400)
-        .json({ success: false, message: "ID không hợp lệ" });
-    await Room.findByIdAndDelete(id);
-    return res
-      .status(200)
-      .json({ success: true, message: "Xóa phòng thành công" });
-  } catch (error) {
-    console.error("Lỗi deleteRoom:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Lỗi server", error: error.message });
-  }
-};
-
-export const getRoomById = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    let room;
-    if (mongoose.Types.ObjectId.isValid(id)) {
-      room = await Room.findById(id);
-    } else {
-      // Nếu không phải ObjectId, tìm theo MaPhong
-      room = await Room.findOne({ MaPhong: id });
-    }
-
-    if (!room) {
-      return res.status(404).json({
-        success: false,
-        message: "Không tìm thấy phòng",
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: room,
-    });
-  } catch (error) {
-    console.error("Lỗi getRoomById:", error); // In lỗi ra console
-    res.status(500).json({
-      success: false,
-      message: "Lỗi server",
-      error: error.message,
-    });
   }
 };
 
@@ -231,8 +74,8 @@ export const getAvailableRooms = async (req, res) => {
                   in: {
                     $and: [
                       { $in: ["$$booking.TrangThai", activeStatuses] },
-                      { $lt: ["$$booking.NgayNhanPhong", end] },
-                      { $gt: ["$$booking.NgayTraPhong", start] },
+                      { $lte: ["$$booking.NgayNhanPhong", end] },
+                      { $gte: ["$$booking.NgayTraPhong", start] },
                     ],
                   },
                 },
@@ -297,77 +140,143 @@ export const getAvailableRooms = async (req, res) => {
   }
 };
 
-// Controller: upload/overwrite room image (Admin)
-export const uploadRoomImage = async (req, res) => {
+// Helper: resolve id param as ObjectId or MaPhong
+const findRoomFilter = (id) => {
+  if (!id) return null;
+  if (mongoose.Types.ObjectId.isValid(id)) return { _id: id };
+  return { MaPhong: id };
+};
+
+// GET /api/v1/rooms/:id
+export const getRoomById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "ID không hợp lệ" });
-    }
-
-    const room = await Room.findById(id);
-    if (!room) {
+    const filter = findRoomFilter(id);
+    if (!filter)
+      return res.status(400).json({ success: false, message: "Thiếu id" });
+    const room = await Room.findOne(filter).lean();
+    if (!room)
       return res
         .status(404)
         .json({ success: false, message: "Không tìm thấy phòng" });
-    }
+    return res.status(200).json({ success: true, data: room });
+  } catch (error) {
+    console.error("Error getRoomById:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server", error: error.message });
+  }
+};
 
-    if (!req.file || !req.file.buffer) {
+// POST /api/v1/rooms
+export const createRoom = async (req, res, next) => {
+  try {
+    const required = ["MaPhong", "TenPhong", "LoaiPhong", "GiaPhong"];
+    const missing = required.filter(
+      (k) =>
+        !Object.hasOwn(req.body, k) ||
+        req.body[k] === "" ||
+        req.body[k] === null
+    );
+    if (missing.length)
       return res
         .status(400)
-        .json({ success: false, message: "Không có tệp ảnh được gửi" });
-    }
+        .json({ success: false, message: "Missing fields", missing });
 
-    // Determine target filename: keep existing filename if present, otherwise use uploaded originalname
-    const existingFilename =
-      room.HinhAnh && room.HinhAnh.trim() ? room.HinhAnh.trim() : null;
-    // sanitize filename to avoid path traversal
-    const rawName = existingFilename || req.file.originalname;
-    const filename = path.basename(rawName);
+    const room = await Room.create(req.body);
+    return res.status(201).json({ success: true, data: room });
+  } catch (error) {
+    console.error("Error createRoom:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server", error: error.message });
+  }
+};
 
-    // Resolve images/room directory under backend/src/assets (this matches static /assets mapping)
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename); // backend/src/controllers
-    const imagesRoomDir = path.join(
-      __dirname,
-      "..",
+// PUT /api/v1/rooms/:id
+export const updateRoom = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const filter = findRoomFilter(id);
+    if (!filter)
+      return res.status(400).json({ success: false, message: "Thiếu id" });
+    const updated = await Room.findOneAndUpdate(
+      filter,
+      { $set: req.body },
+      { new: true }
+    ).lean();
+    if (!updated)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy phòng để cập nhật" });
+    return res.status(200).json({ success: true, data: updated });
+  } catch (error) {
+    console.error("Error updateRoom:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server", error: error.message });
+  }
+};
+
+// DELETE /api/v1/rooms/:id
+export const deleteRoom = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const filter = findRoomFilter(id);
+    if (!filter)
+      return res.status(400).json({ success: false, message: "Thiếu id" });
+    const del = await Room.findOneAndDelete(filter).lean();
+    if (!del)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy phòng để xóa" });
+    return res
+      .status(200)
+      .json({ success: true, message: "Đã xóa phòng", data: del });
+  } catch (error) {
+    console.error("Error deleteRoom:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server", error: error.message });
+  }
+};
+
+// PUT /api/v1/rooms/:id/image - upload/overwrite image (multer memory storage expected)
+export const uploadRoomImage = async (req, res, next) => {
+  try {
+    if (!req.file)
+      return res.status(400).json({ success: false, message: "Không có file" });
+    const { id } = req.params;
+    const filter = findRoomFilter(id);
+    if (!filter)
+      return res.status(400).json({ success: false, message: "Thiếu id" });
+
+    const filename = `${Date.now()}_${req.file.originalname.replace(
+      /\s+/g,
+      "_"
+    )}`;
+    const imagesDir = path.join(
+      process.cwd(),
+      "src",
       "assets",
       "images",
       "room"
     );
+    await fs.mkdir(imagesDir, { recursive: true });
+    const dest = path.join(imagesDir, filename);
+    await fs.writeFile(dest, req.file.buffer);
 
-    // Ensure images/room dir exists
-    await fs.mkdir(imagesRoomDir, { recursive: true });
-
-    const destPath = path.join(imagesRoomDir, filename);
-
-    // Write file buffer to destination (this will overwrite existing file)
-    await fs.writeFile(destPath, req.file.buffer);
-    console.log(`uploadRoomImage: wrote file to ${destPath}`);
-
-    // If room didn't have HinhAnh set, update it to the new filename
-    if (!existingFilename) {
-      room.HinhAnh = filename;
-      await room.save();
-    }
-
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "Ảnh phòng đã được cập nhật",
-        data: { HinhAnh: filename },
-      });
+    // Push to HinhAnh array
+    const updated = await Room.findOneAndUpdate(
+      filter,
+      { $push: { HinhAnh: filename } },
+      { new: true }
+    ).lean();
+    return res.status(200).json({ success: true, filename, data: updated });
   } catch (error) {
-    console.error("Lỗi uploadRoomImage:", error);
+    console.error("Error uploadRoomImage:", error);
     return res
       .status(500)
-      .json({
-        success: false,
-        message: "Lỗi server khi upload ảnh",
-        error: error.message,
-      });
+      .json({ success: false, message: "Lỗi server", error: error.message });
   }
 };

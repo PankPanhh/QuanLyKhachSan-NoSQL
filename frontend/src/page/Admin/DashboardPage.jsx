@@ -1,11 +1,50 @@
-import React, { useContext } from 'react';
-import RevenueChart from '../../components/charts/RevenueChart';
-import BookingChart from '../../components/charts/BookingChart';
-import SatisfactionChart from '../../components/charts/SatisfactionChart';
-import { AuthContext } from '../../context/AuthContext';
+import React, { useContext, useEffect, useState } from "react";
+import RevenueChart from "../../components/charts/RevenueChart";
+import BookingChart from "../../components/charts/BookingChart";
+import SatisfactionChart from "../../components/charts/SatisfactionChart";
+import { AuthContext } from "../../context/AuthContext";
+import { getDailyRevenue } from "../../services/reportService";
 
 function DashboardPage() {
   const { user } = useContext(AuthContext);
+  const [todayRevenue, setTodayRevenue] = useState(0);
+  const [todayBookings, setTodayBookings] = useState(0);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const now = new Date();
+        const start = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate()
+        );
+        const end = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          23,
+          59,
+          59,
+          999
+        );
+        const rows = await getDailyRevenue(
+          start.toISOString(),
+          end.toISOString()
+        );
+        const r =
+          Array.isArray(rows) && rows.length
+            ? rows[0]
+            : { revenue: 0, bookingsCount: 0 };
+        setTodayRevenue(r.revenue || 0);
+        setTodayBookings(r.bookingsCount || 0);
+      } catch (e) {
+        console.error("Failed to fetch today revenue", e);
+        setTodayRevenue(0);
+        setTodayBookings(0);
+      }
+    })();
+  }, []);
   return (
     <div className="row">
       {/* Hàng 1: Welcome Card */}
@@ -14,19 +53,22 @@ function DashboardPage() {
           <div className="d-flex align-items-end row">
             <div className="col-sm-7">
               <div className="card-body">
-                <h5 className="card-title text-primary">Welcome back, {user?.HoTen || 'Mark Johnson'}! 🎉</h5>
-                <p className="mb-4">
-                  Glad to see you again! Ask me anything.
-                </p>
-                <button type="button" className="btn btn-sm btn-outline-primary">
+                <h5 className="card-title text-primary">
+                  Welcome back, {user?.HoTen || "Mark Johnson"}! 🎉
+                </h5>
+                <p className="mb-4">Glad to see you again! Ask me anything.</p>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-primary"
+                >
                   Tap to record
                 </button>
               </div>
             </div>
             <div className="col-sm-5 text-center text-sm-left">
               <div className="card-body pb-0 px-0 px-md-4">
-                  <img
-                    src="/images/illustrations/man-with-laptop-light.png"
+                <img
+                  src="/images/illustrations/man-with-laptop-light.png"
                   height="140"
                   alt="View Badge User"
                 />
@@ -35,7 +77,7 @@ function DashboardPage() {
           </div>
         </div>
       </div>
-      
+
       {/* Hàng 1: Thẻ thống kê nhỏ (Sneat) */}
       <div className="col-lg-4 col-md-4 order-1">
         <div className="row">
@@ -44,15 +86,22 @@ function DashboardPage() {
               <div className="card-body">
                 <div className="card-title d-flex align-items-start justify-content-between">
                   <div className="avatar shrink-0">
-                      <img
-                        src="/images/icons/unicons/chart-success.png"
+                    <img
+                      src="/images/icons/unicons/chart-success.png"
                       alt="chart success"
                       className="rounded"
                     />
                   </div>
                 </div>
-                <span className="fw-semibold d-block mb-1">Today's Money</span>
-                <h3 className="card-title mb-2">$ 15,000</h3>
+                <span className="fw-semibold d-block mb-1">
+                  Doanh thu hôm nay
+                </span>
+                <h3 className="card-title mb-2">
+                  {todayRevenue.toLocaleString("vi-VN", {
+                    style: "currency",
+                    currency: "VND",
+                  })}
+                </h3>
               </div>
             </div>
           </div>
@@ -61,15 +110,15 @@ function DashboardPage() {
               <div className="card-body">
                 <div className="card-title d-flex align-items-start justify-content-between">
                   <div className="avatar shrink-0">
-                      <img
-                        src="/images/icons/unicons/wallet-info.png"
+                    <img
+                      src="/images/icons/unicons/wallet-info.png"
                       alt="Credit Card"
                       className="rounded"
                     />
                   </div>
                 </div>
-                <span>Today's Users</span>
-                <h3 className="card-title text-nowrap mb-1">2,300</h3>
+                <span>Booking hôm nay</span>
+                <h3 className="card-title text-nowrap mb-1">{todayBookings}</h3>
               </div>
             </div>
           </div>
@@ -80,10 +129,10 @@ function DashboardPage() {
       <div className="col-12 col-lg-8 order-2 order-md-3 order-lg-2 mb-4">
         <div className="card">
           <div className="card-header">
-            <h5 className="card-title m-0 me-2">Sales Overview</h5>
+            <h5 className="card-title m-0 me-2">Doanh thu theo tháng</h5>
           </div>
           <div className="card-body">
-            <div style={{ height: '350px' }}>
+            <div style={{ height: "350px" }}>
               <RevenueChart />
             </div>
           </div>
@@ -98,7 +147,11 @@ function DashboardPage() {
               <div className="card-body">
                 <div className="card-title d-flex align-items-start justify-content-between">
                   <div className="avatar shrink-0">
-                      <img src="/images/icons/unicons/paypal.png" alt="Credit Card" className="rounded" />
+                    <img
+                      src="/images/icons/unicons/paypal.png"
+                      alt="Credit Card"
+                      className="rounded"
+                    />
                   </div>
                 </div>
                 <span className="d-block mb-1">New Clients</span>
@@ -111,7 +164,11 @@ function DashboardPage() {
               <div className="card-body">
                 <div className="card-title d-flex align-items-start justify-content-between">
                   <div className="avatar shrink-0">
-                      <img src="/images/icons/unicons/cc-primary.png" alt="Credit Card" className="rounded" />
+                    <img
+                      src="/images/icons/unicons/cc-primary.png"
+                      alt="Credit Card"
+                      className="rounded"
+                    />
                   </div>
                 </div>
                 <span className="fw-semibold d-block mb-1">Total Sales</span>
@@ -121,19 +178,19 @@ function DashboardPage() {
           </div>
         </div>
       </div>
-      
+
       {/* Hàng 3: Active Users & Satisfaction Rate */}
-      
+
       {/* Active Users (BookingChart) */}
       <div className="col-md-6 col-lg-4 col-xl-4 order-0 mb-4">
         <div className="card h-100">
           <div className="card-header d-flex align-items-center justify-content-between pb-0">
             <div className="card-title mb-0">
-              <h5 className="m-0 me-2">Active Users</h5>
+              <h5 className="m-0 me-2">Doanh thu theo ngày</h5>
             </div>
           </div>
           <div className="card-body">
-            <div style={{ height: '350px' }}>
+            <div style={{ height: "350px" }}>
               <BookingChart />
             </div>
           </div>
@@ -144,11 +201,11 @@ function DashboardPage() {
       <div className="col-md-6 col-lg-4 order-1 mb-4">
         <div className="card h-100">
           <div className="card-header">
-             <h5 className="card-title m-0 me-2">Satisfaction Rate</h5>
+            <h5 className="card-title m-0 me-2">Satisfaction Rate</h5>
           </div>
           <div className="card-body">
             <p>From all projects</p>
-            <div style={{ height: '250px', marginTop: '2rem' }}>
+            <div style={{ height: "250px", marginTop: "2rem" }}>
               <SatisfactionChart />
             </div>
           </div>
@@ -165,7 +222,11 @@ function DashboardPage() {
             <ul className="p-0 m-0">
               <li className="d-flex mb-4 pb-1">
                 <div className="avatar shrink-0 me-3">
-            <img src="/images/icons/unicons/wallet.png" alt="User" className="rounded" />
+                  <img
+                    src="/images/icons/unicons/wallet.png"
+                    alt="User"
+                    className="rounded"
+                  />
                 </div>
                 <div className="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
                   <div className="me-2">
@@ -179,7 +240,7 @@ function DashboardPage() {
                 </div>
               </li>
               <li className="d-flex">
-                 <div className="avatar shrink-0 me-3">
+                <div className="avatar shrink-0 me-3">
                   <span className="avatar-initial rounded bg-label-primary">
                     <i className="bx bx-shield-quarter"></i>
                   </span>
