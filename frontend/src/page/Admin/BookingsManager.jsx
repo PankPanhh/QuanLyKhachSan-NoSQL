@@ -290,7 +290,8 @@ function BookingsManager() {
                         )}
 
                         {booking.TrangThai !== "Đã hủy" &&
-                          booking.TrangThai !== "Hoàn thành" && (
+                          booking.TrangThai !== "Hoàn thành" &&
+                          booking.TrangThai !== "Đang sử dụng" && (
                             <button
                               className="btn btn-sm btn-outline-danger modern-btn"
                               title="Hủy đặt phòng"
@@ -482,7 +483,8 @@ function BookingsManager() {
                   </button>
                 )}
                 {selectedBooking.TrangThai !== "Đã hủy" &&
-                  selectedBooking.TrangThai !== "Hoàn thành" && (
+                  selectedBooking.TrangThai !== "Hoàn thành" &&
+                  selectedBooking.TrangThai !== "Đã xác nhận" && (
                     <button
                       className="btn btn-danger"
                       onClick={() => handleCancel(selectedBooking)}
