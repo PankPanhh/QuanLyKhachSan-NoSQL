@@ -2,7 +2,43 @@ import Room from '../models/Room.js';
 import mongoose from 'mongoose';
 import fs from 'fs/promises';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import Booking from '../models/Booking.js';
+import sharp from 'sharp';
+
+// Helper: derive next sequence for service codes by scanning existing DV codes
+// NOTE: This implementation avoids creating a separate `counters` collection.
+// It inspects embedded `DichVu.MaDichVu` values across rooms, extracts the
+// numeric suffix for codes like `DV001` and returns max+1. This is simpler but
+// not strictly atomic under heavy concurrent inserts — acceptable if the app
+// traffic is moderate. If you later want strict atomicity, we can revisit an
+// atomic counter approach using a dedicated document.
+const getNextServiceSeq = async () => {
+  try {
+    // Fetch distinct codes to keep implementation compatible across Mongo versions
+    const codes = await Room.distinct('DichVu.MaDichVu', { 'DichVu.MaDichVu': { $exists: true } });
+    let max = 0;
+    if (Array.isArray(codes)) {
+      for (const c of codes) {
+        if (typeof c !== 'string') continue;
+        const m = c.match(/^DV(\d+)$/i);
+        if (m && m[1]) {
+          const n = parseInt(m[1], 10);
+          if (!Number.isNaN(n) && n > max) max = n;
+        }
+      }
+    }
+    return max + 1;
+  } catch (err) {
+    console.warn('getNextServiceSeq failed, defaulting to 1', err);
+    return 1;
+  }
+};
+
+const sanitizeName = (s) => {
+  if (!s) return '';
+  return String(s).trim().toLowerCase().replace(/[^a-z0-9\s_-]/g, '').replace(/\s+/g, '_').replace(/_+/g, '_');
+};
 
 // Helper: find a Service either by ObjectId or by MaDichVu code
 const findServiceByParam = async (param) => {
@@ -100,7 +136,6 @@ export const getAllServices = async (req, res, next) => {
 export const createService = async (req, res, next) => {
   try {
     const {
-      MaDichVu,
       TenDichVu,
       GiaDichVu,
       DonViTinh,
@@ -109,9 +144,21 @@ export const createService = async (req, res, next) => {
       HinhAnhDichVu,
       ThoiGianPhucVu,
     } = req.body;
-    if (!MaDichVu || !TenDichVu) {
-      return res.status(400).json({ success: false, message: 'MaDichVu và TenDichVu là bắt buộc' });
+    if (!TenDichVu) {
+      return res.status(400).json({ success: false, message: 'TenDichVu là bắt buộc' });
     }
+
+    // Ignore any client-supplied MaDichVu: server always generates it
+    if (Object.prototype.hasOwnProperty.call(req.body, 'MaDichVu')) {
+      // Do not allow client to set MaDichVu; silently ignore but log for debugging
+      console.warn('Client attempted to set MaDichVu on create — ignored');
+      try { delete req.body.MaDichVu; } catch (e) { /* ignore */ }
+    }
+
+    // Generate a unique MaDichVu in format DVxxx using derived sequence
+    let seq = await getNextServiceSeq();
+    // format with at least 3 digits
+    const MaDichVu = `DV${String(seq).padStart(3, '0')}`;
 
     const embedded = {
       MaDichVu,
@@ -149,7 +196,8 @@ export const updateService = async (req, res, next) => {
     const isObjId = mongoose.Types.ObjectId.isValid(id);
     const filter = isObjId ? { 'DichVu._id': id } : { 'DichVu.MaDichVu': id };
 
-    const allowed = ['TenDichVu', 'GiaDichVu', 'DonViTinh', 'MoTaDichVu', 'HinhAnhDichVu', 'MaDichVu', 'TrangThai', 'ThoiGianPhucVu'];
+  // Do not allow changing MaDichVu via update (it's immutable)
+  const allowed = ['TenDichVu', 'GiaDichVu', 'DonViTinh', 'MoTaDichVu', 'HinhAnhDichVu', 'TrangThai', 'ThoiGianPhucVu'];
     const setFields = {};
     allowed.forEach((key) => {
       if (Object.prototype.hasOwnProperty.call(req.body, key)) {
@@ -257,16 +305,78 @@ export const uploadServiceImage = async (req, res, next) => {
 
     let service = await findServiceByParam(id);
     const usingCode = service ? service.MaDichVu : id;
+    // Resolve images directory relative to this file to avoid CWD-dependent paths
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
 
-    const imagesDir = path.resolve('backend', 'src', 'assets', 'images', 'services');
+    // Read optional flags from the multipart form fields
+    const preserveNameFlag = req.body && (req.body.preserveName === '1' || req.body.preserveName === 'true' || req.body.preserveName === 'yes');
+    const requestedExisting = req.body && req.body.existingFilename ? String(req.body.existingFilename) : '';
+
+    // Determine where to save the file. Default: services folder.
+    // If the client provided an existingFilename that contains a path or URL
+    // pointing to another assets subfolder (e.g. /assets/images/room), save there instead.
+    let imagesDir = path.join(__dirname, '..', 'assets', 'images', 'services');
+    if (requestedExisting && requestedExisting.trim()) {
+      try {
+        let p = String(requestedExisting).trim();
+        // If it's a full URL, extract the pathname
+        if (/^https?:\/\//i.test(p)) {
+          try { p = new URL(p).pathname; } catch (e) { /* ignore */ }
+        }
+        // Normalize to use forward slashes for detection
+        const lp = p.replace(/\\/g, '/');
+        if (lp.includes('/assets/images/room')) {
+          imagesDir = path.join(__dirname, '..', 'assets', 'images', 'room');
+        } else if (lp.includes('/assets/images/services')) {
+          imagesDir = path.join(__dirname, '..', 'assets', 'images', 'services');
+        } else {
+          // Try to capture other subfolders under /assets/images/<sub>
+          const m = lp.match(/\/assets\/images\/([^\/]+)/);
+          if (m && m[1]) {
+            imagesDir = path.join(__dirname, '..', 'assets', 'images', m[1]);
+          }
+        }
+      } catch (e) {
+        // ignore and use default
+      }
+    }
     await fs.mkdir(imagesDir, { recursive: true });
 
     const ext = path.extname(req.file.originalname) || '';
     const prevFilename = service ? (service.HinhAnhDichVu || '') : '';
-    const filenameToUse = prevFilename && prevFilename.trim() ? prevFilename : `${usingCode}${ext}`;
-    const target = path.join(imagesDir, filenameToUse);
 
-    await fs.writeFile(target, req.file.buffer);
+  // If the client requests to preserve the existing filename, prefer that (but sanitize)
+
+    // Use the service's name as the image filename (sanitized). Fallback to code.
+    const nameSan = sanitizeName(service?.TenDichVu || usingCode) || String(usingCode).replace(/[^a-zA-Z0-9_-]/g, '_');
+    let baseName = nameSan;
+  const filenameToUse = `${baseName}${ext}`;
+  const target = path.join(imagesDir, filenameToUse);
+  // no thumbnail generation - save only the main image
+
+    // Use sharp to write optimized main image and a thumbnail
+    try {
+      // Write large/optimized main image (preserve aspect ratio, max width 1200)
+      await sharp(req.file.buffer).resize({ width: 1200, withoutEnlargement: true }).toFile(target);
+  // (thumbnail generation intentionally disabled)
+    } catch (sharpErr) {
+      // Fallback: write raw buffer if sharp fails
+      await fs.writeFile(target, req.file.buffer);
+      console.warn('sharp processing failed, wrote raw file instead:', sharpErr);
+    }
+
+    // If previous filename existed and is different from the new one, try to remove the old files
+    try {
+      if (prevFilename && prevFilename.trim() && prevFilename !== filenameToUse) {
+        const prevNameOnly = path.basename(prevFilename);
+        const prevTarget = path.join(imagesDir, prevNameOnly);
+        // unlink if exists (ignore errors)
+        try { await fs.unlink(prevTarget); } catch (e) { /* ignore */ }
+      }
+    } catch (e) {
+      // ignore cleanup errors
+    }
 
     let modifiedCount = 0;
     try {

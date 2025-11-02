@@ -51,6 +51,16 @@ app.use(
   })
 );
 
+// Serve service images with no-store as well so edits show immediately in the admin UI
+app.use(
+  '/assets/images/services',
+  express.static(path.join(__dirname, 'assets', 'images', 'services'), {
+    setHeaders: (res, filePath) => {
+      res.setHeader('Cache-Control', 'no-store, max-age=0');
+    },
+  })
+);
+
 // Fallback static serving for other assets
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
