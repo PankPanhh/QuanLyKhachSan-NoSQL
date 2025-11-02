@@ -17,6 +17,8 @@ import RegisterPage from "../page/Main/Auth/RegisterPage.jsx";
 import NotFoundPage from "../page/NotFoundPage.jsx";
 
 import AboutPage from "../page/Main/AboutPage.jsx";
+import ServicesListPage from "../page/Main/ServicesListPage.jsx";
+import ServiceDetailPage from "../page/Main/ServiceDetailPage.jsx";
 
 
 // Component layout riêng cho trang Auth (không Header/Footer)
@@ -31,8 +33,10 @@ function MainRoutes() {
       <Route path="/" element={<MainLayout />}>
         <Route index element={<MainPage />} />
         <Route path="rooms" element={<RoomsPage />} />
+  <Route path="services" element={<ServicesListPage />} />
         <Route path="about" element={<AboutPage />} />
-        <Route path="room/:id" element={<RoomDetailPage />} />
+  <Route path="room/:id" element={<RoomDetailPage />} />
+  <Route path="service/:id" element={<ServiceDetailPage />} />
         <Route path="booking" element={<BookingPage />} />
         <Route path="promotions" element={<PromotionsPage />} />
         <Route path="contact" element={<ContactPage />} />

@@ -5,6 +5,7 @@ import React, { useEffect } from "react";
 import BookingForm from "../../components/booking/BookingForm";
 import RoomCard from "../../components/rooms/RoomCard";
 import AboutUs from "../../components/layout/AboutUs";
+import ServicesSection from "../../components/services/ServicesSection";
 
 
 // Import các icon
@@ -165,7 +166,7 @@ function MainPage() {
       <br />
       <AboutUs />
 
-      {/* <ServicesSection /> */}
+      <ServicesSection />
 
       <section id="blog" className="padding-medium pt-0">
         {/* ... (Nội dung Blog) ... */}

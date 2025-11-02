@@ -31,10 +31,15 @@ const roomSchema = new mongoose.Schema(
     // Services available for the room (embedded)
     DichVu: [
       {
-        MaDichVu: { type: String },
-        TenDichVu: { type: String },
-        GiaDichVu: { type: Number },
-        DonViTinh: { type: String },
+        MaDichVu: { type: String, required: true },
+        TenDichVu: { type: String, required: true },
+        GiaDichVu: { type: Number, default: 0, min: 0 },
+        DonViTinh: { type: String, default: 'Lần' },
+        HinhAnhDichVu: { type: String, default: '' },
+        MoTaDichVu: { type: String, default: '' },
+        TrangThai: { type: String, enum: ['Đang hoạt động', 'Tạm ngưng'], default: 'Đang hoạt động' },
+        ThoiGianPhucVu: { type: String, default: '' },
+        NguoiPhuTrach: { type: String, default: '' }
       },
     ],
 
