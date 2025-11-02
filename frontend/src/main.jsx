@@ -23,3 +23,22 @@ root.render(
   </BrowserRouter>
   // </React.StrictMode>
 );
+
+// Hide/remove the global preloader once React has mounted, regardless of route
+// This fixes cases where you land directly on /rooms (or any route) and the preloader overlay keeps covering content.
+(() => {
+  const hidePreloader = () => {
+    const preloader = document.querySelector(".preloader");
+    if (!preloader) return;
+    preloader.style.opacity = "0";
+    preloader.style.visibility = "hidden";
+    preloader.style.display = "none";
+    document.body.classList.remove("preloader-site");
+  };
+
+  // Try immediately after first render
+  setTimeout(hidePreloader, 0);
+
+  // Also as a fallback when window fully loads
+  window.addEventListener("load", hidePreloader, { once: true });
+})();
