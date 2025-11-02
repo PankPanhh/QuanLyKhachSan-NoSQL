@@ -1,18 +1,18 @@
-import React from 'react';
-import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import React from "react";
+import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 // Dữ liệu: 95% hoàn thành, 5% còn lại
 const data = [
-  { name: 'Complete', value: 95 },
-  { name: 'Empty', value: 5 },
+  { name: "Complete", value: 95 },
+  { name: "Empty", value: 5 },
 ];
 
 // Màu: Xanh cho 95%, màu nền tối cho 5%
-const COLORS = ['#3b82f6', '#1f2a4f'];
+const COLORS = ["#3b82f6", "#1f2a4f"];
 
 function SatisfactionChart() {
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height="100%" minHeight={200}>
       <PieChart>
         <Pie
           data={data}
@@ -30,11 +30,11 @@ function SatisfactionChart() {
           ))}
         </Pie>
         {/* Thêm chữ 95% ở giữa */}
-        <text 
-          x="50%" 
-          y="50%" 
-          textAnchor="middle" 
-          dominantBaseline="middle" 
+        <text
+          x="50%"
+          y="50%"
+          textAnchor="middle"
+          dominantBaseline="middle"
           fill="#ffffff"
           fontSize="24px"
           fontWeight="bold"

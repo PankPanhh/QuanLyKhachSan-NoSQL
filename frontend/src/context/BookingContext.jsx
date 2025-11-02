@@ -1,33 +1,6 @@
-import React, { createContext, useState } from 'react';
+import { createContext } from "react";
 
+// Export only the context object from this file so the provider (component)
+// can live in a separate module. This avoids mixing non-component exports
+// with components and satisfies fast-refresh lint rules.
 export const BookingContext = createContext();
-
-export const BookingProvider = ({ children }) => {
-  const [bookingDetails, setBookingDetails] = useState({
-    room: null,
-    checkInDate: new Date(),
-    checkOutDate: new Date(new Date().setDate(new Date().getDate() + 1)),
-    guests: 2,
-    rooms: 1,
-  });
-
-  const updateBookingDetails = (details) => {
-    setBookingDetails(prev => ({ ...prev, ...details }));
-  };
-
-  const resetBooking = () => {
-    setBookingDetails({
-      room: null,
-      checkInDate: new Date(),
-      checkOutDate: new Date(new Date().setDate(new Date().getDate() + 1)),
-      guests: 2,
-      rooms: 1,
-    });
-  };
-
-  return (
-    <BookingContext.Provider value={{ bookingDetails, updateBookingDetails, resetBooking }}>
-      {children}
-    </BookingContext.Provider>
-  );
-};

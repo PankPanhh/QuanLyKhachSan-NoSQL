@@ -1,6 +1,6 @@
 // Đây là code đã refactor từ file MainPage.jsx gốc của bạn
 // CẬP NHẬT: Dùng Context
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -28,6 +28,44 @@ function BookingForm({ roomId = null }) {
   const [showModal, setShowModal] = useState(false);
   const [availableRooms, setAvailableRooms] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [filterText, setFilterText] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+
+  // Close modal on Escape and reset small states when opened/closed
+  useEffect(() => {
+    if (!showModal) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") setShowModal(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [showModal]);
+
+  // Lock body scroll while modal is open (we render modal manually, so Bootstrap's
+  // automatic body class isn't applied). This prevents the page from keeping its
+  // own scrollbar and leaving multiple scrollbars visible.
+  useEffect(() => {
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+    if (showModal) {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+    }
+    return () => {
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+    };
+  }, [showModal]);
+
+  const roomTypes = useMemo(() => {
+    return [
+      "all",
+      ...Array.from(new Set(availableRooms.map((r) => r.LoaiPhong || "Khác"))),
+    ];
+  }, [availableRooms]);
 
   const handleCheckInChange = (date) => {
     setCheckInDate(date);
@@ -56,7 +94,7 @@ function BookingForm({ roomId = null }) {
     // Nếu ở trang chủ, gọi API lấy phòng trống và hiển thị modal
     setLoading(true);
     try {
-      const startDate = checkInDate.toISOString().split("T")[0]; // YYYY-MM-DD
+      const startDate = checkInDate.toISOString().split("T")[0];
       const endDate = checkOutDate.toISOString().split("T")[0];
       const roomsData = await getAvailableRooms(startDate, endDate);
       setAvailableRooms(roomsData);
@@ -75,10 +113,17 @@ function BookingForm({ roomId = null }) {
       checkOutDate,
       rooms,
       guests,
-      room: room._id, // hoặc room.MaPhong
+      // store both object and id to make downstream components flexible
+      room: room,
+      roomId: room._id || room.id,
     });
     setShowModal(false);
     navigate("/booking");
+  };
+
+  const handleViewDetails = (room) => {
+    setShowModal(false);
+    navigate(`/room/${room._id}`); // Route chi tiết phòng là /room/:id
   };
 
   return (
@@ -197,50 +242,131 @@ function BookingForm({ roomId = null }) {
 
       {/* MODAL HIỂN THỊ PHÒNG TRỐNG */}
       <div
-        className={`modal fade ${showModal ? "show" : ""}`}
-        style={{ display: showModal ? "block" : "none" }}
+        className={`modal fade ${showModal ? "show" : ""} available-modal`}
+        style={{ display: showModal ? "block" : "none", zIndex: 2000 }}
         tabIndex="-1"
+        role="dialog"
+        aria-modal={showModal}
+        aria-labelledby="availableRoomsTitle"
       >
-        <div className="modal-dialog modal-lg">
+        <div className="modal-dialog modal-lg modal-dialog-scrollable">
           <div className="modal-content">
             <div className="modal-header">
-              <h5 className="modal-title">
-                Phòng trống từ {checkInDate.toLocaleDateString()} đến{" "}
-                {checkOutDate.toLocaleDateString()}
-              </h5>
-              <button
-                type="button"
-                className="btn-close"
-                onClick={() => setShowModal(false)}
-              ></button>
+              <div>
+                <h5 className="modal-title" id="availableRoomsTitle">
+                  Phòng trống
+                </h5>
+                <small className="text-muted">
+                  Từ {checkInDate.toLocaleDateString()} đến{" "}
+                  {checkOutDate.toLocaleDateString()}
+                </small>
+              </div>
+              <div className="ms-3 text-end">
+                <div className="mb-1">{availableRooms.length} kết quả</div>
+                <button
+                  type="button"
+                  className="btn-close"
+                  aria-label="Đóng"
+                  onClick={() => setShowModal(false)}
+                ></button>
+              </div>
             </div>
+
             <div className="modal-body">
+              {/* Filter / Search bar */}
+              <div className="d-flex gap-2 align-items-center mb-3">
+                <input
+                  className="form-control"
+                  placeholder="Tìm theo tên phòng..."
+                  value={filterText}
+                  onChange={(e) => setFilterText(e.target.value)}
+                />
+                <select
+                  className="form-select"
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value)}
+                >
+                  <option value="all">Tất cả loại phòng</option>
+                  {roomTypes
+                    .filter((t) => t !== "all")
+                    .map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
               {availableRooms.length === 0 ? (
-                <p>Không có phòng trống trong khoảng thời gian này.</p>
+                <div className="p-4 text-center text-muted">
+                  Không có phòng trống trong khoảng thời gian này.
+                </div>
               ) : (
                 <div className="row">
-                  {availableRooms.map((room) => (
-                    <div key={room._id} className="col-md-6 mb-3">
-                      <div className="card">
-                        <div className="card-body">
-                          <h6 className="card-title">{room.TenPhong}</h6>
-                          <p className="card-text">Loại: {room.LoaiPhong}</p>
-                          <p className="card-text">
-                            Giá: {room.GiaPhong?.toLocaleString()} VND/đêm
-                          </p>
-                          <p className="card-text">
-                            Số giường: {room.SoGiuong}
-                          </p>
-                          <button
-                            className="btn btn-primary"
-                            onClick={() => handleSelectRoom(room)}
-                          >
-                            Chọn phòng
-                          </button>
+                  {availableRooms
+                    .filter(
+                      (room) =>
+                        (typeFilter === "all" ||
+                          room.LoaiPhong === typeFilter) &&
+                        room.TenPhong.toLowerCase().includes(
+                          filterText.toLowerCase()
+                        )
+                    )
+                    .map((room) => (
+                      <div key={room._id} className="col-md-4 mb-3">
+                        <div className="card room-card shadow-sm">
+                          <div className="card-img-wrap">
+                            {room.HinhAnh ? (
+                              <img
+                                src={`http://localhost:5000/assets/images/room/${room.HinhAnh}`}
+                                className="card-img-top"
+                                alt={room.TenPhong}
+                                style={{ height: "220px", objectFit: "cover" }}
+                              />
+                            ) : (
+                              <div className="card-img-placeholder" />
+                            )}
+                            <span className="room-badge">Sẵn sàng</span>
+                            <span className="price-tag">
+                              {room.GiaPhong?.toLocaleString()}₫{" "}
+                              <small className="per-night">/đêm</small>
+                            </span>
+                          </div>
+                          <div className="card-body">
+                            <h6 className="card-title mb-1">{room.TenPhong}</h6>
+                            <div className="text-muted small mb-2">
+                              {room.LoaiPhong} • {room.SoGiuong} giường
+                            </div>
+                            <p
+                              className="card-text text-truncate"
+                              style={{ maxHeight: "3.2rem" }}
+                            >
+                              {room.MoTa || "Không có mô tả"}
+                            </p>
+                            <div className="d-flex justify-content-between align-items-center mt-3">
+                              <div className="btn-group">
+                                <button
+                                  className="btn btn-primary btn-sm"
+                                  onClick={() => handleSelectRoom(room)}
+                                >
+                                  Chọn
+                                </button>
+                                <button
+                                  className="btn btn-outline-secondary btn-sm"
+                                  onClick={() => handleViewDetails(room)}
+                                >
+                                  Chi tiết
+                                </button>
+                              </div>
+                              {/* moved '/đêm' into price tag overlay for clearer position */}
+                              <div className="text-end small text-muted d-none">
+                                /đêm
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               )}
             </div>
@@ -256,7 +382,12 @@ function BookingForm({ roomId = null }) {
           </div>
         </div>
       </div>
-      {showModal && <div className="modal-backdrop fade show"></div>}
+      {showModal && (
+        <div
+          className="modal-backdrop fade show"
+          style={{ zIndex: 1990 }}
+        ></div>
+      )}
     </>
   );
 }

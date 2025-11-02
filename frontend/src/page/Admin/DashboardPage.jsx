@@ -1,227 +1,201 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import RevenueChart from '../../components/charts/RevenueChart';
 import BookingChart from '../../components/charts/BookingChart';
-import SatisfactionChart from '../../components/charts/SatisfactionChart'; // Import file mới
-import { FaWallet, FaGlobe, FaUserPlus, FaShoppingCart, FaArrowRight } from 'react-icons/fa';
-
-// CSS đã cập nhật cho Giao diện Dark Mode
-const styles = {
-  card: {
-    backgroundColor: '#111c44',
-    padding: '1.5rem',
-    borderRadius: '12px',
-    border: '1px solid #1f2a4f',
-    color: '#ffffff',
-    height: '100%',
-  },
-  // Card thống kê (hàng 1)
-  statCard: {
-    backgroundColor: '#111c44',
-    padding: '1.5rem',
-    borderRadius: '12px',
-    border: '1px solid #1f2a4f',
-    color: '#ffffff',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  statIcon: {
-    width: '50px',
-    height: '50px',
-    borderRadius: '8px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#3b82f6',
-    color: 'white',
-    fontSize: '1.5rem',
-  },
-  statTitle: {
-    color: '#a0aec0',
-    fontSize: '0.9rem',
-    textTransform: 'uppercase',
-    marginBottom: '0.25rem'
-  },
-  statValue: {
-    color: '#ffffff',
-    fontSize: '1.5rem',
-    fontWeight: 'bold',
-    margin: 0
-  },
-  // Card Welcome (con sứa)
-  welcomeCard: {
-    padding: '2rem',
-    // Sử dụng ảnh jellyfish từ Pexels
-    backgroundImage: 'url("https://images.pexels.com/photos/1001752/pexels-photo-1001752.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1")',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  welcomeOverlay: { // Lớp phủ mờ
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(17, 28, 68, 0.7)', // #111c44 với 70% opacity
-    zIndex: 1,
-  },
-  welcomeContent: {
-    position: 'relative',
-    zIndex: 2,
-  },
-  recordButton: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    marginTop: '1rem',
-    color: '#ffffff',
-    cursor: 'pointer',
-    fontWeight: 'bold',
-  },
-  // Card Biểu đồ
-  chartTitle: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    marginBottom: '1.5rem'
-  },
-  chartContainer: {
-    height: '350px' // Tăng chiều cao biểu đồ
-  },
-  chartContainerSmall: {
-    height: '250px' // Chiều cao cho biểu đồ tròn
-  },
-  // Card Referral
-  referralItem: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '0.5rem 0',
-  },
-  referralLabel: {
-    color: '#a0aec0',
-    fontSize: '0.9rem',
-  },
-  referralValue: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: '1.1rem',
-  },
-  safetyScore: {
-    marginTop: '1rem',
-    padding: '1rem',
-    backgroundColor: '#0f1734',
-    borderRadius: '8px',
-    textAlign: 'center',
-  }
-}
+import SatisfactionChart from '../../components/charts/SatisfactionChart';
+import { AuthContext } from '../../context/AuthContext';
 
 function DashboardPage() {
+  const { user } = useContext(AuthContext);
   return (
-    <div>
-      {/* Hàng 1: Thẻ thống kê */}
-      <div className="row g-4 mb-4">
-        <div className="col-lg-3 col-md-6">
-            <div style={styles.statCard}>
-                <div>
-                  <h4 style={styles.statTitle}>Today's Money</h4>
-                  <p style={styles.statValue}>$ 15,000</p>
-                </div>
-                <div style={styles.statIcon}><FaWallet /></div>
+    <div className="row">
+      {/* Hàng 1: Welcome Card */}
+      <div className="col-lg-8 mb-4 order-0">
+        <div className="card">
+          <div className="d-flex align-items-end row">
+            <div className="col-sm-7">
+              <div className="card-body">
+                <h5 className="card-title text-primary">Welcome back, {user?.HoTen || 'Mark Johnson'}! 🎉</h5>
+                <p className="mb-4">
+                  Glad to see you again! Ask me anything.
+                </p>
+                <button type="button" className="btn btn-sm btn-outline-primary">
+                  Tap to record
+                </button>
+              </div>
             </div>
-        </div>
-        <div className="col-lg-3 col-md-6">
-            <div style={styles.statCard}>
-                <div>
-                  <h4 style={styles.statTitle}>Today's Users</h4>
-                  <p style={styles.statValue}>2,300</p>
-                </div>
-                <div style={styles.statIcon}><FaGlobe /></div>
-            </div>
-        </div>
-        <div className="col-lg-3 col-md-6">
-            <div style={styles.statCard}>
-                <div>
-                  <h4 style={styles.statTitle}>New Clients</h4>
-                  <p style={styles.statValue}>+3,462</p>
-                </div>
-                <div style={styles.statIcon}><FaUserPlus /></div>
-            </div>
-        </div>
-        <div className="col-lg-3 col-md-6">
-            <div style={styles.statCard}>
-                <div>
-                  <h4 style={styles.statTitle}>Total Sales</h4>
-                  <p style={styles.statValue}>$ 103,430</p>
-                </div>
-                <div style={styles.statIcon}><FaShoppingCart /></div>
-            </div>
-        </div>
-      </div>
-
-      {/* Hàng 2: Welcome, Satisfaction, Referral */}
-      <div className="row g-4 mb-4">
-        <div className="col-lg-5">
-          <div style={{ ...styles.card, ...styles.welcomeCard }}>
-            <div style={styles.welcomeOverlay}></div>
-            <div style={styles.welcomeContent}>
-              <h5 style={{color: '#a0aec0'}}>Welcome back,</h5>
-              <h2 style={{color: 'white', fontWeight: 'bold'}}>Mark Johnson</h2>
-              <p style={{color: '#a0aec0', maxWidth: '80%'}}>Glad to see you again! Ask me anything.</p>
-              <div style={styles.recordButton}>
-                Tap to record <FaArrowRight style={{marginLeft: '0.5rem'}} />
+            <div className="col-sm-5 text-center text-sm-left">
+              <div className="card-body pb-0 px-0 px-md-4">
+                  <img
+                    src="/images/illustrations/man-with-laptop-light.png"
+                  height="140"
+                  alt="View Badge User"
+                />
               </div>
             </div>
           </div>
         </div>
-        <div className="col-lg-4">
-          <div style={{ ...styles.card, paddingBottom: '0' }}>
-            <h5 style={styles.chartTitle}>Satisfaction Rate</h5>
-            <p style={{color: '#a0aec0', marginTop: '-1rem'}}>From all projects</p>
-            <div style={styles.chartContainerSmall}>
-              <SatisfactionChart />
+      </div>
+      
+      {/* Hàng 1: Thẻ thống kê nhỏ (Sneat) */}
+      <div className="col-lg-4 col-md-4 order-1">
+        <div className="row">
+          <div className="col-lg-6 col-md-12 col-6 mb-4">
+            <div className="card">
+              <div className="card-body">
+                <div className="card-title d-flex align-items-start justify-content-between">
+                  <div className="avatar shrink-0">
+                      <img
+                        src="/images/icons/unicons/chart-success.png"
+                      alt="chart success"
+                      className="rounded"
+                    />
+                  </div>
+                </div>
+                <span className="fw-semibold d-block mb-1">Today's Money</span>
+                <h3 className="card-title mb-2">$ 15,000</h3>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="col-lg-3">
-          <div style={styles.card}>
-            <h5 style={styles.chartTitle}>Referral Tracking</h5>
-            <div style={styles.referralItem}>
-              <span style={styles.referralLabel}>Invited</span>
-              <span style={styles.referralValue}>145 people</span>
-            </div>
-            <hr style={{borderColor: '#1f2a4f'}}/>
-            <div style={styles.referralItem}>
-              <span style={styles.referralLabel}>Bonus</span>
-              <span style={styles.referralValue}>1,465</span>
-            </div>
-            <div style={styles.safetyScore}>
-              <span style={styles.referralLabel}>Safety</span>
-              <p style={{...styles.referralValue, fontSize: '2rem', color: '#3b82f6', margin: '0.5rem 0 0 0'}}>9.3</p>
-              <span style={styles.referralLabel}>Total Score</span>
+          <div className="col-lg-6 col-md-12 col-6 mb-4">
+            <div className="card">
+              <div className="card-body">
+                <div className="card-title d-flex align-items-start justify-content-between">
+                  <div className="avatar shrink-0">
+                      <img
+                        src="/images/icons/unicons/wallet-info.png"
+                      alt="Credit Card"
+                      className="rounded"
+                    />
+                  </div>
+                </div>
+                <span>Today's Users</span>
+                <h3 className="card-title text-nowrap mb-1">2,300</h3>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Hàng 3: Biểu đồ */}
-      <div className="row g-4">
-        <div className="col-lg-8">
-            <div style={styles.card}>
-                <h5 style={styles.chartTitle}>Sales Overview</h5>
-                <p style={{color: '#a0aec0', marginTop: '-1rem'}}>+5% more in 2021</p>
-                <div style={styles.chartContainer}>
-                    <RevenueChart />
-                </div>
+      {/* Hàng 2: Total Revenue (Sales Overview) */}
+      <div className="col-12 col-lg-8 order-2 order-md-3 order-lg-2 mb-4">
+        <div className="card">
+          <div className="card-header">
+            <h5 className="card-title m-0 me-2">Sales Overview</h5>
+          </div>
+          <div className="card-body">
+            <div style={{ height: '350px' }}>
+              <RevenueChart />
             </div>
+          </div>
         </div>
-        <div className="col-lg-4">
-            <div style={styles.card}>
-                <h5 style={styles.chartTitle}>Active Users</h5>
-                <div style={styles.chartContainer}>
-                    <BookingChart />
+      </div>
+
+      {/* Hàng 2: Thống kê còn lại */}
+      <div className="col-12 col-md-8 col-lg-4 order-3 order-md-2">
+        <div className="row">
+          <div className="col-6 mb-4">
+            <div className="card">
+              <div className="card-body">
+                <div className="card-title d-flex align-items-start justify-content-between">
+                  <div className="avatar shrink-0">
+                      <img src="/images/icons/unicons/paypal.png" alt="Credit Card" className="rounded" />
+                  </div>
                 </div>
+                <span className="d-block mb-1">New Clients</span>
+                <h3 className="card-title text-nowrap mb-2">+3,462</h3>
+              </div>
             </div>
+          </div>
+          <div className="col-6 mb-4">
+            <div className="card">
+              <div className="card-body">
+                <div className="card-title d-flex align-items-start justify-content-between">
+                  <div className="avatar shrink-0">
+                      <img src="/images/icons/unicons/cc-primary.png" alt="Credit Card" className="rounded" />
+                  </div>
+                </div>
+                <span className="fw-semibold d-block mb-1">Total Sales</span>
+                <h3 className="card-title mb-2">$ 103,430</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Hàng 3: Active Users & Satisfaction Rate */}
+      
+      {/* Active Users (BookingChart) */}
+      <div className="col-md-6 col-lg-4 col-xl-4 order-0 mb-4">
+        <div className="card h-100">
+          <div className="card-header d-flex align-items-center justify-content-between pb-0">
+            <div className="card-title mb-0">
+              <h5 className="m-0 me-2">Active Users</h5>
+            </div>
+          </div>
+          <div className="card-body">
+            <div style={{ height: '350px' }}>
+              <BookingChart />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Satisfaction Rate */}
+      <div className="col-md-6 col-lg-4 order-1 mb-4">
+        <div className="card h-100">
+          <div className="card-header">
+             <h5 className="card-title m-0 me-2">Satisfaction Rate</h5>
+          </div>
+          <div className="card-body">
+            <p>From all projects</p>
+            <div style={{ height: '250px', marginTop: '2rem' }}>
+              <SatisfactionChart />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Referral Tracking - Gộp vào "Transactions" card style */}
+      <div className="col-md-6 col-lg-4 order-2 mb-4">
+        <div className="card h-100">
+          <div className="card-header d-flex align-items-center justify-content-between">
+            <h5 className="card-title m-0 me-2">Referral Tracking</h5>
+          </div>
+          <div className="card-body">
+            <ul className="p-0 m-0">
+              <li className="d-flex mb-4 pb-1">
+                <div className="avatar shrink-0 me-3">
+            <img src="/images/icons/unicons/wallet.png" alt="User" className="rounded" />
+                </div>
+                <div className="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                  <div className="me-2">
+                    <small className="text-muted d-block mb-1">Invited</small>
+                    <h6 className="mb-0">145 people</h6>
+                  </div>
+                  <div className="user-progress d-flex align-items-center gap-1">
+                    <h6 className="mb-0">1,465</h6>
+                    <span className="text-muted">Bonus</span>
+                  </div>
+                </div>
+              </li>
+              <li className="d-flex">
+                 <div className="avatar shrink-0 me-3">
+                  <span className="avatar-initial rounded bg-label-primary">
+                    <i className="bx bx-shield-quarter"></i>
+                  </span>
+                </div>
+                <div className="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                  <div className="me-2">
+                    <h6 className="mb-0">Safety Score</h6>
+                    <small className="text-muted">Total Score</small>
+                  </div>
+                  <div className="user-progress">
+                    <h5 className="mb-0 text-primary">9.3</h5>
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>

@@ -1,114 +1,79 @@
 import React, { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
-import { FaUserCircle, FaSignOutAlt, FaSearch, FaBell, FaCog } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
-
-// CSS cập nhật cho Giao diện Dark Mode
-const styles = {
-  topbar: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    height: '100%',
-    color: '#ffffff',
-  },
-  leftSection: {
-    display: 'flex',
-    alignItems: 'center',
-  },
-  breadcrumb: {
-    color: '#a0aec0',
-    fontSize: '0.9rem',
-  },
-  breadcrumbPage: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    fontSize: '0.9rem'
-  },
-  searchBox: {
-    display: 'flex',
-    alignItems: 'center',
-    backgroundColor: '#0f1734', // Nền ô search (nền chính)
-    borderRadius: '8px',
-    padding: '0.5rem 0.75rem',
-    marginLeft: '2rem',
-    border: '1px solid #1f2a4f',
-  },
-  searchIcon: {
-    color: '#a0aec0',
-    marginRight: '0.5rem',
-  },
-  searchInput: {
-    background: 'none',
-    border: 'none',
-    outline: 'none',
-    color: '#ffffff',
-  },
-  rightSection: {
-    display: 'flex',
-    alignItems: 'center',
-  },
-  iconButton: {
-    background: 'none',
-    border: 'none',
-    color: '#a0aec0',
-    fontSize: '1.2rem',
-    cursor: 'pointer',
-    marginLeft: '1.5rem',
-  },
-  userMenu: {
-    display: 'flex',
-    alignItems: 'center',
-    cursor: 'pointer',
-    marginLeft: '1.5rem',
-  },
-  userName: {
-    margin: '0 0.5rem',
-    color: '#a0aec0',
-    fontSize: '0.9rem'
-  },
-};
 
 function TopbarAdmin() {
-  const { user, logout } = useContext(AuthContext);
+  // Guard against missing context (HMR / early render). If AuthContext isn't available
+  // useContext(AuthContext) may return undefined; avoid destructuring directly.
+  const auth = useContext(AuthContext) || {};
+  const user = auth.user;
+  const logout = auth.logout || (() => {});
 
   return (
-    <div style={styles.topbar}>
-      {/* Phần bên trái */}
-      <div style={styles.leftSection}>
-        <div>
-          <span style={styles.breadcrumb}>Pages / </span>
-          <span style={styles.breadcrumbPage}>Dashboard</span>
-        </div>
+    <nav
+      className="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme"
+      id="layout-navbar"
+    >
+      <div className="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+        <a className="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
+          <i className="bx bx-menu bx-sm"></i>
+        </a>
       </div>
-      
-      {/* Phần bên phải */}
-      <div style={styles.rightSection}>
-        <div style={styles.searchBox}>
-          <FaSearch style={styles.searchIcon} />
-          <input 
-            type="text" 
-            placeholder="Type here..." 
-            style={styles.searchInput} 
-          />
-        </div>
 
-        <div style={styles.userMenu}>
-          <FaUserCircle size={20} color="#a0aec0" />
-          <span style={styles.userName}>{user?.name || 'Admin'}</span>
-        </div>
-        
-        <button style={styles.iconButton} title="Thông báo">
-          <FaBell />
-        </button>
-        <button style={styles.iconButton} title="Cài đặt">
-          <FaCog />
-        </button>
-        <button onClick={logout} style={{...styles.iconButton, color: '#e74c3c'}} title="Đăng xuất">
-          <FaSignOutAlt />
-        </button>
+      <div className="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+        <ul className="navbar-nav flex-row align-items-center ms-auto">
+          {/* User */}
+          <li className="nav-item navbar-dropdown dropdown-user dropdown">
+            <a className="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+              <div className="avatar avatar-online">
+                <img src="/images/avatars/1.png" alt="User Avatar" className="w-px-40 h-auto rounded-circle" />
+              </div>
+            </a>
+            <ul className="dropdown-menu dropdown-menu-end">
+              <li>
+                <a className="dropdown-item" href="#">
+                  <div className="d-flex">
+                    <div className="shrink-0 me-3">
+                      <div className="avatar avatar-online">
+                        <img src="/images/avatars/1.png" alt="User Avatar" className="w-px-40 h-auto rounded-circle" />
+                      </div>
+                    </div>
+                    <div className="flex-grow-2">
+                      <span className="fw-semibold d-block">{user?.HoTen || 'Admin'}</span>
+                      <small className="text-muted">Admin</small>
+                    </div>
+                  </div>
+                </a>
+              </li>
+              <li>
+                <div className="dropdown-divider"></div>
+              </li>
+              <li>
+                <a className="dropdown-item" href="#">
+                  <i className="bx bx-user me-2"></i>
+                  <span className="align-middle">My Profile</span>
+                </a>
+              </li>
+              <li>
+                <a className="dropdown-item" href="#">
+                  <i className="bx bx-cog me-2"></i>
+                  <span className="align-middle">Settings</span>
+                </a>
+              </li>
+              <li>
+                <div className="dropdown-divider"></div>
+              </li>
+              <li>
+                <a className="dropdown-item" href="#" onClick={logout}>
+                  <i className="bx bx-power-off me-2"></i>
+                  <span className="align-middle">Log Out</span>
+                </a>
+              </li>
+            </ul>
+          </li>
+          {/* / User */}
+        </ul>
       </div>
-    </div>
+    </nav>
   );
 }
 

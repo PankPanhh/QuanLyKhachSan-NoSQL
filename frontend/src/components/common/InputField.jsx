@@ -2,27 +2,48 @@ import React from 'react';
 
 function InputField({ 
   id, 
+  name,
   label, 
   type = 'text', 
   placeholder, 
   value, 
   onChange, 
   defaultValue,
-  required = false 
+  required = false,
+  rows = 3,
+  disabled = false,
+  className = ''
 }) {
   return (
     <div className="mb-3">
-      <label htmlFor={id} className="form-label">{label}</label>
-      <input
-        type={type}
-        className="form-control"
-        id={id}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        defaultValue={defaultValue}
-        required={required}
-      />
+      {label && <label htmlFor={id || name} className="form-label">{label}</label>}
+      {type === 'textarea' ? (
+        <textarea
+          id={id || name}
+          name={name}
+          className={`form-control ${className}`}
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          defaultValue={defaultValue}
+          required={required}
+          rows={rows}
+          disabled={disabled}
+        />
+      ) : (
+        <input
+          type={type}
+          name={name}
+          className={`form-control ${className}`}
+          id={id || name}
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          defaultValue={defaultValue}
+          required={required}
+          disabled={disabled}
+        />
+      )}
     </div>
   );
 }
