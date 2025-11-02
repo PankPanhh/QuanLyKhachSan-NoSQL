@@ -198,7 +198,15 @@ export const createBooking = async (req, res, next) => {
 
     const booking = await Booking.create(doc);
 
-    // TODO: Cap nhat trang thai phong (neu can)
+    // Update room status so it reflects this booking immediately.
+    // If booking covers current time -> 'Đang sử dụng', otherwise mark as 'Đã đặt'
+    try {
+      const now = new Date();
+      const roomStatus = now >= NgayNhanPhong && now < NgayTraPhong ? 'Đang sử dụng' : 'Đã đặt';
+      await Room.findOneAndUpdate({ MaPhong }, { $set: { TinhTrang: roomStatus } });
+    } catch (err) {
+      console.error('[bookingController.createBooking] failed to update room status:', err);
+    }
 
     // TODO: Gui email xac nhan
     // await sendEmail(contactInfo.email, 'Xac nhan dat phong', `Cam on ban da dat phong...`, `...`);
@@ -248,11 +256,31 @@ export const cancelBooking = async (req, res, next) => {
       // use byMa
       byMa.TrangThai = "Đã hủy"; // set to 'Đã hủy' when cancelled
       await byMa.save();
+      // After cancellation, check if room should be freed (no other active bookings overlapping now)
+      try {
+        const roomId = byMa.MaPhong;
+        const overlapping = await Booking.findOne({ MaPhong: roomId, TrangThai: { $ne: 'Đã hủy' }, NgayNhanPhong: { $lt: new Date() }, NgayTraPhong: { $gt: new Date() } });
+        if (!overlapping) {
+          await Room.findOneAndUpdate({ MaPhong: roomId }, { $set: { TinhTrang: 'Trống' } });
+        }
+      } catch (err) {
+        console.error('[bookingController.cancelBooking] error updating room status after cancel:', err);
+      }
       return res.status(200).json({ success: true, data: byMa });
     }
 
     booking.TrangThai = "Đã hủy"; // set to 'Đã hủy' when cancelled
     await booking.save();
+    // After cancellation, check if room should be freed
+    try {
+      const roomId = booking.MaPhong;
+      const overlapping = await Booking.findOne({ MaPhong: roomId, TrangThai: { $ne: 'Đã hủy' }, NgayNhanPhong: { $lt: new Date() }, NgayTraPhong: { $gt: new Date() } });
+      if (!overlapping) {
+        await Room.findOneAndUpdate({ MaPhong: roomId }, { $set: { TinhTrang: 'Trống' } });
+      }
+    } catch (err) {
+      console.error('[bookingController.cancelBooking] error updating room status after cancel:', err);
+    }
     return res.status(200).json({ success: true, data: booking });
   } catch (error) {
     next(error);

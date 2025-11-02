@@ -118,7 +118,6 @@ export default function ServiceDetailPage() {
 
               <div className="d-flex gap-3 align-items-center">
                 <div className="small text-muted"><FaRegClock className="me-1" /> {service.ThoiGianPhucVu || '—'}</div>
-                {service.NguoiPhuTrach && <div className="small text-muted">Người phụ trách: {service.NguoiPhuTrach}</div>}
               </div>
 
               <div className="mt-4 d-flex gap-2">

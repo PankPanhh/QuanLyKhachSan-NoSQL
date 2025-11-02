@@ -1,66 +1,65 @@
-// models/Room.js
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
-const roomSchema = new mongoose.Schema(
+const TienNghiSchema = new mongoose.Schema({
+  MaTienNghi: { type: String, required: true },
+  TenTienNghi: { type: String, required: true },
+  TrangThai: { type: String, default: "Đang hoạt động" }
+});
+
+const DichVuSchema = new mongoose.Schema({
+  MaDichVu: { type: String, required: true },
+  TenDichVu: { type: String, required: true },
+  GiaDichVu: { type: Number, required: true },
+  DonViTinh: { type: String },
+  HinhAnhDichVu: { type: String },
+  MoTaDichVu: { type: String },
+  TrangThai: { type: String, default: "Đang hoạt động" },
+  ThoiGianPhucVu: { type: String, default: "08:00 - 22:00" }
+});
+
+const KhuyenMaiSchema = new mongoose.Schema({
+  MaKhuyenMai: { type: String },
+  TenChuongTrinh: { type: String },
+  LoaiKhuyenMai: { type: String }, // "Phần trăm" hoặc "Giảm giá cố định"
+  GiaTri: { type: Number },
+  NgayBatDau: { type: Date },
+  NgayKetThuc: { type: Date },
+  TrangThai: { type: String, default: "Đang hoạt động" }
+});
+
+const RoomSchema = new mongoose.Schema(
   {
-    MaPhong: { type: String, unique: true, required: true }, // P203
-    TenPhong: { type: String, required: true }, // Phòng Deluxe Hướng Biển
-    LoaiPhong: { type: String, required: true }, // Deluxe, Standard, Suite
-    Tang: { type: Number, required: true }, // 2
-    GiaPhong: { type: Number, required: true, min: 0 }, // 1500000
+    MaPhong: { type: String, required: true, unique: true },
+    TenPhong: { type: String, required: true },
+    LoaiPhong: { type: String, required: true },
+    Tang: { type: Number },
+    GiaPhong: { type: Number, required: true },
     TinhTrang: {
       type: String,
-      enum: ["Trống", "Đã đặt", "Đang sử dụng", "Bảo trì"],
-      default: "Trống",
+      enum: [
+        "Trống",
+        "Đã đặt",
+        "Đang sử dụng",
+        "Đang dọn",
+        "Hư",
+        "Bảo trì"
+      ],
+      default: "Trống"
     },
-    SoGiuong: { type: Number, required: true, min: 1 },
-    LoaiGiuong: { type: String }, // King, Queen, Twin
-    DienTich: { type: Number }, // 35 (m2)
+    SoGiuong: { type: Number },
+    LoaiGiuong: { type: String },
+    DienTich: { type: Number },
     MoTa: { type: String },
-    HinhAnh: { type: String },
-
-    // Amenities (embedded objects)
-    TienNghi: [
-      {
-        MaTienNghi: { type: String },
-        TenTienNghi: { type: String },
-        TrangThai: { type: String },
-      },
-    ],
-
-    // Services available for the room (embedded)
-    DichVu: [
-      {
-        MaDichVu: { type: String, required: true },
-        TenDichVu: { type: String, required: true },
-        GiaDichVu: { type: Number, default: 0, min: 0 },
-        DonViTinh: { type: String, default: 'Lần' },
-        HinhAnhDichVu: { type: String, default: '' },
-        MoTaDichVu: { type: String, default: '' },
-        TrangThai: { type: String, enum: ['Đang hoạt động', 'Tạm ngưng'], default: 'Đang hoạt động' },
-        ThoiGianPhucVu: { type: String, default: '' },
-        NguoiPhuTrach: { type: String, default: '' }
-      },
-    ],
-
-    // Promotions attached to the room (embedded)
-    KhuyenMai: [
-      {
-        MaKhuyenMai: { type: String },
-        TenChuongTrinh: { type: String },
-        LoaiKhuyenMai: { type: String },
-        GiaTri: { type: Number },
-        NgayBatDau: { type: Date },
-        NgayKetThuc: { type: Date },
-        TrangThai: { type: String },
-      },
-    ],
-
-    // Additional fields for compatibility with frontend
-    // Optional legacy field kept for compatibility
-    LoaiTaiSan: { type: String },
+    HinhAnh: [{ type: String }],
+    TienNghi: [TienNghiSchema],
+    DichVu: [DichVuSchema],
+    KhuyenMai: [KhuyenMaiSchema]
   },
-  { timestamps: true }
+  {
+    collection: "Phong",
+    versionKey: false,
+    timestamps: true
+  }
 );
 
-export default mongoose.model("Phong", roomSchema, "Phong");
+export default mongoose.model("Room", RoomSchema);

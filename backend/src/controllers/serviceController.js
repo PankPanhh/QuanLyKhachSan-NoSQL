@@ -43,8 +43,7 @@ export const getAllServices = async (req, res, next) => {
           DonViTinh: { $first: '$DichVu.DonViTinh' },
           HinhList: { $push: '$DichVu.HinhAnhDichVu' },
           MoTaList: { $push: '$DichVu.MoTaDichVu' },
-          TrangThaiList: { $push: '$DichVu.TrangThai' },
-          NguoiPhuTrachList: { $push: '$DichVu.NguoiPhuTrach' },
+          TrangThaiList: { $push: '$DichVu.TrangThai' },   
           ThoiGianList: { $push: '$DichVu.ThoiGianPhucVu' },
           ElemId: { $first: '$DichVu._id' },
           countRooms: { $sum: 1 },
@@ -77,12 +76,6 @@ export const getAllServices = async (req, res, next) => {
               in: { $cond: [{ $gt: [{ $size: '$$filtered' }, 0] }, { $arrayElemAt: ['$$filtered', 0] }, null] }
             }
           },
-          NguoiPhuTrach: {
-            $let: {
-              vars: { filtered: { $filter: { input: '$NguoiPhuTrachList', as: 'it', cond: { $and: [{ $ne: ['$$it', null] }, { $ne: ['$$it', ''] }] } } } },
-              in: { $cond: [{ $gt: [{ $size: '$$filtered' }, 0] }, { $arrayElemAt: ['$$filtered', 0] }, null] }
-            }
-          },
           ThoiGianPhucVu: {
             $let: {
               vars: { filtered: { $filter: { input: '$ThoiGianList', as: 'it', cond: { $and: [{ $ne: ['$$it', null] }, { $ne: ['$$it', ''] }] } } } },
@@ -112,7 +105,6 @@ export const createService = async (req, res, next) => {
       GiaDichVu,
       DonViTinh,
       TrangThai,
-      NguoiPhuTrach,
       MoTaDichVu,
       HinhAnhDichVu,
       ThoiGianPhucVu,
