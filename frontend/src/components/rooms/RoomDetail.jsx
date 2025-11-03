@@ -28,10 +28,18 @@ function RoomDetail({ room }) {
       url: getRoomImageUrl(room.HinhAnh),
       altText: room.TenPhong || 'Room Image'
     }],
-    amenities: (room.MaTienNghi || []).map((ma) => ({
-      name: getAmenityName(ma),
-      icon: getAmenityIcon(ma)
-    })),
+    // Prefer the rich `TienNghi` objects (which include TenTienNghi and TrangThai).
+    // Show only amenities whose TrangThai === 'Hoạt động'. Fall back to the legacy
+    // `MaTienNghi` array when `TienNghi` is not present.
+    amenities: (Array.isArray(room.TienNghi) ? room.TienNghi
+      .filter(t => String((t.TrangThai || '')).trim() === 'Hoạt động')
+      .map(t => ({
+        name: t.TenTienNghi || getAmenityName(t.MaTienNghi),
+        icon: getAmenityIcon(t.MaTienNghi)
+      })) : (room.MaTienNghi || []).map((ma) => ({
+        name: getAmenityName(ma),
+        icon: getAmenityIcon(ma)
+      }))),
     promotions: (room.MaKhuyenMai || []).map((ma) => ({
       code: ma,
       description: `Khuyến mãi ${ma}`,
@@ -90,22 +98,18 @@ function RoomDetail({ room }) {
       {/* Tiện nghi với ICON */}
       <hr className="my-4" />
       <h3 className="mb-3">Tiện nghi</h3>
-      <div className="row g-3">
-        {roomData.amenities.map((amenity, index) => (
-          <div key={index} className="col-md-6 col-lg-4">
-            <div className="d-flex align-items-center">
-              <span className="text-success me-2 fs-4">
-                {amenity.icon === 'wifi' && <FaWifi />}
-                {amenity.icon === 'tv' && <FaTv />}
-                {amenity.icon === 'bath' && <FaBath />}
-                {amenity.icon === 'ac' && <FaSnowflake />}
-                {amenity.icon === 'bar' && <FaCocktail />}
-              </span>
-              <span>{amenity.name}</span>
+        <div className="row g-3">
+          {roomData.amenities.map((amenity, index) => (
+            <div key={index} className="col-md-6 col-lg-4">
+              <div className="d-flex align-items-center">
+                <span className="text-success me-2 fs-4">
+                  {amenity.icon}
+                </span>
+                <span>{amenity.name}</span>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
       {/* Dịch vụ đi kèm */}
       {room.extraServices?.length > 0 && (
@@ -152,15 +156,26 @@ const getAmenityName = (ma) => {
   return amenityMap[ma] || `Tiện nghi ${ma}`;
 };
 
-const getAmenityIcon = (ma) => {
-  const iconMap = {
-    'TN001': 'wifi',
-    'TN002': 'tv', 
-    'TN003': 'ac',
-    'TN004': 'bar',
-    'TN005': 'bath',
-  };
-  return iconMap[ma] || 'wifi';
+const getAmenityIcon = (ma, name) => {
+  // Return a React node (icon component). Try by code first, then by name keywords.
+  switch (ma) {
+    case 'TN001': return <FaWifi />;
+    case 'TN002': return <FaTv />;
+    case 'TN003': return <FaSnowflake />; // điều hòa
+    case 'TN004': return <FaCocktail />; // minibar/bar
+    case 'TN005': return <FaBath />; // phòng tắm
+    default: break;
+  }
+
+  const n = String(name || '').toLowerCase();
+  if (n.includes('wifi') || n.includes('wi-fi')) return <FaWifi />;
+  if (n.includes('tv') || n.includes('tivi')) return <FaTv />;
+  if (n.includes('điều hòa') || n.includes('đieu hoa') || n.includes('ac') || n.includes('air')) return <FaSnowflake />;
+  if (n.includes('minibar') || n.includes('bar') || n.includes('mini')) return <FaCocktail />;
+  if (n.includes('tắm') || n.includes('bath') || n.includes('bathroom')) return <FaBath />;
+
+  // fallback generic check icon
+  return <FaCheckCircle />;
 };
 
 export default RoomDetail;

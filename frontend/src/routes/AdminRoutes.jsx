@@ -14,6 +14,7 @@ import ServicesManager from '../page/Admin/ServicesManager.jsx';
 import PromotionsManager from '../page/Admin/PromotionsManager.jsx';
 import ReportsPage from '../page/Admin/ReportsPage.jsx';
 import AdminPage from '../page/Admin/AdminPage.jsx';
+import AmenticsManager from '../page/Admin/AmenticsManager.jsx';
 
 // Component bảo vệ Route
 const ProtectedRoute = ({ children }) => {
@@ -42,6 +43,7 @@ function AdminRoutes() {
         <Route path="users" element={<UsersManager />} />
         <Route path="services" element={<ServicesManager />} />
         <Route path="promotions" element={<PromotionsManager />} />
+  <Route path="amentics" element={<AmenticsManager />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="home" element={<AdminPage />} /> 
       </Route>

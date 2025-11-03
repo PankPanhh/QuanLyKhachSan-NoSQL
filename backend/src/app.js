@@ -18,6 +18,7 @@ import userRoutes from './routes/userRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
 import serviceRoutes from './routes/serviceRoutes.js';
+import amenitiesRoutes from './routes/amenitiesRoutes.js';
 import promoRoutes from './routes/promoRoutes.js';
 import reportRoutes from './routes/reportRoutes.js'; // Đảm bảo reportRoutes được import
 
@@ -77,6 +78,7 @@ app.use('/api/v1/bookings', bookingRoutes);
 app.use('/api/v1/services', serviceRoutes);
 app.use('/api/v1/promotions', promoRoutes);
 app.use('/api/v1/reports', reportRoutes); // Gắn reportRoutes
+app.use('/api/v1/amenities', amenitiesRoutes);
 
 // --- Error Handling ---
 // 404 Not Found (Phải đặt trước errorHandler)
