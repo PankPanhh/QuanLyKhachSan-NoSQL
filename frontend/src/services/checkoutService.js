@@ -88,37 +88,28 @@ const checkoutService = {
   /**
    * Tải hóa đơn PDF
    */
-  downloadInvoice: (bookingId) => {
-    const token = localStorage.getItem("token");
-    const url = `${api.defaults.baseURL}/checkout/${bookingId}/invoice/download`;
+  downloadInvoice: async (bookingId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const baseURL = api.baseURL || "http://localhost:5000/api/v1";
+      const url = `${baseURL}/checkout/${bookingId}/invoice/download`;
 
-    // Tạo link download
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `invoice_${bookingId}.pdf`);
-
-    // Thêm token vào header (sử dụng fetch để có thể set header)
-    fetch(url, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((response) => response.blob())
-      .then((blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `invoice_${bookingId}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-      })
-      .catch((error) => {
-        console.error("Error downloading invoice:", error);
-        throw error;
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
+
+      if (!response.ok) {
+        throw new Error("Không thể tải hóa đơn");
+      }
+
+      return { data: await response.blob() };
+    } catch (error) {
+      console.error("Error downloading invoice:", error);
+      throw error;
+    }
   },
 
   /**

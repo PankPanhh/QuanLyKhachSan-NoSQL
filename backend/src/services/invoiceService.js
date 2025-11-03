@@ -70,30 +70,23 @@ export const generateInvoicePDF = async (bookingId) => {
     // Header - Tên khách sạn
     doc
       .fontSize(24)
-      .font("Helvetica-Bold")
-      .text("KHÁCH SẠN ABC", { align: "center" })
+      .text("KHACH SAN ABC", { align: "center" })
       .fontSize(10)
-      .font("Helvetica")
-      .text("Địa chỉ: 123 Đường ABC, Quận 1, TP.HCM", { align: "center" })
-      .text("Điện thoại: (028) 1234 5678 | Email: info@khachsan.vn", {
+      .text("Dia chi: 123 Duong ABC, Quan 1, TP.HCM", { align: "center" })
+      .text("Dien thoai: (028) 1234 5678 | Email: info@khachsan.vn", {
         align: "center",
       })
       .moveDown(2);
 
     // Tiêu đề hóa đơn
-    doc
-      .fontSize(20)
-      .font("Helvetica-Bold")
-      .text("HÓA ĐƠN THANH TOÁN", { align: "center" })
-      .moveDown();
+    doc.fontSize(20).text("HOA DON THANH TOAN", { align: "center" }).moveDown();
 
     // Thông tin hóa đơn
     doc
       .fontSize(11)
-      .font("Helvetica")
-      .text(`Mã hóa đơn: ${booking.HoaDon.MaHoaDon}`)
-      .text(`Ngày lập: ${formatDate(booking.HoaDon.NgayLap || new Date())}`)
-      .text(`Mã đặt phòng: ${booking.MaDatPhong}`)
+      .text(`Ma hoa don: ${booking.HoaDon.MaHoaDon}`)
+      .text(`Ngay lap: ${formatDate(booking.HoaDon.NgayLap || new Date())}`)
+      .text(`Ma dat phong: ${booking.MaDatPhong}`)
       .moveDown();
 
     // Đường kẻ ngang
@@ -101,29 +94,27 @@ export const generateInvoicePDF = async (bookingId) => {
     doc.moveDown();
 
     // Thông tin khách hàng
-    doc.fontSize(12).font("Helvetica-Bold").text("THÔNG TIN KHÁCH HÀNG");
+    doc.fontSize(12).text("THONG TIN KHACH HANG");
     doc
       .fontSize(11)
-      .font("Helvetica")
-      .text(`Họ tên: ${customer?.HoTen || "N/A"}`)
+      .text(`Ho ten: ${customer?.HoTen || "N/A"}`)
       .text(`Email: ${customer?.Email || "N/A"}`)
-      .text(`Số điện thoại: ${customer?.SDT || "N/A"}`)
+      .text(`So dien thoai: ${customer?.SDT || "N/A"}`)
       .moveDown();
 
     // Thông tin phòng
-    doc.fontSize(12).font("Helvetica-Bold").text("THÔNG TIN PHÒNG");
+    doc.fontSize(12).text("THONG TIN PHONG");
     doc
       .fontSize(11)
-      .font("Helvetica")
-      .text(`Mã phòng: ${room?.MaPhong || "N/A"}`)
-      .text(`Tên phòng: ${room?.TenPhong || "N/A"}`)
-      .text(`Loại phòng: ${room?.LoaiPhong || "N/A"}`)
-      .text(`Ngày nhận phòng: ${formatDate(booking.NgayNhanPhong)}`)
-      .text(`Ngày trả phòng: ${formatDate(booking.NgayTraPhong)}`);
+      .text(`Ma phong: ${room?.MaPhong || "N/A"}`)
+      .text(`Ten phong: ${room?.TenPhong || "N/A"}`)
+      .text(`Loai phong: ${room?.LoaiPhong || "N/A"}`)
+      .text(`Ngay nhan phong: ${formatDate(booking.NgayNhanPhong)}`)
+      .text(`Ngay tra phong: ${formatDate(booking.NgayTraPhong)}`);
 
     if (booking.NgayTraPhongThucTe) {
       doc.text(
-        `Ngày trả phòng thực tế: ${formatDate(booking.NgayTraPhongThucTe)}`
+        `Ngay tra phong thuc te: ${formatDate(booking.NgayTraPhongThucTe)}`
       );
     }
 
@@ -132,14 +123,14 @@ export const generateInvoicePDF = async (bookingId) => {
       (new Date(booking.NgayTraPhong) - new Date(booking.NgayNhanPhong)) /
         (1000 * 60 * 60 * 24)
     );
-    doc.text(`Số đêm: ${nights} đêm`).moveDown();
+    doc.text(`So dem: ${nights} dem`).moveDown();
 
     // Đường kẻ ngang
     doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
     doc.moveDown();
 
     // Chi tiết hóa đơn
-    doc.fontSize(12).font("Helvetica-Bold").text("CHI TIẾT HÓA ĐƠN");
+    doc.fontSize(12).text("CHI TIET HOA DON");
     doc.moveDown(0.5);
 
     // Table header
@@ -148,10 +139,10 @@ export const generateInvoicePDF = async (bookingId) => {
     const col2 = 300;
     const col3 = 450;
 
-    doc.fontSize(11).font("Helvetica-Bold");
-    doc.text("Mô tả", col1, tableTop);
-    doc.text("Số lượng", col2, tableTop);
-    doc.text("Thành tiền", col3, tableTop, { width: 100, align: "right" });
+    doc.fontSize(11);
+    doc.text("Mo ta", col1, tableTop);
+    doc.text("So luong", col2, tableTop);
+    doc.text("Thanh tien", col3, tableTop, { width: 100, align: "right" });
 
     // Đường kẻ dưới header
     doc
@@ -163,9 +154,9 @@ export const generateInvoicePDF = async (bookingId) => {
     let currentY = doc.y;
 
     // Tiền phòng
-    doc.fontSize(10).font("Helvetica");
-    doc.text(`Phòng ${room?.TenPhong || booking.MaPhong}`, col1, currentY);
-    doc.text(`${nights} đêm`, col2, currentY);
+    doc.fontSize(10);
+    doc.text(`Phong ${room?.TenPhong || booking.MaPhong}`, col1, currentY);
+    doc.text(`${nights} dem`, col2, currentY);
     doc.text(formatCurrency(booking.HoaDon.TongTienPhong), col3, currentY, {
       width: 100,
       align: "right",
@@ -176,7 +167,7 @@ export const generateInvoicePDF = async (bookingId) => {
     if (booking.DichVuSuDung && booking.DichVuSuDung.length > 0) {
       doc.moveDown();
       booking.DichVuSuDung.forEach((dv) => {
-        doc.text(`Dịch vụ ${dv.MaDichVu}`, col1, currentY);
+        doc.text(`Dich vu ${dv.MaDichVu}`, col1, currentY);
         doc.text(`${dv.SoLuong}`, col2, currentY);
         doc.text(formatCurrency(dv.ThanhTien), col3, currentY, {
           width: 100,
@@ -190,8 +181,7 @@ export const generateInvoicePDF = async (bookingId) => {
     if (booking.HoaDon.TongTienDichVu > 0) {
       doc.moveDown();
       currentY = doc.y;
-      doc.font("Helvetica-Bold");
-      doc.text("Tổng tiền dịch vụ:", col1, currentY);
+      doc.text("Tong tien dich vu:", col1, currentY);
       doc.text(formatCurrency(booking.HoaDon.TongTienDichVu), col3, currentY, {
         width: 100,
         align: "right",
@@ -203,8 +193,7 @@ export const generateInvoicePDF = async (bookingId) => {
     if (booking.HoaDon.GiamGia > 0) {
       doc.moveDown();
       currentY = doc.y;
-      doc.font("Helvetica");
-      doc.text("Giảm giá/Khuyến mãi:", col1, currentY);
+      doc.text("Giam gia/Khuyen mai:", col1, currentY);
       doc.text(`-${formatCurrency(booking.HoaDon.GiamGia)}`, col3, currentY, {
         width: 100,
         align: "right",
@@ -217,7 +206,7 @@ export const generateInvoicePDF = async (bookingId) => {
       doc.moveDown();
       currentY = doc.y;
       doc.fillColor("red");
-      doc.text("Phụ phí trả trễ:", col1, currentY);
+      doc.text("Phu phi tra tre:", col1, currentY);
       doc.text(
         `+${formatCurrency(booking.HoaDon.PhuPhiTraTre)}`,
         col3,
@@ -236,11 +225,18 @@ export const generateInvoicePDF = async (bookingId) => {
     doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
     doc.moveDown();
 
-    // Tổng cộng
+    // Tổng cộng - FIX: Tính lại đúng với smart detection
     currentY = doc.y;
-    doc.fontSize(14).font("Helvetica-Bold");
-    doc.text("TỔNG CỘNG:", col1, currentY);
-    doc.text(formatCurrency(booking.HoaDon.TongTien), col3, currentY, {
+    const tongTienPhong = booking.HoaDon.TongTienPhong || 0;
+    const tongTienDichVu = booking.HoaDon.TongTienDichVu || 0;
+    const giamGia = booking.HoaDon.GiamGia || 0;
+    const phuPhiTraTre = booking.HoaDon.PhuPhiTraTre || 0;
+    const correctTongTien =
+      tongTienPhong + tongTienDichVu - giamGia + phuPhiTraTre;
+
+    doc.fontSize(14);
+    doc.text("TONG CONG:", col1, currentY);
+    doc.text(formatCurrency(correctTongTien), col3, currentY, {
       width: 100,
       align: "right",
     });
@@ -251,17 +247,16 @@ export const generateInvoicePDF = async (bookingId) => {
       booking.HoaDon.LichSuThanhToan.length > 0
     ) {
       doc.moveDown(2);
-      doc.fontSize(12).font("Helvetica-Bold").text("LỊCH SỬ THANH TOÁN");
+      doc.fontSize(12).text("LICH SU THANH TOAN");
       doc.moveDown(0.5);
 
       booking.HoaDon.LichSuThanhToan.forEach((payment, index) => {
-        if (payment.TrangThai === "Thành công") {
+        if (payment.TrangThai === "Thanh cong") {
           doc
             .fontSize(10)
-            .font("Helvetica")
             .text(`${index + 1}. ${formatDate(payment.NgayThanhToan)}`);
-          doc.text(`   Phương thức: ${payment.PhuongThuc}`);
-          doc.text(`   Số tiền: ${formatCurrency(payment.SoTien)}`);
+          doc.text(`   Phuong thuc: ${payment.PhuongThuc}`);
+          doc.text(`   So tien: ${formatCurrency(payment.SoTien)}`);
           doc.moveDown(0.5);
         }
       });
@@ -269,37 +264,33 @@ export const generateInvoicePDF = async (bookingId) => {
 
     // Trạng thái thanh toán
     doc.moveDown();
-    doc.fontSize(11).font("Helvetica-Bold");
+    doc.fontSize(11);
     const tinhTrang = booking.HoaDon.TinhTrang;
-    if (tinhTrang === "Đã thanh toán") {
+    if (tinhTrang === "Da thanh toan") {
       doc
         .fillColor("green")
-        .text(`Trạng thái: ${tinhTrang}`, { align: "center" });
+        .text(`Trang thai: ${tinhTrang}`, { align: "center" });
     } else {
       doc
         .fillColor("orange")
-        .text(`Trạng thái: ${tinhTrang}`, { align: "center" });
+        .text(`Trang thai: ${tinhTrang}`, { align: "center" });
     }
     doc.fillColor("black");
 
     // Ghi chú (nếu có)
     if (booking.HoaDon.GhiChu) {
       doc.moveDown();
-      doc
-        .fontSize(10)
-        .font("Helvetica-Oblique")
-        .text(`Ghi chú: ${booking.HoaDon.GhiChu}`);
+      doc.fontSize(10).text(`Ghi chu: ${booking.HoaDon.GhiChu}`);
     }
 
     // Footer
     doc.moveDown(2);
     doc
       .fontSize(9)
-      .font("Helvetica")
-      .text("Cảm ơn quý khách đã sử dụng dịch vụ của chúng tôi!", {
+      .text("Cam on quy khach da su dung dich vu cua chung toi!", {
         align: "center",
       })
-      .text("Hẹn gặp lại!", { align: "center" });
+      .text("Hen gap lai!", { align: "center" });
 
     // Kết thúc document
     doc.end();

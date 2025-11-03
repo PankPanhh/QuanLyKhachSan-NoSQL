@@ -69,8 +69,8 @@ export const confirmCheckout = async (req, res) => {
       });
     }
 
+    // Lưu phụ phí riêng, KHÔNG cộng vào TongTien
     booking.HoaDon.PhuPhiTraTre = lateFee;
-    booking.HoaDon.TongTien += lateFee;
 
     // Cập nhật thông tin trả phòng
     booking.NgayTraPhongThucTe = checkoutDate;
@@ -85,6 +85,14 @@ export const confirmCheckout = async (req, res) => {
 
     await booking.save();
 
+    // Tính tổng tiền bao gồm phụ phí
+    const totalAmount = booking.HoaDon.TongTien + lateFee;
+    const totalPaid = booking.HoaDon.LichSuThanhToan.reduce(
+      (sum, payment) =>
+        payment.TrangThai === "Thành công" ? sum + payment.SoTien : sum,
+      0
+    );
+
     res.status(200).json({
       success: true,
       message: "Xác nhận trả phòng thành công",
@@ -92,13 +100,8 @@ export const confirmCheckout = async (req, res) => {
         booking,
         lateFee,
         isLate,
-        remainingAmount:
-          booking.HoaDon.TongTien -
-          booking.HoaDon.LichSuThanhToan.reduce(
-            (sum, payment) =>
-              payment.TrangThai === "Thành công" ? sum + payment.SoTien : sum,
-            0
-          ),
+        totalAmount,
+        remainingAmount: totalAmount - totalPaid,
       },
     });
   } catch (error) {
@@ -152,7 +155,14 @@ export const processCheckoutPayment = async (req, res) => {
       0
     );
 
-    const remainingAmount = booking.HoaDon.TongTien - totalPaid;
+    // Tính tổng tiền chính xác (tránh dùng TongTien bị corrupt)
+    const baseTongTien =
+      (booking.HoaDon.TongTienPhong || 0) +
+      (booking.HoaDon.TongTienDichVu || 0) -
+      (booking.HoaDon.GiamGia || 0);
+    const lateFee = booking.HoaDon.PhuPhiTraTre || 0;
+    const totalAmount = baseTongTien + lateFee;
+    const remainingAmount = totalAmount - totalPaid;
 
     // Kiểm tra số tiền thanh toán
     if (soTien > remainingAmount) {
@@ -177,7 +187,9 @@ export const processCheckoutPayment = async (req, res) => {
 
     // Cập nhật tình trạng hóa đơn
     const newTotalPaid = totalPaid + soTien;
-    if (newTotalPaid >= booking.HoaDon.TongTien) {
+
+    // Sử dụng lại totalAmount đã tính ở trên (đã tính đúng)
+    if (newTotalPaid >= totalAmount) {
       booking.HoaDon.TinhTrang = "Đã thanh toán";
     } else {
       booking.HoaDon.TinhTrang = "Thanh toán một phần";
@@ -192,9 +204,10 @@ export const processCheckoutPayment = async (req, res) => {
         maThanhToan,
         soTienThanhToan: soTien,
         tongDaThanhToan: newTotalPaid,
-        conLai: booking.HoaDon.TongTien - newTotalPaid,
+        conLai: totalAmount - newTotalPaid,
         tinhTrang: booking.HoaDon.TinhTrang,
       },
+      booking: booking, // Thêm booking để frontend có thể reload
     });
   } catch (error) {
     console.error("Error processing checkout payment:", error);
@@ -294,8 +307,11 @@ export const submitReview = async (req, res) => {
       });
     }
 
-    // Kiểm tra quyền đánh giá
-    if (booking.IDKhachHang !== req.user.IDNguoiDung) {
+    // Kiểm tra quyền đánh giá (Khách hàng hoặc Admin/Nhân viên)
+    const isOwner = booking.IDKhachHang === req.user.IDNguoiDung;
+    const isStaff = ["Admin", "NhanVien"].includes(req.user.VaiTro);
+
+    if (!isOwner && !isStaff) {
       return res.status(403).json({
         success: false,
         message: "Bạn không có quyền đánh giá đặt phòng này",
@@ -485,7 +501,10 @@ export const getCheckoutDetails = async (req, res) => {
         0
       ) || 0;
 
-    const remainingAmount = (booking.HoaDon?.TongTien || 0) - totalPaid;
+    // Tính tổng tiền bao gồm phụ phí trả trễ
+    const lateFee = booking.HoaDon?.PhuPhiTraTre || 0;
+    const totalAmount = (booking.HoaDon?.TongTien || 0) + lateFee;
+    const remainingAmount = totalAmount - totalPaid;
 
     res.status(200).json({
       success: true,
@@ -499,6 +518,8 @@ export const getCheckoutDetails = async (req, res) => {
         },
         payment: {
           totalPaid,
+          totalAmount,
+          lateFee,
           remainingAmount,
           status: booking.HoaDon?.TinhTrang,
         },

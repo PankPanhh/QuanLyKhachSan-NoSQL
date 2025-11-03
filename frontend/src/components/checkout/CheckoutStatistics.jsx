@@ -44,11 +44,11 @@ const CheckoutStatistics = () => {
     return <div className="loading">Đang tải thống kê...</div>;
   }
 
-  if (!statistics) {
+  if (!statistics || !statistics.summary) {
     return <div className="no-data">Không có dữ liệu thống kê</div>;
   }
 
-  const { summary, timeSeries } = statistics;
+  const { summary = {}, timeSeries = [] } = statistics;
 
   return (
     <div className="checkout-statistics">
@@ -96,7 +96,7 @@ const CheckoutStatistics = () => {
           </div>
           <div className="stat-content">
             <h3>Tổng số lượt trả phòng</h3>
-            <p className="stat-value">{summary.totalCheckouts}</p>
+            <p className="stat-value">{summary.totalCheckouts || 0}</p>
           </div>
         </div>
 
@@ -106,7 +106,9 @@ const CheckoutStatistics = () => {
           </div>
           <div className="stat-content">
             <h3>Doanh thu thực tế</h3>
-            <p className="stat-value">{formatCurrency(summary.totalRevenue)}</p>
+            <p className="stat-value">
+              {formatCurrency(summary.totalRevenue || 0)}
+            </p>
           </div>
         </div>
 
@@ -116,9 +118,9 @@ const CheckoutStatistics = () => {
           </div>
           <div className="stat-content">
             <h3>Trả phòng trễ</h3>
-            <p className="stat-value">{summary.lateCheckouts}</p>
+            <p className="stat-value">{summary.lateCheckouts || 0}</p>
             <p className="stat-subtitle">
-              {summary.lateCheckoutRate.toFixed(1)}% tổng số
+              {summary.lateCheckoutRate?.toFixed(1) || 0}% tổng số
             </p>
           </div>
         </div>
@@ -130,7 +132,7 @@ const CheckoutStatistics = () => {
           <div className="stat-content">
             <h3>Tổng phụ phí trả trễ</h3>
             <p className="stat-value">
-              {formatCurrency(summary.totalLateFees)}
+              {formatCurrency(summary.totalLateFees || 0)}
             </p>
           </div>
         </div>
@@ -141,7 +143,9 @@ const CheckoutStatistics = () => {
           </div>
           <div className="stat-content">
             <h3>Tỷ lệ lấp đầy</h3>
-            <p className="stat-value">{summary.occupancyRate.toFixed(1)}%</p>
+            <p className="stat-value">
+              {summary.occupancyRate?.toFixed(1) || 0}%
+            </p>
           </div>
         </div>
       </div>
