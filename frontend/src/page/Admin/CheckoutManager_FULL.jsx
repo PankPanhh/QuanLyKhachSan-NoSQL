@@ -46,6 +46,17 @@ const CheckoutManager = () => {
   };
 
   const handleCheckout = async (booking) => {
+    setSelectedBooking(booking);
+
+    // Nếu booking đã hoàn thành, chỉ hiển thị chi tiết mà không tính phí trễ
+    if (booking.TrangThai === "Hoàn thành") {
+      setLateFeeInfo(null); // Không có phí trễ cho booking đã hoàn thành
+      setActiveTab("confirm");
+      setShowCheckoutModal(true);
+      return;
+    }
+
+    // Nếu booking đang sử dụng, tính phí trễ
     try {
       const response = await checkoutService.calculateLateFee(
         booking.MaDatPhong

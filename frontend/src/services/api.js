@@ -100,6 +100,13 @@ class ApiClient {
     });
   }
 
+  async patch(endpoint, body) {
+    return this.request(endpoint, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
+  }
+
   // PUT with FormData (don't set Content-Type, browser will add boundary)
   async putFormData(endpoint, formData) {
     const url = `${this.baseURL}${endpoint}`;
