@@ -95,6 +95,27 @@ function BookingSummary() {
   }
 
   const total = roomData.price * nights * rooms;
+  // Apply promo if present
+  const promo = bookingDetails.promo;
+  let discount = 0;
+  let totalAfterDiscount = total;
+  if (promo) {
+    // check dates
+    const now = new Date();
+    const start = promo.startDate ? new Date(promo.startDate) : null;
+    const end = promo.endDate ? new Date(promo.endDate) : null;
+    const valid = (!start || start <= now) && (!end || end >= now);
+    if (valid) {
+      if (promo.discountPercent) {
+        discount = Math.round((total * Number(promo.discountPercent || 0)) / 100);
+      } else if (promo.discountAmount) {
+        discount = Number(promo.discountAmount) || 0;
+        // don't exceed total
+        if (discount > total) discount = total;
+      }
+      totalAfterDiscount = total - discount;
+    }
+  }
 
   return (
     <div className="p-4 border rounded" style={{ backgroundColor: "#f8f9fa" }}>
@@ -131,10 +152,28 @@ function BookingSummary() {
         <strong>{roomData.price?.toLocaleString()}đ</strong>
       </div>
       <hr />
+      {promo && promo.title && (
+        <div className="mb-2 p-2 rounded" style={{ backgroundColor: '#fff6f0' }}>
+          <div className="d-flex justify-content-between">
+            <small>Khuyến mãi:</small>
+            <strong>{promo.title}</strong>
+          </div>
+          <div className="d-flex justify-content-between">
+            <small>Giảm:</small>
+            <strong className="text-danger">
+              {promo.discountPercent ? `${promo.discountPercent}%` : promo.discountAmount ? `${Number(promo.discountAmount).toLocaleString()}đ` : ""}
+            </strong>
+          </div>
+        </div>
+      )}
+
       <div className="d-flex justify-content-between fs-4 fw-bold">
         <span>Tổng cộng:</span>
-        <span className="text-primary">{total.toLocaleString()}đ</span>
+        <span className="text-primary">{totalAfterDiscount.toLocaleString()}đ</span>
       </div>
+      {discount > 0 && (
+        <div className="mt-2 text-muted small">(Giảm {discount.toLocaleString()}đ từ khuyến mãi)</div>
+      )}
     </div>
   );
 }

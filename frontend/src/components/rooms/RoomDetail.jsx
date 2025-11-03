@@ -1,5 +1,5 @@
 // components/rooms/RoomDetail.jsx
-import React from 'react';
+import React, { useContext } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import { 
@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fa';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { getRoomImageUrl } from '../../config/constants';
+import { BookingContext } from '../../context/BookingContext';
 
 function RoomDetail({ room }) {
   if (!room) return null;
@@ -40,12 +41,56 @@ function RoomDetail({ room }) {
         name: getAmenityName(ma),
         icon: getAmenityIcon(ma)
       }))),
-    promotions: (room.MaKhuyenMai || []).map((ma) => ({
-      code: ma,
-      description: `Khuyến mãi ${ma}`,
-      discountPercent: 10
-    }))
+    // Use embedded KhuyenMai array when present (newer schema). Fallback to MaKhuyenMai.
+    promotions: Array.isArray(room.KhuyenMai) && room.KhuyenMai.length > 0
+      ? room.KhuyenMai
+      : (room.MaKhuyenMai || []).map((ma) => ({
+          MaKhuyenMai: ma,
+          TenChuongTrinh: `Khuyến mãi ${ma}`,
+          LoaiGiamGia: 'Phần trăm',
+          GiaTriGiam: 10,
+          TrangThai: 'Hoạt động'
+        }))
   };
+
+  // Read booking dates from BookingContext so we can determine whether a promo
+  // applies to the currently selected stay range.
+  const { bookingDetails } = useContext(BookingContext);
+  const checkIn = bookingDetails?.checkInDate ? new Date(bookingDetails.checkInDate) : null;
+  const checkOut = bookingDetails?.checkOutDate ? new Date(bookingDetails.checkOutDate) : null;
+
+  // Find the first promotion that is marked 'Hoạt động' and whose date range
+  // contains today's date. We'll also check booking dates later to see if the
+  // selected stay falls inside the promo window.
+  const now = new Date();
+  const normalizedPromos = (roomData.promotions || []).map((p) => ({
+    MaKhuyenMai: p.MaKhuyenMai || p.MaKM || p.Ma || null,
+    TenChuongTrinh: p.TenChuongTrinh || p.Ten || p.TenKM || null,
+    LoaiGiamGia: p.LoaiGiamGia || p.LoaiGiam || '',
+    GiaTriGiam: p.GiaTriGiam != null ? p.GiaTriGiam : (p.GiaTri != null ? p.GiaTri : p.value),
+    NgayBatDau: p.NgayBatDau ? new Date(p.NgayBatDau) : null,
+    NgayKetThuc: p.NgayKetThuc ? new Date(p.NgayKetThuc) : null,
+    DieuKien: p.DieuKien || p.DieuKhoan || p.Condition || '',
+    MoTa: p.MoTa || p.Description || '',
+    TrangThai: p.TrangThai || p.Status || '',
+  }));
+
+  const activePromo = normalizedPromos.find((p) => {
+    if (!p) return false;
+    if (String((p.TrangThai || '')).trim() !== 'Hoạt động') return false;
+    if (p.NgayBatDau && p.NgayBatDau > now) return false;
+    if (p.NgayKetThuc && p.NgayKetThuc < now) return false;
+    return true;
+  }) || null;
+
+  // Determine whether the currently selected booking dates fall inside the
+  // promotion period. We require the entire stay to be within the promo window
+  // for the discount to apply. If no dates are selected, treat as potentially applicable.
+  let promoAppliesToSelectedDates = true;
+  if (activePromo && (checkIn || checkOut)) {
+    if (activePromo.NgayBatDau && checkIn && checkIn < activePromo.NgayBatDau) promoAppliesToSelectedDates = false;
+    if (activePromo.NgayKetThuc && checkOut && checkOut > activePromo.NgayKetThuc) promoAppliesToSelectedDates = false;
+  }
 
   return (
     <div>
@@ -66,11 +111,30 @@ function RoomDetail({ room }) {
       {/* Tiêu đề & Giá */}
       <h1 className="display-4 fw-normal mb-3">{roomData.title}</h1>
       <h2 className="text-primary fs-1 mb-4">
-        {formatCurrency(roomData.pricePerNight)}/đêm
-        {roomData.promotions?.[0] && (
-          <span className="badge bg-danger ms-3">
-            -{roomData.promotions[0].discountPercent}% KM
-          </span>
+        {activePromo ? (
+          <>
+            {/* If promo applies to selected dates, show crossed price and discounted price */}
+            {promoAppliesToSelectedDates ? (
+              <>
+                <span style={{ textDecoration: 'line-through', color: '#888', fontSize: '0.9em', marginRight: 10 }}>{formatCurrency(roomData.pricePerNight)}/đêm</span>
+                <span>{formatCurrency(
+                  activePromo.LoaiGiamGia && String(activePromo.LoaiGiamGia).toLowerCase().includes('phần')
+                    ? Math.max(0, roomData.pricePerNight * (1 - (Number(activePromo.GiaTriGiam || 0) / 100)))
+                    : Math.max(0, roomData.pricePerNight - Number(activePromo.GiaTriGiam || 0))
+                )}/đêm</span>
+              </>
+            ) : (
+              <>
+                {formatCurrency(roomData.pricePerNight)}/đêm
+                <span className="ms-3 text-warning">Chương trình không còn hiệu lực</span>
+              </>
+            )}
+            <span className="badge bg-danger ms-3">
+              {activePromo.TenChuongTrinh ? `${activePromo.TenChuongTrinh}` : (activePromo.MaKhuyenMai || 'KM')}
+            </span>
+          </>
+        ) : (
+          <>{formatCurrency(roomData.pricePerNight)}/đêm</>
         )}
       </h2>
 
@@ -129,14 +193,16 @@ function RoomDetail({ room }) {
         </>
       )}
 
-      {/* Khuyến mãi */}
-      {roomData.promotions?.[0] && (
+      {/* Khuyến mãi: hiển thị chi tiết khi có khuyến mãi đặc biệt hợp lệ */}
+      {activePromo && (
         <>
           <hr className="my-4" />
           <h3 className="mb-3">Khuyến mãi</h3>
           <div className="alert alert-success">
-            <strong>{roomData.promotions[0].code}:</strong> {roomData.promotions[0].description} 
-            <br /><small>Khuyến mãi đặc biệt</small>
+            <strong>{activePromo.TenChuongTrinh || activePromo.MaKhuyenMai || 'Khuyến mãi'}:</strong>{' '}
+            {activePromo.MoTa || activePromo.DieuKien || ''}
+            <br />
+            <small>Khuyến mãi đặc biệt</small>
           </div>
         </>
       )}

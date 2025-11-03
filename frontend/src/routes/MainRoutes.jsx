@@ -38,7 +38,7 @@ function MainRoutes() {
   <Route path="room/:id" element={<RoomDetailPage />} />
   <Route path="service/:id" element={<ServiceDetailPage />} />
         <Route path="booking" element={<BookingPage />} />
-        <Route path="promotions" element={<PromotionsPage />} />
+    <Route path="promotions" element={<PromotionsPage />} />
         <Route path="contact" element={<ContactPage />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>

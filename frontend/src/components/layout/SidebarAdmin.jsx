@@ -61,6 +61,14 @@ function SidebarAdmin() {
           </NavLink>
         </li>
 
+        {/* Promotions */}
+        <li className="menu-item">
+          <NavLink to="/admin/promotions" className={({ isActive }) => `menu-link${isActive ? ' active' : ''}`}>
+            <i className="menu-icon tf-icons bx bx-tag"></i>
+            <div data-i18n="Promotions">Quản lý Khuyến mãi</div>
+          </NavLink>
+        </li>
+
         {/* Amenities (Amentics) */}
         <li className="menu-item">
           <NavLink to="/admin/amentics" className={({ isActive }) => `menu-link${isActive ? ' active' : ''}`}>
