@@ -6,7 +6,6 @@ const hoaDonSchema = new mongoose.Schema({
   TongTienPhong: { type: Number, required: true },
   TongTienDichVu: { type: Number, default: 0 },
   GiamGia: { type: Number, default: 0 },
-  PhuPhiTraTre: { type: Number, default: 0 },
   TongTien: { type: Number, required: true },
   TinhTrang: {
     type: String,
@@ -19,13 +18,7 @@ const hoaDonSchema = new mongoose.Schema({
       MaThanhToan: { type: String, required: true },
       PhuongThuc: {
         type: String,
-        enum: [
-          "Tiền mặt",
-          "Chuyển khoản",
-          "Thẻ tín dụng",
-          "PayPal",
-          "Ví điện tử",
-        ],
+        enum: ["Tiền mặt", "Chuyển khoản", "Thẻ tín dụng"],
         default: "Tiền mặt",
       },
       SoTien: { type: Number, required: true },
@@ -101,13 +94,6 @@ const bookingSchema = new mongoose.Schema(
     DichVuSuDung: [dichVuSuDungSchema],
     HoaDon: hoaDonSchema,
     DanhGia: danhGiaSchema,
-    NgayTraPhongThucTe: {
-      type: Date,
-    },
-    TraTre: {
-      type: Boolean,
-      default: false,
-    },
   },
   {
     timestamps: true,
