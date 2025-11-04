@@ -407,7 +407,10 @@ export const submitReview = async (req, res, next) => {
     }
 
     // Kiểm tra quyền: chỉ khách hàng của booking hoặc admin mới được đánh giá
-    if (req.user.role !== "Admin" && req.user.id !== booking.IDKhachHang) {
+    if (
+      req.user.VaiTro !== "Admin" &&
+      req.user.IDNguoiDung !== booking.IDKhachHang
+    ) {
       return res.status(403).json({
         success: false,
         message: "Không có quyền đánh giá booking này",

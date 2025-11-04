@@ -232,12 +232,24 @@ const CheckoutManager = () => {
       // Reload booking để cập nhật TẤT CẢ các tab (Xác nhận, Thanh toán, Đánh giá, Hóa đơn)
       await reloadSelectedBooking();
 
-      // Nếu đã thanh toán hết (0đ), tự động chuyển sang tab Hóa đơn
+      // Nếu đã thanh toán hết (0đ)
       if (remainingFromResponse <= 0) {
-        alert(
-          `✅ Thanh toán hoàn tất!\n💰 Đã thanh toán: ${paymentData.soTien.toLocaleString()} VND\n🎉 Chuyển sang xuất hóa đơn...`
-        );
-        setActiveTab("invoice"); // Chuyển sang tab Hóa đơn
+        // Kiểm tra xem đã đánh giá chưa
+        const hasReview = selectedBooking.DanhGia?.DiemDanhGia;
+
+        if (hasReview) {
+          // Đã đánh giá rồi → chuyển thẳng sang xuất hóa đơn
+          alert(
+            `✅ Thanh toán hoàn tất!\n💰 Đã thanh toán: ${paymentData.soTien.toLocaleString()} VND\n📄 Chuyển sang xuất hóa đơn...`
+          );
+          setActiveTab("invoice");
+        } else {
+          // Chưa đánh giá → mời đánh giá trước
+          alert(
+            `✅ Thanh toán hoàn tất!\n💰 Đã thanh toán: ${paymentData.soTien.toLocaleString()} VND\n⭐ Mời bạn đánh giá trải nghiệm...`
+          );
+          setActiveTab("review");
+        }
       } else {
         alert(
           `✅ Thanh toán thành công!\n💰 Số tiền: ${paymentData.soTien.toLocaleString()} VND\n📊 Còn lại: ${remainingFromResponse.toLocaleString()} VND`

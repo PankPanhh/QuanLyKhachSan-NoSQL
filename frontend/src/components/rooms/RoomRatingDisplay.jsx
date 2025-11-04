@@ -15,7 +15,12 @@ const RoomRatingDisplay = ({ roomCode, showDetails = false }) => {
     try {
       setLoading(true);
       const response = await checkoutService.getRoomRating(roomCode);
-      setRatingData(response.data?.data || null);
+
+      // API client đã unwrap response, nên response.data chính là data thực sự
+      // Backend trả về: {success: true, data: {MaPhong, averageRating, ...}}
+      // Sau khi unwrap: response = {success: true, data: {...}}
+      const ratingData = response.success ? response.data : response;
+      setRatingData(ratingData);
     } catch (error) {
       console.error("Error loading room rating:", error);
       setRatingData(null);
