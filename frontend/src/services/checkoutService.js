@@ -58,9 +58,9 @@ export const submitReview = async (bookingId, reviewData) => {
 
 export const downloadInvoice = async (bookingId) => {
   try {
-    const response = await api.get(`/checkout/${bookingId}/invoice/download`, {
-      responseType: "blob",
-    });
+    const response = await api.download(
+      `/checkout/${bookingId}/invoice/download`
+    );
     return response;
   } catch (error) {
     console.error("Lỗi khi tải hóa đơn:", error);

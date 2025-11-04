@@ -13,6 +13,8 @@ const hoaDonSchema = new mongoose.Schema({
     default: "Chưa thanh toán",
   },
   GhiChu: { type: String },
+  DaXuatHoaDon: { type: Boolean, default: false }, // Flag đánh dấu đã xuất hóa đơn
+  NgayXuatHoaDon: { type: Date }, // Ngày xuất hóa đơn
   LichSuThanhToan: [
     {
       MaThanhToan: { type: String, required: true },

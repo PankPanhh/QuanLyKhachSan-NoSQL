@@ -4,6 +4,7 @@ import checkoutService from "../../services/checkoutService";
 import { adminGetAllBookings } from "../../services/bookingService";
 import CheckoutStatistics from "../../components/checkout/CheckoutStatistics";
 import CheckoutAdvancedStats from "../../components/checkout/CheckoutAdvancedStats";
+import ReviewForm from "../../components/checkout/ReviewForm";
 import "./CheckoutManager.css";
 
 const CheckoutManager = () => {
@@ -36,8 +37,14 @@ const CheckoutManager = () => {
       const bookingsData = Array.isArray(response)
         ? response
         : response.data || [];
+      // Hiển thị booking chưa xuất hóa đơn
+      // Bao gồm: "Đã xác nhận", "Đang sử dụng", "Hoàn thành" (chưa xuất hóa đơn)
       const activeBookings = bookingsData.filter(
-        (b) => b.TrangThai === "Đang sử dụng" || b.TrangThai === "Hoàn thành"
+        (b) =>
+          (b.TrangThai === "Đã xác nhận" ||
+            b.TrangThai === "Đang sử dụng" ||
+            b.TrangThai === "Hoàn thành") &&
+          !b.HoaDon?.DaXuatHoaDon // Chỉ hiển thị nếu chưa xuất hóa đơn
       );
       setBookings(activeBookings);
     } catch (error) {
@@ -49,34 +56,40 @@ const CheckoutManager = () => {
   };
 
   const handleCheckout = async (booking) => {
-    setSelectedBooking(booking);
-
-    // Nếu booking đã hoàn thành, chỉ hiển thị chi tiết mà không tính phí trễ
-    if (booking.TrangThai === "Hoàn thành") {
-      setLateFeeInfo(null); // Không có phí trễ cho booking đã hoàn thành
-      setActiveTab("confirm");
-      setShowCheckoutModal(true);
-      return;
-    }
-
-    // Nếu booking đang sử dụng, tính phí trễ
     try {
-      const response = await checkoutService.calculateLateFee(
+      // Lấy thông tin booking đầy đủ từ API trước
+      const response = await checkoutService.getCheckoutDetails(
         booking.MaDatPhong
       );
-      setLateFeeInfo(response.data);
-      setSelectedBooking(booking);
+      const fullBookingData = response.booking;
+
+      setSelectedBooking(fullBookingData);
+
+      // Nếu booking đã hoàn thành, chỉ hiển thị chi tiết mà không tính phí trễ
+      if (fullBookingData.TrangThai === "Hoàn thành") {
+        setLateFeeInfo(null); // Không có phí trễ cho booking đã hoàn thành
+        setActiveTab("confirm");
+        setShowCheckoutModal(true);
+        return;
+      }
+
+      // Nếu booking "Đã xác nhận" hoặc "Đang sử dụng", tính phí trễ
+      const lateFeeResponse = await checkoutService.calculateLateFee(
+        booking.MaDatPhong
+      );
+      setLateFeeInfo(lateFeeResponse);
       setActiveTab("confirm");
 
-      // Tính số tiền còn lại để mặc định cho thanh toán
+      // Tính số tiền còn lại để mặc định cho thanh toán (dùng fullBookingData)
       const totalPaid =
-        booking.HoaDon?.LichSuThanhToan?.reduce(
+        fullBookingData.HoaDon?.LichSuThanhToan?.reduce(
           (sum, payment) =>
             payment.TrangThai === "Thành công" ? sum + payment.SoTien : sum,
           0
         ) || 0;
       const totalAmount =
-        (booking.HoaDon?.TongTien || 0) + (response.data?.lateFee || 0);
+        (fullBookingData.HoaDon?.TongTien || 0) +
+        (lateFeeResponse?.lateFee || 0);
       const remaining = totalAmount - totalPaid;
 
       setPaymentData({
@@ -92,20 +105,82 @@ const CheckoutManager = () => {
 
       setShowCheckoutModal(true);
     } catch (error) {
+      // Nếu lỗi, vẫn mở modal với booking ban đầu
+      console.error("Lỗi khi load chi tiết booking:", error);
       alert(
-        "Lỗi khi tính phụ phí: " +
-          (error.response?.data?.message || error.message)
+        "❌ Lỗi khi tải thông tin booking: " +
+          (error.message || "Không rõ lý do")
       );
+      setSelectedBooking(null);
+    }
+  };
+
+  // Hàm reload selectedBooking để cập nhật dữ liệu mới nhất
+  const reloadSelectedBooking = async () => {
+    if (!selectedBooking) return null;
+    try {
+      const response = await checkoutService.getCheckoutDetails(
+        selectedBooking.MaDatPhong
+      );
+      console.log("📊 Response từ API:", response);
+      console.log("💰 Booking data:", response.booking);
+      console.log("💰 Hóa đơn:", response.booking?.HoaDon);
+
+      // Backend trả về response.booking, không phải response trực tiếp
+      const updatedBooking = response.booking;
+
+      // Cập nhật state - React sẽ re-render tất cả components dùng selectedBooking
+      setSelectedBooking(updatedBooking);
+
+      // Reload list để cập nhật trạng thái trong danh sách
+      loadActiveBookings();
+
+      // Return updated booking để các function khác có thể dùng luôn
+      return updatedBooking;
+    } catch (error) {
+      console.error("Lỗi khi reload booking:", error);
+      return null;
     }
   };
 
   const confirmCheckout = async () => {
     try {
       await checkoutService.confirmCheckout(selectedBooking.MaDatPhong);
-      alert("✅ Trả phòng thành công!");
-      setShowCheckoutModal(false);
-      setSelectedBooking(null);
-      loadActiveBookings();
+
+      // Reload booking để cập nhật trạng thái mới và lấy data mới luôn
+      const updatedBooking = await reloadSelectedBooking();
+
+      if (!updatedBooking) {
+        alert("❌ Lỗi: Không thể tải lại thông tin booking");
+        return;
+      }
+
+      // CẬP NHẬT selectedBooking state với dữ liệu mới
+      setSelectedBooking(updatedBooking);
+
+      // Tính số tiền còn lại (TongTien đã bao gồm phí trễ sau confirmCheckout)
+      const totalPaid =
+        updatedBooking.HoaDon?.LichSuThanhToan?.reduce(
+          (sum, payment) =>
+            payment.TrangThai === "Thành công" ? sum + payment.SoTien : sum,
+          0
+        ) || 0;
+      const remaining = (updatedBooking.HoaDon?.TongTien || 0) - totalPaid;
+
+      // Reset payment data với số tiền mới
+      setPaymentData({
+        phuongThuc: "Tiền mặt",
+        soTien: remaining > 0 ? remaining : 0,
+        ghiChu: "",
+      });
+
+      // Reset lateFeeInfo vì đã được cộng vào TongTien
+      setLateFeeInfo(null);
+
+      alert("✅ Trả phòng thành công! Chuyển sang thanh toán.");
+
+      // Tự động chuyển sang tab Thanh toán để tiếp tục quy trình
+      setActiveTab("payment");
     } catch (error) {
       alert(
         "Lỗi khi xác nhận trả phòng: " +
@@ -121,29 +196,67 @@ const CheckoutManager = () => {
         return;
       }
 
-      await checkoutService.processPayment(
+      // Tính số tiền tối đa có thể thanh toán
+      const totalPaid =
+        selectedBooking.HoaDon?.LichSuThanhToan?.reduce(
+          (sum, payment) =>
+            payment.TrangThai === "Thành công" ? sum + payment.SoTien : sum,
+          0
+        ) || 0;
+      // TongTien đã bao gồm phí trễ (nếu có) sau confirmCheckout
+      const totalAmount = selectedBooking.HoaDon?.TongTien || 0;
+      const remainingAmount = totalAmount - totalPaid;
+
+      if (paymentData.soTien > remainingAmount) {
+        alert(
+          `❌ Số tiền thanh toán (${paymentData.soTien.toLocaleString()} VND) vượt quá số tiền còn lại (${remainingAmount.toLocaleString()} VND)!`
+        );
+        return;
+      }
+
+      // Map field names từ Vietnamese sang English cho backend
+      const paymentPayload = {
+        paymentMethod: paymentData.phuongThuc,
+        amount: paymentData.soTien,
+        notes: paymentData.ghiChu,
+      };
+
+      const response = await checkoutService.processPayment(
         selectedBooking.MaDatPhong,
-        paymentData
+        paymentPayload
       );
-      alert("✅ Thanh toán thành công!");
 
-      // Reload booking để cập nhật thông tin thanh toán
-      const response = await checkoutService.getCheckoutDetails(
-        selectedBooking.MaDatPhong
-      );
-      setSelectedBooking(response.data);
+      // API trả về trực tiếp JSON, không có .data wrapper
+      const remainingFromResponse = response?.remainingAmount ?? 0;
 
-      // Reset form
+      // Reload booking để cập nhật TẤT CẢ các tab (Xác nhận, Thanh toán, Đánh giá, Hóa đơn)
+      await reloadSelectedBooking();
+
+      // Nếu đã thanh toán hết (0đ), tự động chuyển sang tab Hóa đơn
+      if (remainingFromResponse <= 0) {
+        alert(
+          `✅ Thanh toán hoàn tất!\n💰 Đã thanh toán: ${paymentData.soTien.toLocaleString()} VND\n🎉 Chuyển sang xuất hóa đơn...`
+        );
+        setActiveTab("invoice"); // Chuyển sang tab Hóa đơn
+      } else {
+        alert(
+          `✅ Thanh toán thành công!\n💰 Số tiền: ${paymentData.soTien.toLocaleString()} VND\n📊 Còn lại: ${remainingFromResponse.toLocaleString()} VND`
+        );
+      }
+
+      // Reset form với số tiền còn lại mới
       setPaymentData({
         phuongThuc: "Tiền mặt",
-        soTien: 0,
+        soTien: remainingFromResponse > 0 ? remainingFromResponse : 0,
         ghiChu: "",
       });
     } catch (error) {
-      alert(
-        "Lỗi khi thanh toán: " +
-          (error.response?.data?.message || error.message)
-      );
+      // API dùng fetch, không có axios response structure
+      const errorMsg = error.message || "Lỗi không xác định";
+
+      let detailedMsg = `❌ Lỗi khi thanh toán: ${errorMsg}`;
+
+      alert(detailedMsg);
     }
   };
 
@@ -158,11 +271,20 @@ const CheckoutManager = () => {
         return;
       }
 
+      // Map field names từ Vietnamese sang English cho backend
+      const reviewPayload = {
+        rating: reviewData.diemDanhGia,
+        comment: reviewData.binhLuan,
+      };
+
       await checkoutService.submitReview(
         selectedBooking.MaDatPhong,
-        reviewData
+        reviewPayload
       );
       alert("⭐ Cảm ơn bạn đã đánh giá!");
+
+      // Reload booking để cập nhật đánh giá trên tất cả các tab
+      await reloadSelectedBooking();
 
       // Reset form
       setReviewData({
@@ -179,18 +301,28 @@ const CheckoutManager = () => {
 
   const handleDownloadInvoice = async () => {
     try {
+      if (!selectedBooking || !selectedBooking.MaDatPhong) {
+        alert("❌ Lỗi: Không tìm thấy thông tin booking. Vui lòng thử lại.");
+        return;
+      }
+
+      console.log(
+        "📥 Đang xuất hóa đơn cho booking:",
+        selectedBooking.MaDatPhong
+      );
+
       const response = await checkoutService.downloadInvoice(
         selectedBooking.MaDatPhong
       );
 
-      // Tạo blob từ response
-      const blob = new Blob([response.data], { type: "application/pdf" });
+      // Backend trả về HTML
+      const blob = new Blob([response], { type: "text/html; charset=utf-8" });
       const url = window.URL.createObjectURL(blob);
 
       // Tạo link download
       const link = document.createElement("a");
       link.href = url;
-      link.download = `HoaDon_${selectedBooking.MaDatPhong}.pdf`;
+      link.download = `HoaDon_${selectedBooking.MaDatPhong}.html`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -198,11 +330,16 @@ const CheckoutManager = () => {
       // Cleanup
       window.URL.revokeObjectURL(url);
 
-      alert("📄 Tải hóa đơn thành công!");
+      alert("📄 Xuất hóa đơn thành công! Booking đã hoàn tất.");
+
+      // Đóng modal và reload danh sách
+      setShowCheckoutModal(false);
+      setSelectedBooking(null);
+      loadActiveBookings();
     } catch (error) {
+      console.error("Download invoice error:", error);
       alert(
-        "Lỗi khi tải hóa đơn: " +
-          (error.response?.data?.message || error.message)
+        "Lỗi khi tải hóa đơn: " + (error.message || "Không thể tải hóa đơn")
       );
     }
   };
@@ -225,10 +362,11 @@ const CheckoutManager = () => {
   };
 
   const formatCurrency = (amount) => {
+    const safeAmount = amount || 0;
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
-    }).format(amount);
+    }).format(safeAmount);
   };
 
   const formatDate = (dateString) => {
@@ -1079,8 +1217,12 @@ const CheckoutManager = () => {
                           <span>Tổng tiền:</span>
                           <strong>
                             {formatCurrency(
+                              // Nếu booking "Hoàn thành", TongTien đã bao gồm phí trễ
+                              // Nếu chưa hoàn thành, cộng thêm lateFee
                               (selectedBooking.HoaDon?.TongTien || 0) +
-                                (lateFeeInfo?.lateFee || 0)
+                                (selectedBooking.TrangThai === "Hoàn thành"
+                                  ? 0
+                                  : lateFeeInfo?.lateFee || 0)
                             )}
                           </strong>
                         </div>
@@ -1121,8 +1263,12 @@ const CheckoutManager = () => {
                           <span>Còn lại:</span>
                           <span>
                             {formatCurrency(
+                              // Tổng tiền (bao gồm phí trễ nếu đã hoàn thành)
                               (selectedBooking.HoaDon?.TongTien || 0) +
-                                (lateFeeInfo?.lateFee || 0) -
+                                (selectedBooking.TrangThai === "Hoàn thành"
+                                  ? 0
+                                  : lateFeeInfo?.lateFee || 0) -
+                                // Trừ đi số tiền đã thanh toán
                                 (selectedBooking.HoaDon?.LichSuThanhToan?.reduce(
                                   (sum, p) =>
                                     p.TrangThai === "Thành công"
@@ -1174,15 +1320,55 @@ const CheckoutManager = () => {
                     </div>
 
                     <div style={{ marginBottom: "20px" }}>
-                      <label
+                      <div
                         style={{
-                          display: "block",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
                           marginBottom: "8px",
-                          fontWeight: "600",
                         }}
                       >
-                        Số tiền:
-                      </label>
+                        <label
+                          style={{
+                            fontWeight: "600",
+                          }}
+                        >
+                          Số tiền:
+                        </label>
+                        <button
+                          onClick={() => {
+                            const totalPaid =
+                              selectedBooking.HoaDon?.LichSuThanhToan?.reduce(
+                                (sum, payment) =>
+                                  payment.TrangThai === "Thành công"
+                                    ? sum + payment.SoTien
+                                    : sum,
+                                0
+                              ) || 0;
+                            const totalAmount =
+                              (selectedBooking.HoaDon?.TongTien || 0) +
+                              (selectedBooking.TrangThai === "Hoàn thành"
+                                ? 0
+                                : lateFeeInfo?.lateFee || 0);
+                            const remaining = totalAmount - totalPaid;
+                            setPaymentData({
+                              ...paymentData,
+                              soTien: remaining > 0 ? remaining : 0,
+                            });
+                          }}
+                          style={{
+                            padding: "6px 12px",
+                            background: "#17a2b8",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "6px",
+                            fontSize: "13px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          💳 Thanh toán toàn bộ
+                        </button>
+                      </div>
                       <input
                         type="number"
                         value={paymentData.soTien}
@@ -1199,7 +1385,30 @@ const CheckoutManager = () => {
                           borderRadius: "8px",
                           fontSize: "16px",
                         }}
+                        placeholder="Nhập số tiền thanh toán"
                       />
+                      <div
+                        style={{
+                          marginTop: "6px",
+                          fontSize: "13px",
+                          color: "#6c757d",
+                        }}
+                      >
+                        Tối đa:{" "}
+                        {formatCurrency(
+                          (selectedBooking.HoaDon?.TongTien || 0) +
+                            (selectedBooking.TrangThai === "Hoàn thành"
+                              ? 0
+                              : lateFeeInfo?.lateFee || 0) -
+                            (selectedBooking.HoaDon?.LichSuThanhToan?.reduce(
+                              (sum, p) =>
+                                p.TrangThai === "Thành công"
+                                  ? sum + p.SoTien
+                                  : sum,
+                              0
+                            ) || 0)
+                        )}
+                      </div>
                     </div>
 
                     <div style={{ marginBottom: "20px" }}>
@@ -1332,140 +1541,48 @@ const CheckoutManager = () => {
                 {/* TAB 3: ĐÁNH GIÁ */}
                 {activeTab === "review" && (
                   <div>
-                    <div
-                      style={{
-                        textAlign: "center",
-                        marginBottom: "30px",
-                      }}
-                    >
-                      <div style={{ fontSize: "64px", marginBottom: "16px" }}>
-                        ⭐
-                      </div>
-                      <h3
-                        style={{
-                          margin: "0 0 8px 0",
-                          fontSize: "24px",
-                          color: "#495057",
-                        }}
-                      >
-                        Đánh giá trải nghiệm của bạn
-                      </h3>
-                      <p style={{ margin: 0, color: "#6c757d" }}>
-                        Chia sẻ cảm nhận của bạn về phòng và dịch vụ
-                      </p>
-                    </div>
+                    {/* Nếu chưa có đánh giá, hiển thị form */}
+                    {!selectedBooking.DanhGia?.DiemDanhGia &&
+                      selectedBooking.TrangThai === "Hoàn thành" && (
+                        <ReviewForm
+                          bookingId={selectedBooking.MaDatPhong}
+                          roomCode={selectedBooking.MaPhong}
+                          onSuccess={(review) => {
+                            // Cập nhật booking với review mới
+                            setSelectedBooking({
+                              ...selectedBooking,
+                              DanhGia: review,
+                            });
+                            // Reload danh sách
+                            loadActiveBookings();
+                          }}
+                          onCancel={() => setActiveTab("confirm")}
+                        />
+                      )}
 
-                    <div style={{ marginBottom: "30px" }}>
-                      <label
-                        style={{
-                          display: "block",
-                          marginBottom: "12px",
-                          fontWeight: "600",
-                          textAlign: "center",
-                        }}
-                      >
-                        Chọn số sao (1-5):
-                      </label>
+                    {/* Nếu booking chưa hoàn thành */}
+                    {selectedBooking.TrangThai !== "Hoàn thành" && (
                       <div
                         style={{
-                          display: "flex",
-                          justifyContent: "center",
-                          gap: "8px",
-                        }}
-                      >
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button
-                            key={star}
-                            onClick={() =>
-                              setReviewData({
-                                ...reviewData,
-                                diemDanhGia: star,
-                              })
-                            }
-                            style={{
-                              fontSize: "48px",
-                              background: "none",
-                              border: "none",
-                              cursor: "pointer",
-                              transition: "all 0.2s",
-                              opacity: star <= reviewData.diemDanhGia ? 1 : 0.3,
-                            }}
-                            onMouseEnter={(e) =>
-                              (e.target.style.transform = "scale(1.2)")
-                            }
-                            onMouseLeave={(e) =>
-                              (e.target.style.transform = "scale(1)")
-                            }
-                          >
-                            ⭐
-                          </button>
-                        ))}
-                      </div>
-                      <p
-                        style={{
                           textAlign: "center",
-                          marginTop: "8px",
-                          color: "#667eea",
-                          fontWeight: "600",
-                          fontSize: "18px",
+                          padding: "40px 20px",
+                          color: "#6c757d",
                         }}
                       >
-                        {reviewData.diemDanhGia}/5 sao
-                      </p>
-                    </div>
-
-                    <div style={{ marginBottom: "20px" }}>
-                      <label
-                        style={{
-                          display: "block",
-                          marginBottom: "8px",
-                          fontWeight: "600",
-                        }}
-                      >
-                        Nhận xét của bạn:
-                      </label>
-                      <textarea
-                        value={reviewData.binhLuan}
-                        onChange={(e) =>
-                          setReviewData({
-                            ...reviewData,
-                            binhLuan: e.target.value,
-                          })
-                        }
-                        rows="5"
-                        style={{
-                          width: "100%",
-                          padding: "12px",
-                          border: "2px solid #e9ecef",
-                          borderRadius: "8px",
-                          fontSize: "16px",
-                          fontFamily: "inherit",
-                        }}
-                        placeholder="Chia sẻ trải nghiệm của bạn về phòng, dịch vụ, nhân viên..."
-                      />
-                    </div>
-
-                    <button
-                      onClick={handleReview}
-                      style={{
-                        width: "100%",
-                        padding: "14px 32px",
-                        background:
-                          "linear-gradient(135deg, #ffc107 0%, #ff9800 100%)",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "8px",
-                        fontSize: "18px",
-                        fontWeight: "600",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                      }}
-                    >
-                      ⭐ Gửi đánh giá
-                    </button>
+                        <div style={{ fontSize: "64px", marginBottom: "16px" }}>
+                          ℹ️
+                        </div>
+                        <h4 style={{ marginBottom: "8px" }}>
+                          Chưa thể đánh giá
+                        </h4>
+                        <p style={{ margin: 0 }}>
+                          Vui lòng hoàn thành checkout trước khi đánh giá
+                        </p>
+                      </div>
+                    )}
 
                     {/* Hiển thị đánh giá đã có */}
-                    {selectedBooking.DanhGia && (
+                    {selectedBooking.DanhGia?.DiemDanhGia && (
                       <div
                         style={{
                           marginTop: "30px",

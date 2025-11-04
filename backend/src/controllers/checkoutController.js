@@ -17,11 +17,15 @@ export const calculateLateFee = async (req, res, next) => {
       });
     }
 
-    // Kiểm tra trạng thái booking
-    if (booking.TrangThai !== "Đang sử dụng") {
+    // Kiểm tra trạng thái booking - cho phép tính phí cho "Đã xác nhận" và "Đang sử dụng"
+    if (
+      booking.TrangThai !== "Đang sử dụng" &&
+      booking.TrangThai !== "Đã xác nhận"
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Booking không ở trạng thái đang sử dụng",
+        message:
+          "Chỉ có thể tính phí trễ cho booking ở trạng thái 'Đã xác nhận' hoặc 'Đang sử dụng'",
       });
     }
 
@@ -81,11 +85,15 @@ export const confirmCheckout = async (req, res, next) => {
       });
     }
 
-    // Kiểm tra trạng thái
-    if (booking.TrangThai !== "Đang sử dụng") {
+    // Kiểm tra trạng thái - cho phép checkout từ "Đã xác nhận" hoặc "Đang sử dụng"
+    if (
+      booking.TrangThai !== "Đang sử dụng" &&
+      booking.TrangThai !== "Đã xác nhận"
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Booking không ở trạng thái đang sử dụng",
+        message:
+          "Chỉ có thể checkout booking ở trạng thái 'Đã xác nhận' hoặc 'Đang sử dụng'",
       });
     }
 
@@ -221,13 +229,32 @@ export const processPayment = async (req, res, next) => {
       });
     }
 
-    // Kiểm tra số tiền còn lại cần thanh toán
+    // Tính phí trễ nếu booking chưa hoàn thành (cho phép thanh toán bao gồm phí trễ)
+    let lateFee = 0;
+    if (booking.TrangThai !== "Hoàn thành") {
+      const room = await Room.findOne({ MaPhong: booking.MaPhong });
+      if (room) {
+        const currentTime = new Date();
+        const expectedCheckoutTime = new Date(booking.NgayTraPhong);
+        if (currentTime > expectedCheckoutTime) {
+          const lateHours = differenceInHours(
+            currentTime,
+            expectedCheckoutTime
+          );
+          const hourlyRate = room.GiaPhong / 24;
+          lateFee = Math.round(Math.ceil(lateHours) * (hourlyRate * 0.5)); // 50% giá giờ
+        }
+      }
+    }
+
+    // Kiểm tra số tiền còn lại cần thanh toán (bao gồm cả phí trễ nếu có)
     const totalPaid =
       booking.HoaDon.LichSuThanhToan?.reduce((sum, payment) => {
         return payment.TrangThai === "Thành công" ? sum + payment.SoTien : sum;
       }, 0) || 0;
 
-    const remainingAmount = booking.HoaDon.TongTien - totalPaid;
+    const totalAmountWithLateFee = booking.HoaDon.TongTien + lateFee;
+    const remainingAmount = totalAmountWithLateFee - totalPaid;
 
     if (remainingAmount <= 0) {
       return res.status(400).json({
@@ -243,6 +270,7 @@ export const processPayment = async (req, res, next) => {
           "vi-VN"
         )} VND)`,
         remainingAmount,
+        lateFee: lateFee > 0 ? lateFee : undefined,
       });
     }
 
@@ -270,8 +298,9 @@ export const processPayment = async (req, res, next) => {
       0
     );
 
-    // Cập nhật trạng thái hóa đơn
-    if (totalPaidAfter >= booking.HoaDon.TongTien) {
+    // Cập nhật trạng thái hóa đơn (tính cả phí trễ nếu có)
+    const finalTotalAmount = booking.HoaDon.TongTien + lateFee;
+    if (totalPaidAfter >= finalTotalAmount) {
       booking.HoaDon.TinhTrang = "Đã thanh toán";
     } else if (totalPaidAfter > 0) {
       booking.HoaDon.TinhTrang = "Thanh toán một phần";
@@ -284,8 +313,9 @@ export const processPayment = async (req, res, next) => {
       message: "Thanh toán thành công",
       payment: paymentRecord,
       totalPaid: totalPaidAfter,
-      remainingAmount: Math.max(0, booking.HoaDon.TongTien - totalPaidAfter),
+      remainingAmount: Math.max(0, finalTotalAmount - totalPaidAfter),
       invoiceStatus: booking.HoaDon.TinhTrang,
+      lateFee: lateFee > 0 ? lateFee : undefined,
     });
   } catch (error) {
     next(error);
@@ -353,6 +383,21 @@ export const submitReview = async (req, res, next) => {
     const { bookingId } = req.params;
     const { rating, comment } = req.body;
 
+    // Validation chi tiết
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({
+        success: false,
+        message: "Điểm đánh giá phải từ 1 đến 5",
+      });
+    }
+
+    if (comment && comment.length > 2000) {
+      return res.status(400).json({
+        success: false,
+        message: "Nhận xét không được vượt quá 2000 ký tự",
+      });
+    }
+
     const booking = await Booking.findOne({ MaDatPhong: bookingId });
     if (!booking) {
       return res.status(404).json({
@@ -377,9 +422,25 @@ export const submitReview = async (req, res, next) => {
       });
     }
 
+    // Ngăn đánh giá trùng lặp
+    if (booking.DanhGia && booking.DanhGia.DiemDanhGia) {
+      return res.status(409).json({
+        success: false,
+        message: "Booking này đã được đánh giá",
+        existingReview: booking.DanhGia,
+      });
+    }
+
+    // Sanitize comment đơn giản (loại bỏ HTML tags)
+    const sanitizedComment = comment
+      ? String(comment)
+          .replace(/<[^>]*>/g, "")
+          .trim()
+      : "";
+
     booking.DanhGia = {
-      DiemDanhGia: rating,
-      BinhLuan: comment,
+      DiemDanhGia: Number(rating),
+      BinhLuan: sanitizedComment,
       NgayDanhGia: new Date(),
     };
 
@@ -417,27 +478,251 @@ export const downloadInvoice = async (req, res, next) => {
       });
     }
 
-    // Tạo nội dung hóa đơn đơn giản (trong thực tế nên dùng thư viện PDF)
-    const invoiceContent = `
-HÓA ĐƠN THANH TOÁN
-Mã hóa đơn: ${booking.HoaDon.MaHoaDon}
-Mã đặt phòng: ${booking.MaDatPhong}
-Ngày lập: ${new Date(booking.HoaDon.NgayLap).toLocaleDateString("vi-VN")}
+    // Populate thông tin khách hàng và phòng
+    await booking.populate("IDKhachHang", "HoTen Email SoDienThoai");
+    await booking.populate("MaPhong", "TenPhong LoaiPhong");
 
-Tiền phòng: ${booking.HoaDon.TongTienPhong?.toLocaleString("vi-VN")} VND
-Tiền dịch vụ: ${booking.HoaDon.TongTienDichVu?.toLocaleString("vi-VN")} VND
-Giảm giá: ${booking.HoaDon.GiamGia?.toLocaleString("vi-VN")} VND
-Tổng tiền: ${booking.HoaDon.TongTien?.toLocaleString("vi-VN")} VND
+    // Tính tổng đã thanh toán
+    const totalPaid =
+      booking.HoaDon.LichSuThanhToan?.reduce((sum, payment) => {
+        return payment.TrangThai === "Thành công" ? sum + payment.SoTien : sum;
+      }, 0) || 0;
 
-Trạng thái: ${booking.HoaDon.TinhTrang}
+    // Tạo hóa đơn HTML đẹp
+    const invoiceHTML = `
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; padding: 20px; }
+    .invoice-container { max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; text-align: center; }
+    .header h1 { font-size: 36px; margin-bottom: 10px; }
+    .header p { font-size: 16px; opacity: 0.9; }
+    .content { padding: 40px; }
+    .section { margin-bottom: 30px; }
+    .section-title { font-size: 18px; font-weight: 600; color: #333; margin-bottom: 15px; border-bottom: 2px solid #667eea; padding-bottom: 8px; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .info-item { padding: 12px; background: #f8f9fa; border-radius: 8px; }
+    .info-label { font-size: 13px; color: #6c757d; margin-bottom: 5px; }
+    .info-value { font-size: 16px; color: #333; font-weight: 500; }
+    .table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    .table th { background: #f8f9fa; padding: 12px; text-align: left; font-weight: 600; color: #495057; border-bottom: 2px solid #dee2e6; }
+    .table td { padding: 12px; border-bottom: 1px solid #e9ecef; }
+    .table tr:last-child td { border-bottom: none; }
+    .total-row { background: #f8f9fa; font-weight: 600; font-size: 18px; }
+    .total-row td { color: #667eea; }
+    .payment-history { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 8px; margin-top: 20px; }
+    .payment-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #dee2e6; }
+    .payment-item:last-child { border-bottom: none; }
+    .status-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+    .status-paid { background: #d4edda; color: #155724; }
+    .status-partial { background: #fff3cd; color: #856404; }
+    .status-unpaid { background: #f8d7da; color: #721c24; }
+    .footer { background: #f8f9fa; padding: 20px; text-align: center; font-size: 14px; color: #6c757d; }
+  </style>
+</head>
+<body>
+  <div class="invoice-container">
+    <div class="header">
+      <h1>🏨 HÓA ĐƠN THANH TOÁN</h1>
+      <p>Khách sạn • Hotel Management System</p>
+    </div>
+    
+    <div class="content">
+      <!-- Thông tin hóa đơn -->
+      <div class="section">
+        <div class="section-title">📋 Thông tin hóa đơn</div>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Mã hóa đơn</div>
+            <div class="info-value">${booking.HoaDon.MaHoaDon}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Mã đặt phòng</div>
+            <div class="info-value">${booking.MaDatPhong}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Ngày lập</div>
+            <div class="info-value">${new Date(
+              booking.HoaDon.NgayLap
+            ).toLocaleDateString("vi-VN")}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Trạng thái</div>
+            <div class="info-value">
+              <span class="status-badge ${
+                booking.HoaDon.TinhTrang === "Đã thanh toán"
+                  ? "status-paid"
+                  : booking.HoaDon.TinhTrang === "Thanh toán một phần"
+                  ? "status-partial"
+                  : "status-unpaid"
+              }">
+                ${booking.HoaDon.TinhTrang}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thông tin khách hàng -->
+      <div class="section">
+        <div class="section-title">👤 Thông tin khách hàng</div>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Họ tên</div>
+            <div class="info-value">${booking.IDKhachHang?.HoTen || "N/A"}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Email</div>
+            <div class="info-value">${booking.IDKhachHang?.Email || "N/A"}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Số điện thoại</div>
+            <div class="info-value">${
+              booking.IDKhachHang?.SoDienThoai || "N/A"
+            }</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Phòng</div>
+            <div class="info-value">${
+              booking.MaPhong?.TenPhong || booking.MaPhong
+            } - ${booking.MaPhong?.LoaiPhong || ""}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chi tiết thanh toán -->
+      <div class="section">
+        <div class="section-title">💰 Chi tiết thanh toán</div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Khoản mục</th>
+              <th style="text-align: right;">Số tiền (VND)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Tiền phòng</td>
+              <td style="text-align: right;">${
+                booking.HoaDon.TongTienPhong?.toLocaleString("vi-VN") || 0
+              }</td>
+            </tr>
+            <tr>
+              <td>Tiền dịch vụ</td>
+              <td style="text-align: right;">${
+                booking.HoaDon.TongTienDichVu?.toLocaleString("vi-VN") || 0
+              }</td>
+            </tr>
+            ${
+              booking.HoaDon.GiamGia > 0
+                ? `
+            <tr>
+              <td>Giảm giá</td>
+              <td style="text-align: right; color: #28a745;">-${booking.HoaDon.GiamGia?.toLocaleString(
+                "vi-VN"
+              )}</td>
+            </tr>`
+                : ""
+            }
+            ${
+              booking.HoaDon.PhuPhiTraTre > 0
+                ? `
+            <tr>
+              <td>Phụ phí trả trễ</td>
+              <td style="text-align: right; color: #dc3545;">+${booking.HoaDon.PhuPhiTraTre?.toLocaleString(
+                "vi-VN"
+              )}</td>
+            </tr>`
+                : ""
+            }
+            <tr class="total-row">
+              <td>TỔNG CỘNG</td>
+              <td style="text-align: right;">${booking.HoaDon.TongTien?.toLocaleString(
+                "vi-VN"
+              )} VND</td>
+            </tr>
+            <tr style="background: #d4edda;">
+              <td style="color: #155724;">Đã thanh toán</td>
+              <td style="text-align: right; color: #155724; font-weight: 600;">${totalPaid.toLocaleString(
+                "vi-VN"
+              )} VND</td>
+            </tr>
+            <tr style="background: #f8d7da;">
+              <td style="color: #721c24;">Còn lại</td>
+              <td style="text-align: right; color: #721c24; font-weight: 600;">${(
+                booking.HoaDon.TongTien - totalPaid
+              ).toLocaleString("vi-VN")} VND</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Lịch sử thanh toán -->
+      ${
+        booking.HoaDon.LichSuThanhToan?.length > 0
+          ? `
+      <div class="section">
+        <div class="section-title">📝 Lịch sử thanh toán</div>
+        <div class="payment-history">
+          ${booking.HoaDon.LichSuThanhToan.map(
+            (payment) => `
+            <div class="payment-item">
+              <div>
+                <strong>${payment.PhuongThuc}</strong> - ${new Date(
+              payment.NgayThanhToan
+            ).toLocaleString("vi-VN")}
+                ${
+                  payment.GhiChu
+                    ? `<br><small style="color: #6c757d;">${payment.GhiChu}</small>`
+                    : ""
+                }
+              </div>
+              <div style="font-weight: 600; color: #28a745;">
+                ${payment.SoTien.toLocaleString("vi-VN")} VND
+              </div>
+            </div>
+          `
+          ).join("")}
+        </div>
+      </div>`
+          : ""
+      }
+
+      ${
+        booking.HoaDon.GhiChu
+          ? `
+      <div class="section">
+        <div class="section-title">📌 Ghi chú</div>
+        <p style="padding: 12px; background: #f8f9fa; border-radius: 8px;">${booking.HoaDon.GhiChu}</p>
+      </div>`
+          : ""
+      }
+    </div>
+
+    <div class="footer">
+      <p>Cảm ơn quý khách đã sử dụng dịch vụ!</p>
+      <p style="margin-top: 8px;">📞 Hotline: 1900-xxxx | 📧 Email: support@hotel.com</p>
+    </div>
+  </div>
+</body>
+</html>
     `;
 
-    res.setHeader("Content-Type", "text/plain");
+    // Đánh dấu đã xuất hóa đơn
+    booking.HoaDon.DaXuatHoaDon = true;
+    booking.HoaDon.NgayXuatHoaDon = new Date();
+    await booking.save();
+
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="invoice-${bookingId}.txt"`
+      `attachment; filename="HoaDon_${bookingId}.html"`
     );
-    res.send(invoiceContent);
+    res.send(invoiceHTML);
   } catch (error) {
     next(error);
   }
