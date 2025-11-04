@@ -67,6 +67,28 @@ export const createBooking = async (bookingDetails) => {
     LichSuThanhToan: [],
   };
 
+  // If a promo was applied in bookingDetails, record it in the invoice
+  if (bookingDetails.KhuyenMaiApDung) {
+    HoaDon.KhuyenMaiApDung = bookingDetails.KhuyenMaiApDung;
+    HoaDon.GiaTriGiam = bookingDetails.GiaTriGiam || 0;
+    HoaDon.LoaiGiamGia = bookingDetails.LoaiGiamGia || '';
+    // include promo discount in GiamGia if not already present in pm.discount
+    if (!GiamGia || GiamGia === 0) {
+      GiamGia = HoaDon.GiaTriGiam || 0;
+    }
+    // ensure totals reflect promo
+    HoaDon.GiamGia = GiamGia;
+    // Recompute total to reflect promo discount
+    const newTongTien = (TongTienPhong || 0) + (TongTienDichVu || 0) - (GiamGia || 0);
+    HoaDon.TongTien = newTongTien;
+    HoaDon.TinhTrang =
+      paidAmount >= newTongTien
+        ? "Đã thanh toán"
+        : paidAmount > 0
+        ? "Thanh toán một phần"
+        : "Chưa thanh toán";
+  }
+
   if (paidAmount > 0) {
     HoaDon.LichSuThanhToan.push({
       MaThanhToan: `TT${Date.now().toString().slice(-6)}`,

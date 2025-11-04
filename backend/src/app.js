@@ -14,13 +14,14 @@ loadEnv();
 
 // Import routes (sau khi đã load env)
 import authRoutes from "./routes/authRoutes.js";
-import userRoutes from "./routes/userManagementRoutes.js";
+import userRoutes from "./routes/userManagementRoutes.js"; // quản lý người dùng
 import roomRoutes from "./routes/roomRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
 import serviceRoutes from "./routes/serviceRoutes.js";
+import amenitiesRoutes from "./routes/amenitiesRoutes.js"; // thêm từ nhánh cc
 import promoRoutes from "./routes/promoRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js"; // Đảm bảo reportRoutes được import
-import checkoutRoutes from "./routes/checkoutRoutes.js";
+import checkoutRoutes from "./routes/checkoutRoutes.js"; // thêm từ nhánh main
 
 const app = express();
 
@@ -80,9 +81,11 @@ app.use("/api/v1/rooms", roomRoutes);
 app.use("/api/v1/bookings", bookingRoutes);
 app.use("/api/v1/services", serviceRoutes);
 app.use("/api/v1/promotions", promoRoutes);
-app.use("/api/v1/reports", reportRoutes); // Gắn reportRoutes
+app.use("/api/v1/reports", reportRoutes);
+app.use("/api/v1/amenities", amenitiesRoutes);
 app.use("/api/v1/checkout", checkoutRoutes);
 app.use("/api/v1/admin", userRoutes);
+
 // --- Error Handling ---
 // 404 Not Found (Phải đặt trước errorHandler)
 app.use((req, res, next) => {
