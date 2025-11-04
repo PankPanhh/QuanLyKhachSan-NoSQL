@@ -1,36 +1,42 @@
 import express from 'express';
-import { body } from 'express-validator';
-import { registerUser, loginUser, getMe } from '../controllers/authController.js';
-import { validateRequest } from '../middleware/validateMiddleware.js';
+import {
+  validators,
+  registerWithAccount,
+  registerGuest,
+  verifyOtpAndCreateAccount,
+  register,
+  verifyOtp,
+  login,
+  checkRole,
+  staffRegisterWithAccount,
+  forgotPassword,
+  resetPassword
+} from '../controllers/authController.js';
+import { handleValidation } from '../middleware/validateMiddleware.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.post(
-  '/register',
-  [
-    // Kiem tra du lieu dau vao
-    body('HoTen').notEmpty().withMessage('Ho ten la bat buoc'),
-    body('Email').isEmail().withMessage('Email khong hop le'),
-    body('MatKhau')
-      .isLength({ min: 6 })
-      .withMessage('Mat khau phai co it nhat 6 ky tu'),
-  ],
-  validateRequest, // Middleware xu ly loi validation
-  registerUser
-);
+// === API mới cho 2 lựa chọn đăng ký ===
+router.post('/register-with-account', validators.registerWithAccount, handleValidation, registerWithAccount);
+router.post('/register-guest', validators.registerGuest, handleValidation, registerGuest);
+router.post('/verify-otp-account', validators.verifyOtpAccount, handleValidation, verifyOtpAndCreateAccount);
 
-router.post(
-  '/login',
-  [
-    body('Email').isEmail().withMessage('Email khong hop le'),
-    body('MatKhau').notEmpty().withMessage('Mat khau la bat buoc'),
-  ],
-  validateRequest,
-  loginUser
-);
+// Staff register (tùy chọn)
+router.post('/staff/register-with-account', validators.registerWithAccount, handleValidation, staffRegisterWithAccount);
 
-// Route nay yeu cau dang nhap (protect)
-router.get('/me', protect, getMe);
+// Alias tương thích
+router.post('/register', validators.registerWithAccount, handleValidation, register);
+router.post('/verify-otp', validators.verifyOtpAccount, handleValidation, verifyOtp);
+
+// Login chung cho mọi vai trò
+router.post('/login', validators.login, handleValidation, login);
+
+// Quên/đặt lại mật khẩu
+router.post('/forgot-password', validators.forgotPassword, handleValidation, forgotPassword);
+router.post('/reset-password', validators.resetPassword, handleValidation, resetPassword);
+
+// Check role (JWT)
+router.get('/check-role', protect, checkRole);
 
 export default router;

@@ -1,9 +1,9 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const TienNghiSchema = new mongoose.Schema({
   MaTienNghi: { type: String, required: true },
   TenTienNghi: { type: String, required: true },
-  TrangThai: { type: String, default: "Đang hoạt động" }
+  TrangThai: { type: String, default: "Đang hoạt động" },
 });
 
 const DichVuSchema = new mongoose.Schema({
@@ -14,7 +14,7 @@ const DichVuSchema = new mongoose.Schema({
   HinhAnhDichVu: { type: String },
   MoTaDichVu: { type: String },
   TrangThai: { type: String, default: "Đang hoạt động" },
-  ThoiGianPhucVu: { type: String, default: "08:00 - 22:00" }
+  ThoiGianPhucVu: { type: String, default: "08:00 - 22:00" },
 });
 
 const KhuyenMaiSchema = new mongoose.Schema({
@@ -33,7 +33,7 @@ const KhuyenMaiSchema = new mongoose.Schema({
   MoTa: { type: String },
   NgayBatDau: { type: Date },
   NgayKetThuc: { type: Date },
-  TrangThai: { type: String, default: "Đang hoạt động" }
+  TrangThai: { type: String, default: "Đang hoạt động" },
 });
 
 const RoomSchema = new mongoose.Schema(
@@ -45,15 +45,8 @@ const RoomSchema = new mongoose.Schema(
     GiaPhong: { type: Number, required: true },
     TinhTrang: {
       type: String,
-      enum: [
-        "Trống",
-        "Đã đặt",
-        "Đang sử dụng",
-        "Đang dọn",
-        "Hư",
-        "Bảo trì"
-      ],
-      default: "Trống"
+      enum: ["Trống", "Đã đặt", "Đang sử dụng", "Đang dọn", "Hư", "Bảo trì"],
+      default: "Trống",
     },
     SoGiuong: { type: Number },
     LoaiGiuong: { type: String },
@@ -62,12 +55,12 @@ const RoomSchema = new mongoose.Schema(
     HinhAnh: [{ type: String }],
     TienNghi: [TienNghiSchema],
     DichVu: [DichVuSchema],
-    KhuyenMai: [KhuyenMaiSchema]
+    KhuyenMai: [KhuyenMaiSchema],
   },
   {
     collection: "Phong",
     versionKey: false,
-    timestamps: true
+    timestamps: true,
   }
 );
 

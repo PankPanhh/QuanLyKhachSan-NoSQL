@@ -1,8 +1,8 @@
-import Room from '../models/Room.js';
-import mongoose from 'mongoose';
-import fs from 'fs/promises';
-import path from 'path';
-import Booking from '../models/Booking.js';
+import Room from "../models/Room.js";
+import mongoose from "mongoose";
+import fs from "fs/promises";
+import path from "path";
+import Booking from "../models/Booking.js";
 
 // GET /api/v1/rooms - list rooms
 export const getAllRooms = async (req, res, next) => {
@@ -10,40 +10,133 @@ export const getAllRooms = async (req, res, next) => {
     const rooms = await Room.find({}).sort({ TenPhong: 1 }).lean();
     return res.status(200).json(rooms);
   } catch (error) {
-    console.error('Error getAllRooms:', error);
-    return res.status(500).json({ success: false, message: 'Lỗi server', error: error.message });
+    console.error("Error getAllRooms:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server", error: error.message });
   }
 };
 
-// GET /api/v1/rooms/available
-export const getAvailableRooms = async (req, res, next) => {
+// Controller: Kiểm tra phòng trống theo khoảng thời gian
+export const getAvailableRooms = async (req, res) => {
   try {
-    // If checkIn/checkOut provided, compute availability by checking overlapping bookings
-    const { checkIn, checkOut } = req.query;
-    if (checkIn && checkOut) {
-      const ci = new Date(checkIn);
-      const co = new Date(checkOut);
-      if (isNaN(ci.getTime()) || isNaN(co.getTime()) || ci >= co) {
-        return res.status(400).json({ success: false, message: 'Invalid checkIn/checkOut' });
-      }
+    const { startDate, endDate } = req.query;
 
-      // Find bookings that overlap [ci, co)
-      const overlapping = await Booking.find({
-        TrangThai: { $ne: 'Đã hủy' },
-        NgayNhanPhong: { $lt: co },
-        NgayTraPhong: { $gt: ci },
-      }).distinct('MaPhong');
-
-      const rooms = await Room.find({ MaPhong: { $nin: overlapping } }).sort({ TenPhong: 1 }).lean();
-      return res.status(200).json(rooms);
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        success: false,
+        message: "Vui lòng cung cấp startDate và endDate",
+      });
     }
 
-    // Fallback: return rooms marked as 'Trống'
-    const rooms = await Room.find({ TinhTrang: 'Trống' }).sort({ TenPhong: 1 }).lean();
-    return res.status(200).json(rooms);
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: "Định dạng ngày không hợp lệ",
+      });
+    }
+
+    if (start >= end) {
+      return res.status(400).json({
+        success: false,
+        message: "startDate phải nhỏ hơn endDate",
+      });
+    }
+
+    const activeStatuses = ["Đang chờ", "Đang sử dụng"];
+
+    const pipeline = [
+      {
+        $match: {
+          MaPhong: { $exists: true },
+          TinhTrang: "Trống",
+        },
+      },
+      {
+        $lookup: {
+          from: "DatPhong",
+          localField: "MaPhong",
+          foreignField: "MaPhong",
+          as: "bookings",
+        },
+      },
+      {
+        $addFields: {
+          isAvailable: {
+            $not: {
+              $anyElementTrue: {
+                $map: {
+                  input: "$bookings",
+                  as: "booking",
+                  in: {
+                    $and: [
+                      { $in: ["$$booking.TrangThai", activeStatuses] },
+                      { $lte: ["$$booking.NgayNhanPhong", end] },
+                      { $gte: ["$$booking.NgayTraPhong", start] },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        $match: {
+          isAvailable: true,
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          MaPhong: 1,
+          TenPhong: 1,
+          LoaiPhong: 1,
+          GiaPhong: 1,
+          SoGiuong: 1,
+          MoTa: 1,
+          HinhAnh: 1,
+        },
+      },
+    ];
+
+    console.log("--- Running Aggregation Pipeline ---");
+    const availableRooms = await Room.aggregate(pipeline);
+    console.log(`Found ${availableRooms.length} available rooms.`);
+
+    // Log từng bước để debug
+    const step1 = await Room.aggregate([pipeline[0]]).exec();
+    console.log(`Step 1 ($match TinhTrang): Found ${step1.length} rooms.`);
+
+    const step2 = await Room.aggregate(pipeline.slice(0, 2)).exec();
+    console.log(
+      `Step 2 ($lookup): Found ${step2.length} rooms, check bookings field.`
+    );
+    // console.log(JSON.stringify(step2.slice(0, 2), null, 2)); // Log sample data after lookup
+
+    const step3 = await Room.aggregate(pipeline.slice(0, 3)).exec();
+    console.log(
+      `Step 3 ($addFields isAvailable): Found ${step3.length} rooms.`
+    );
+    // console.log(JSON.stringify(step3.filter(r => !r.isAvailable).slice(0, 2), null, 2)); // Log unavailable rooms
+
+    const step4 = await Room.aggregate(pipeline.slice(0, 4)).exec();
+    console.log(`Step 4 ($match isAvailable): Found ${step4.length} rooms.`);
+
+    return res.status(200).json({
+      success: true,
+      data: availableRooms,
+    });
   } catch (error) {
-    console.error('Error getAvailableRooms:', error);
-    return res.status(500).json({ success: false, message: 'Lỗi server', error: error.message });
+    console.error("Lỗi getAvailableRooms:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server",
+      error: error.message,
+    });
   }
 };
 
@@ -59,28 +152,44 @@ export const getRoomById = async (req, res, next) => {
   try {
     const { id } = req.params;
     const filter = findRoomFilter(id);
-    if (!filter) return res.status(400).json({ success: false, message: 'Thiếu id' });
+    if (!filter)
+      return res.status(400).json({ success: false, message: "Thiếu id" });
     const room = await Room.findOne(filter).lean();
-    if (!room) return res.status(404).json({ success: false, message: 'Không tìm thấy phòng' });
+    if (!room)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy phòng" });
     return res.status(200).json({ success: true, data: room });
   } catch (error) {
-    console.error('Error getRoomById:', error);
-    return res.status(500).json({ success: false, message: 'Lỗi server', error: error.message });
+    console.error("Error getRoomById:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server", error: error.message });
   }
 };
 
 // POST /api/v1/rooms
 export const createRoom = async (req, res, next) => {
   try {
-    const required = ['MaPhong', 'TenPhong', 'LoaiPhong', 'GiaPhong'];
-    const missing = required.filter((k) => !Object.hasOwn(req.body, k) || req.body[k] === '' || req.body[k] === null);
-    if (missing.length) return res.status(400).json({ success: false, message: 'Missing fields', missing });
+    const required = ["MaPhong", "TenPhong", "LoaiPhong", "GiaPhong"];
+    const missing = required.filter(
+      (k) =>
+        !Object.hasOwn(req.body, k) ||
+        req.body[k] === "" ||
+        req.body[k] === null
+    );
+    if (missing.length)
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing fields", missing });
 
     const room = await Room.create(req.body);
     return res.status(201).json({ success: true, data: room });
   } catch (error) {
-    console.error('Error createRoom:', error);
-    return res.status(500).json({ success: false, message: 'Lỗi server', error: error.message });
+    console.error("Error createRoom:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server", error: error.message });
   }
 };
 
@@ -89,13 +198,23 @@ export const updateRoom = async (req, res, next) => {
   try {
     const { id } = req.params;
     const filter = findRoomFilter(id);
-    if (!filter) return res.status(400).json({ success: false, message: 'Thiếu id' });
-    const updated = await Room.findOneAndUpdate(filter, { $set: req.body }, { new: true }).lean();
-    if (!updated) return res.status(404).json({ success: false, message: 'Không tìm thấy phòng để cập nhật' });
+    if (!filter)
+      return res.status(400).json({ success: false, message: "Thiếu id" });
+    const updated = await Room.findOneAndUpdate(
+      filter,
+      { $set: req.body },
+      { new: true }
+    ).lean();
+    if (!updated)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy phòng để cập nhật" });
     return res.status(200).json({ success: true, data: updated });
   } catch (error) {
-    console.error('Error updateRoom:', error);
-    return res.status(500).json({ success: false, message: 'Lỗi server', error: error.message });
+    console.error("Error updateRoom:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server", error: error.message });
   }
 };
 
@@ -104,35 +223,60 @@ export const deleteRoom = async (req, res, next) => {
   try {
     const { id } = req.params;
     const filter = findRoomFilter(id);
-    if (!filter) return res.status(400).json({ success: false, message: 'Thiếu id' });
+    if (!filter)
+      return res.status(400).json({ success: false, message: "Thiếu id" });
     const del = await Room.findOneAndDelete(filter).lean();
-    if (!del) return res.status(404).json({ success: false, message: 'Không tìm thấy phòng để xóa' });
-    return res.status(200).json({ success: true, message: 'Đã xóa phòng', data: del });
+    if (!del)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy phòng để xóa" });
+    return res
+      .status(200)
+      .json({ success: true, message: "Đã xóa phòng", data: del });
   } catch (error) {
-    console.error('Error deleteRoom:', error);
-    return res.status(500).json({ success: false, message: 'Lỗi server', error: error.message });
+    console.error("Error deleteRoom:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server", error: error.message });
   }
 };
 
 // PUT /api/v1/rooms/:id/image - upload/overwrite image (multer memory storage expected)
 export const uploadRoomImage = async (req, res, next) => {
   try {
-    if (!req.file) return res.status(400).json({ success: false, message: 'Không có file' });
+    if (!req.file)
+      return res.status(400).json({ success: false, message: "Không có file" });
     const { id } = req.params;
     const filter = findRoomFilter(id);
-    if (!filter) return res.status(400).json({ success: false, message: 'Thiếu id' });
+    if (!filter)
+      return res.status(400).json({ success: false, message: "Thiếu id" });
 
-    const filename = `${Date.now()}_${req.file.originalname.replace(/\s+/g, '_')}`;
-    const imagesDir = path.join(process.cwd(), 'src', 'assets', 'images', 'room');
+    const filename = `${Date.now()}_${req.file.originalname.replace(
+      /\s+/g,
+      "_"
+    )}`;
+    const imagesDir = path.join(
+      process.cwd(),
+      "src",
+      "assets",
+      "images",
+      "room"
+    );
     await fs.mkdir(imagesDir, { recursive: true });
     const dest = path.join(imagesDir, filename);
     await fs.writeFile(dest, req.file.buffer);
 
     // Push to HinhAnh array
-    const updated = await Room.findOneAndUpdate(filter, { $push: { HinhAnh: filename } }, { new: true }).lean();
+    const updated = await Room.findOneAndUpdate(
+      filter,
+      { $push: { HinhAnh: filename } },
+      { new: true }
+    ).lean();
     return res.status(200).json({ success: true, filename, data: updated });
   } catch (error) {
-    console.error('Error uploadRoomImage:', error);
-    return res.status(500).json({ success: false, message: 'Lỗi server', error: error.message });
+    console.error("Error uploadRoomImage:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server", error: error.message });
   }
 };

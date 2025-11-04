@@ -1,12 +1,11 @@
-import app from './app.js';
-import { connectDB } from './config/db.js';
-import { loadEnv } from './config/dotenv.js';
 
-// Tải biến môi trường
+import { loadEnv } from './config/dotenv.js';
 loadEnv();
 
-// Kết nối CSDL
-connectDB();
+const { connectDB } = await import('./config/db.js');
+await connectDB();
+
+const { default: app } = await import('./app.js');
 
 const PORT = process.env.PORT || 5000;
 

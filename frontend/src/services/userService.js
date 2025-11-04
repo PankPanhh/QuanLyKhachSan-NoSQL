@@ -1,39 +1,28 @@
-import api from './api'; // Import mock API
+// src/services/userService.js
+import api from './api.js';
 
-export const login = async (email, password) => {
-  try {
-    const data = await api.post('/auth/login', { 
-      Email: email, 
-      MatKhau: password 
-    });
-    return data;
-  } catch (error) {
-    console.error('Lỗi khi đăng nhập:', error.message);
-    throw error;
-  }
-};
+export const apiLogin = (email, password) =>
+  api.post('/auth/login', { email, password });
 
-export const register = async (name, email, password) => {
-  try {
-    const data = await api.post('/auth/register', { 
-      HoTen: name, 
-      Email: email, 
-      MatKhau: password 
-    });
-    return data;
-  } catch (error) {
-    console.error('Lỗi khi đăng ký:', error.message);
-    throw error;
-  }
-};
+export const apiRegisterWithAccount = (payload) =>
+  api.post('/auth/register-with-account', payload);
 
-// Hàm lấy tất cả user (cho Admin)
-export const getAllUsers = async () => {
-    try {
-        const data = await api.get('/admin/users');
-        return data;
-    } catch (error) {
-        console.error('Lỗi khi lấy danh sách user:', error.message);
-        throw error;
-    }
-}
+export const apiVerifyOtpAccount = (payload) =>
+  api.post('/auth/verify-otp-account', payload);
+
+export const apiRegisterGuest = (payload) =>
+  api.post('/auth/register-guest', payload);
+
+export const apiCheckRole = () =>
+  api.get('/auth/check-role');
+
+// tùy chọn (nếu dùng)
+export const apiForgotPassword = (email) =>
+  api.post('/auth/forgot-password', { email });
+
+export const apiResetPassword = (email, otp, newPassword) =>
+  api.post('/auth/reset-password', { email, otp, newPassword });
+
+export const apiStaffRegisterWithAccount = (payload) =>
+  api.post('/auth/staff/register-with-account', payload);
+

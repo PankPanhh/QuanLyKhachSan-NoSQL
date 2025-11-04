@@ -1,150 +1,90 @@
-import React, { createContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // <-- 1. THÊM IMPORT
-import { login as apiLogin, register as apiRegister } from '../services/userService';
+// src/context/AuthContext.jsx
+import React, { createContext, useEffect, useState } from 'react';
+import {
+  apiLogin,
+  apiRegisterWithAccount,
+  apiVerifyOtpAccount,
+  apiCheckRole,
+  apiStaffRegisterWithAccount 
+} from '../services/userService.js';
 
-// 1. Tạo Context
 export const AuthContext = createContext();
 
-// 2. Tạo Provider
-export const AuthProvider = ({ children }) => {
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate(); // <-- 2. KHỞI TẠO HOOK
+  const [role, setRole] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // 3. Effect: Tự động đăng nhập khi tải lại trang (nếu có token)
   useEffect(() => {
-    const DEV_BYPASS_LOGIN = false; // 🔧 Tắt bypass để test login thực tế
+    // optional: gọi apiCheckRole nếu cần
+  }, []);
 
-    if (DEV_BYPASS_LOGIN) {
-      // Giả lập user admin và token
-      setUser({
-        IDNguoiDung: "NV_DEV",
-        HoTen: "Admin Developer",
-        isAdmin: true,
-        Email: "dev@admin.local",
-      });
-      setToken("dev-token");
-      setLoading(false);
-      return;
-    }
-
+  const login = async (email, password) => {
+    setLoading(true);
     try {
-      const storedToken = localStorage.getItem("token");
-      const storedUser = localStorage.getItem("user");
-
-      if (storedToken && storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        setToken(storedToken);
-        setUser(parsedUser);
-      }
-    } catch (err) {
-      console.error("Lỗi parse user:", err);
-      localStorage.removeItem("user");
+      const res = await apiLogin(email, password); // { token, user }
+      if (res?.token) localStorage.setItem('token', res.token);
+      setUser(res?.user || null);
+      setRole(res?.user?.VaiTro || null);
+      return res;
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
-
-  // 4. Hàm Login
-  const login = async (email, password) => {
+  const registerWithAccount = async (payload) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const data = await apiLogin(email, password); // Gọi API service
-      
-      console.log('Login response data:', data); // Debug log
-      
-      // Backend trả về user info trực tiếp, không có field 'user'
-      const userInfo = {
-        _id: data._id,
-        IDNguoiDung: data.IDNguoiDung,
-        HoTen: data.HoTen,
-        Email: data.Email,
-        VaiTro: data.VaiTro,
-        isAdmin: data.VaiTro === 'Admin' || data.VaiTro === 'NhanVien'
-      };
-      
-      setUser(userInfo);
-      setToken(data.token);
-      
-      localStorage.setItem('user', JSON.stringify(userInfo));
-      localStorage.setItem('token', data.token);
-      
+      return await apiRegisterWithAccount(payload);
+    } finally {
       setLoading(false);
-      return data;
-    } catch (error) {
-      setLoading(false);
-      throw error; // Ném lỗi để trang Login có thể bắt
     }
   };
 
-  // 5. Hàm Register
-  const register = async (name, email, password) => {
+  const verifyOtpAccount = async (payload) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const data = await apiRegister(name, email, password); // Gọi API service
-      
-      console.log('Register response data:', data); // Debug log
-      
-      // Backend trả về user info trực tiếp, không có field 'user'
-      const userInfo = {
-        _id: data._id,
-        IDNguoiDung: data.IDNguoiDung,
-        HoTen: data.HoTen,
-        Email: data.Email,
-        VaiTro: data.VaiTro,
-        isAdmin: data.VaiTro === 'Admin' || data.VaiTro === 'NhanVien'
-      };
-      
-      setUser(userInfo);
-      setToken(data.token);
-
-      localStorage.setItem('user', JSON.stringify(userInfo));
-      localStorage.setItem('token', data.token);
-
+      return await apiVerifyOtpAccount(payload);
+    } finally {
       setLoading(false);
-      return data;
-    } catch (error) {
-      setLoading(false);
-      throw error;
     }
   };
 
-  // 6. Hàm Logout (ĐÃ CẬP NHẬT)
+  const checkRole = async () => {
+    try {
+      const { role: r, user: u } = await apiCheckRole();
+      setRole(r);
+      setUser(u);
+      return { r, u };
+    } catch {}
+  };
+
   const logout = () => {
-    console.log('Logout function called'); // Debug log
-    console.log('Current URL before logout:', window.location.href); // Debug log
-    
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('user');
     localStorage.removeItem('token');
-    localStorage.removeItem('userInfo'); // Xóa thêm userInfo nếu có
-    
-    console.log('About to navigate to home page'); // Debug log
-    
-    // Thử sử dụng navigate với replace
-    navigate('/', { replace: true });
-    
-    // Nếu vẫn có vấn đề, có thể uncommment dòng dưới
-    // window.location.href = '/';
+    setUser(null);
+    setRole(null);
   };
-
-  // 7. Giá trị cung cấp cho các component con
-  const value = {
-    user,
-    token,
-    loading,
-    isAuthenticated: !!token,
-    login,
-    register,
-    logout,
-  };
+const staffRegisterWithAccount = async (payload) => {
+  setLoading(true);
+  try {
+    return await apiStaffRegisterWithAccount(payload);
+  } catch (err) {
+    throw new Error(err?.message || 'Đăng ký nhân viên thất bại');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
-    <AuthContext.Provider value={value}>
-      {!loading && children} {/* Chỉ render app khi đã check auth xong */}
+    <AuthContext.Provider value={{
+      user, role, loading,
+      login, logout,
+      registerWithAccount, verifyOtpAccount, staffRegisterWithAccount,  
+      checkRole
+    }}>
+      {children}
     </AuthContext.Provider>
   );
-};
+}
+
+export default AuthProvider;
