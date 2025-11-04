@@ -41,8 +41,10 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // 2. Body Parsers
-app.use(express.json()); // Parse JSON bodies
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+// Increase limits to allow large payloads (e.g. base64-encoded avatars sent in JSON).
+// Note: For production it's better to accept file uploads via multipart/form-data and handle them with multer.
+app.use(express.json({ limit: '10mb' })); // Parse JSON bodies (allow up to 10MB)
+app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Parse URL-encoded bodies
 
 // 3. Static Files - Serve images từ assets
 // Serve room images with no-cache so overwritten files are fetched immediately by browsers
