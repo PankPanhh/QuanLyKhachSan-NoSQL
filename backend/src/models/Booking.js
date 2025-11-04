@@ -18,7 +18,13 @@ const hoaDonSchema = new mongoose.Schema({
       MaThanhToan: { type: String, required: true },
       PhuongThuc: {
         type: String,
-        enum: ["Tiền mặt", "Chuyển khoản", "Thẻ tín dụng"],
+        enum: [
+          "Tiền mặt",
+          "Chuyển khoản",
+          "Thẻ tín dụng",
+          "PayPal",
+          "Ví điện tử",
+        ],
         default: "Tiền mặt",
       },
       SoTien: { type: Number, required: true },

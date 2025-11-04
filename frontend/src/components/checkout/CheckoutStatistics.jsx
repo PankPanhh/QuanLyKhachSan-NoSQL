@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { adminGetAllBookings } from "../../services/bookingService";
+import { formatCurrency } from "../../utils/formatCurrency";
 
 const CheckoutStatistics = () => {
   const [stats, setStats] = useState({
-    totalBookings: 0,
-    activeBookings: 0,
-    completedBookings: 0,
+    totalCheckouts: 0,
     totalRevenue: 0,
-    pendingPayments: 0,
+    lateCheckouts: 0,
+    totalLateFee: 0,
+    occupancyRate: 0,
   });
 
   useEffect(() => {
@@ -20,52 +21,40 @@ const CheckoutStatistics = () => {
       const bookingsArray = Array.isArray(bookings)
         ? bookings
         : bookings.data || [];
+      const completedBookings = bookingsArray.filter(
+        (b) => b.TrangThai === "Hoàn thành"
+      );
 
-      const totalBookings = bookingsArray.length;
+      const totalCheckouts = completedBookings.length;
+      const totalRevenue = completedBookings.reduce(
+        (sum, b) => sum + (b.HoaDon?.TongTien || 0),
+        0
+      );
+      const lateCheckouts = completedBookings.filter(
+        (b) => (b.HoaDon?.PhuPhiTraTre || 0) > 0
+      ).length;
+      const totalLateFee = completedBookings.reduce(
+        (sum, b) => sum + (b.HoaDon?.PhuPhiTraTre || 0),
+        0
+      );
+
+      const totalRooms = 30;
       const activeBookings = bookingsArray.filter(
         (b) => b.TrangThai === "Đang sử dụng"
       ).length;
-      const completedBookings = bookingsArray.filter(
-        (b) => b.TrangThai === "Hoàn thành"
-      ).length;
-
-      // Calculate total revenue from completed bookings
-      const totalRevenue = bookingsArray
-        .filter((b) => b.TrangThai === "Hoàn thành")
-        .reduce((sum, b) => sum + (b.HoaDon?.TongTien || 0), 0);
-
-      // Calculate pending payments
-      const pendingPayments = bookingsArray
-        .filter((b) => b.TrangThai === "Hoàn thành")
-        .reduce((sum, b) => {
-          const totalAmount = b.HoaDon?.TongTien || 0;
-          const paidAmount =
-            b.HoaDon?.LichSuThanhToan?.reduce(
-              (paid, payment) =>
-                paid +
-                (payment.TrangThai === "Thành công" ? payment.SoTien : 0),
-              0
-            ) || 0;
-          return sum + Math.max(0, totalAmount - paidAmount);
-        }, 0);
+      const occupancyRate =
+        totalRooms > 0 ? (activeBookings / totalRooms) * 100 : 0;
 
       setStats({
-        totalBookings,
-        activeBookings,
-        completedBookings,
+        totalCheckouts,
         totalRevenue,
-        pendingPayments,
+        lateCheckouts,
+        totalLateFee,
+        occupancyRate,
       });
     } catch (error) {
       console.error("Error loading checkout statistics:", error);
     }
-  };
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount);
   };
 
   return (
@@ -77,99 +66,131 @@ const CheckoutStatistics = () => {
           gap: "20px",
         }}
       >
-        {/* Tổng số booking */}
         <div
           style={{
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            background: "white",
             padding: "20px",
             borderRadius: "12px",
-            color: "white",
-            textAlign: "center",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
           }}
         >
-          <div style={{ fontSize: "48px", marginBottom: "10px" }}>📊</div>
+          <div style={{ fontSize: "48px", marginBottom: "10px" }}>�</div>
           <h3
-            style={{ margin: "0 0 8px 0", fontSize: "24px", fontWeight: "700" }}
+            style={{
+              margin: "0 0 8px 0",
+              fontSize: "32px",
+              fontWeight: "700",
+              color: "#333",
+            }}
           >
-            {stats.totalBookings}
+            {stats.totalCheckouts}
           </h3>
-          <p style={{ margin: 0, opacity: 0.9 }}>Tổng số đặt phòng</p>
+          <p style={{ margin: 0, color: "#666", fontSize: "14px" }}>
+            Tổng số lượt trả phòng
+          </p>
         </div>
 
-        {/* Đang sử dụng */}
         <div
           style={{
-            background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+            background: "white",
             padding: "20px",
             borderRadius: "12px",
-            color: "white",
-            textAlign: "center",
-          }}
-        >
-          <div style={{ fontSize: "48px", marginBottom: "10px" }}>🏨</div>
-          <h3
-            style={{ margin: "0 0 8px 0", fontSize: "24px", fontWeight: "700" }}
-          >
-            {stats.activeBookings}
-          </h3>
-          <p style={{ margin: 0, opacity: 0.9 }}>Đang sử dụng</p>
-        </div>
-
-        {/* Đã hoàn thành */}
-        <div
-          style={{
-            background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-            padding: "20px",
-            borderRadius: "12px",
-            color: "white",
-            textAlign: "center",
-          }}
-        >
-          <div style={{ fontSize: "48px", marginBottom: "10px" }}>✅</div>
-          <h3
-            style={{ margin: "0 0 8px 0", fontSize: "24px", fontWeight: "700" }}
-          >
-            {stats.completedBookings}
-          </h3>
-          <p style={{ margin: 0, opacity: 0.9 }}>Đã hoàn thành</p>
-        </div>
-
-        {/* Tổng doanh thu */}
-        <div
-          style={{
-            background: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-            padding: "20px",
-            borderRadius: "12px",
-            color: "white",
-            textAlign: "center",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
           }}
         >
           <div style={{ fontSize: "48px", marginBottom: "10px" }}>💰</div>
           <h3
-            style={{ margin: "0 0 8px 0", fontSize: "20px", fontWeight: "700" }}
+            style={{
+              margin: "0 0 8px 0",
+              fontSize: "24px",
+              fontWeight: "700",
+              color: "#333",
+            }}
           >
             {formatCurrency(stats.totalRevenue)}
           </h3>
-          <p style={{ margin: 0, opacity: 0.9 }}>Tổng doanh thu</p>
+          <p style={{ margin: 0, color: "#666", fontSize: "14px" }}>
+            Doanh thu thực tế
+          </p>
         </div>
 
-        {/* Chưa thanh toán */}
         <div
           style={{
-            background: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+            background: "white",
             padding: "20px",
             borderRadius: "12px",
-            color: "white",
-            textAlign: "center",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
           }}
         >
-          <div style={{ fontSize: "48px", marginBottom: "10px" }}>⏳</div>
+          <div style={{ fontSize: "48px", marginBottom: "10px" }}>⏰</div>
           <h3
-            style={{ margin: "0 0 8px 0", fontSize: "20px", fontWeight: "700" }}
+            style={{
+              margin: "0 0 8px 0",
+              fontSize: "32px",
+              fontWeight: "700",
+              color: "#333",
+            }}
           >
-            {formatCurrency(stats.pendingPayments)}
+            {stats.lateCheckouts}
           </h3>
-          <p style={{ margin: 0, opacity: 0.9 }}>Chưa thanh toán</p>
+          <p style={{ margin: 0, color: "#666", fontSize: "14px" }}>
+            Trả phòng trễ
+          </p>
+          <p style={{ margin: "5px 0 0 0", color: "#999", fontSize: "12px" }}>
+            {stats.totalCheckouts > 0
+              ? `${((stats.lateCheckouts / stats.totalCheckouts) * 100).toFixed(
+                  1
+                )}% tổng số`
+              : "0% tổng số"}
+          </p>
+        </div>
+
+        <div
+          style={{
+            background: "white",
+            padding: "20px",
+            borderRadius: "12px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          }}
+        >
+          <div style={{ fontSize: "48px", marginBottom: "10px" }}>🏷️</div>
+          <h3
+            style={{
+              margin: "0 0 8px 0",
+              fontSize: "24px",
+              fontWeight: "700",
+              color: "#333",
+            }}
+          >
+            {formatCurrency(stats.totalLateFee)}
+          </h3>
+          <p style={{ margin: 0, color: "#666", fontSize: "14px" }}>
+            Tổng phụ phí trả trễ
+          </p>
+        </div>
+
+        <div
+          style={{
+            background: "white",
+            padding: "20px",
+            borderRadius: "12px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          }}
+        >
+          <div style={{ fontSize: "48px", marginBottom: "10px" }}>📊</div>
+          <h3
+            style={{
+              margin: "0 0 8px 0",
+              fontSize: "32px",
+              fontWeight: "700",
+              color: "#333",
+            }}
+          >
+            {stats.occupancyRate.toFixed(1)}%
+          </h3>
+          <p style={{ margin: 0, color: "#666", fontSize: "14px" }}>
+            Tỷ lệ lấp đầy
+          </p>
         </div>
       </div>
     </div>

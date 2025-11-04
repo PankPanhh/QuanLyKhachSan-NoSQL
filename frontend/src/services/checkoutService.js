@@ -81,6 +81,88 @@ export const emailInvoice = async (bookingId, emailData) => {
   }
 };
 
+export const getLateFeeReport = async (startDate, endDate) => {
+  try {
+    const params = {};
+    if (startDate) params.start = startDate;
+    if (endDate) params.end = endDate;
+    const response = await api.get("/checkout/reports/late-checkouts", {
+      params,
+    });
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi lấy báo cáo trả trễ:", error);
+    throw error;
+  }
+};
+
+export const getOccupancyRate = async (startDate, endDate) => {
+  try {
+    const params = {};
+    if (startDate) params.start = startDate;
+    if (endDate) params.end = endDate;
+    const response = await api.get("/checkout/reports/occupancy", { params });
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi lấy tỷ lệ lấp đầy:", error);
+    throw error;
+  }
+};
+
+export const getRoomRating = async (roomCode) => {
+  try {
+    const response = await api.get(`/checkout/rooms/${roomCode}/rating`);
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi lấy đánh giá phòng:", error);
+    throw error;
+  }
+};
+
+export const getTopRatedRooms = async (limit = 10) => {
+  try {
+    const response = await api.get("/checkout/rooms/top-rated", {
+      params: { limit },
+    });
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi lấy top phòng đánh giá cao:", error);
+    throw error;
+  }
+};
+
+export const getCheckoutStatistics = async (
+  startDate,
+  endDate,
+  groupBy = "day"
+) => {
+  try {
+    const params = { groupBy };
+    if (startDate) params.start = startDate;
+    if (endDate) params.end = endDate;
+    const response = await api.get("/checkout/reports/checkout-stats", {
+      params,
+    });
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi lấy thống kê checkout:", error);
+    throw error;
+  }
+};
+
+export const getActualRevenue = async (startDate, endDate) => {
+  try {
+    const params = {};
+    if (startDate) params.start = startDate;
+    if (endDate) params.end = endDate;
+    const response = await api.get("/checkout/reports/revenue", { params });
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi lấy doanh thu thực tế:", error);
+    throw error;
+  }
+};
+
 export default {
   calculateLateFee,
   confirmCheckout,
@@ -89,4 +171,10 @@ export default {
   submitReview,
   downloadInvoice,
   emailInvoice,
+  getLateFeeReport,
+  getOccupancyRate,
+  getRoomRating,
+  getTopRatedRooms,
+  getCheckoutStatistics,
+  getActualRevenue,
 };

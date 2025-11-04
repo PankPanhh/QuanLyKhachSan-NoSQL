@@ -3,6 +3,7 @@ import ReactDOM from "react-dom";
 import checkoutService from "../../services/checkoutService";
 import { adminGetAllBookings } from "../../services/bookingService";
 import CheckoutStatistics from "../../components/checkout/CheckoutStatistics";
+import CheckoutAdvancedStats from "../../components/checkout/CheckoutAdvancedStats";
 import "./CheckoutManager.css";
 
 const CheckoutManager = () => {
@@ -21,6 +22,8 @@ const CheckoutManager = () => {
     diemDanhGia: 5,
     binhLuan: "",
   });
+  const [showCheckoutStatsModal, setShowCheckoutStatsModal] = useState(false);
+  const [selectedReportType, setSelectedReportType] = useState(null); // checkout-stats, revenue, late-fee, occupancy
 
   useEffect(() => {
     loadActiveBookings();
@@ -264,8 +267,183 @@ const CheckoutManager = () => {
         </p>
       </div>
 
-      {/* Thống kê */}
-      <CheckoutStatistics />
+      {/* Thống kê cơ bản với 5 nút báo cáo */}
+      {console.log("🔍 About to render CheckoutStatistics component")}
+      <CheckoutStatistics
+        onOpenReport={(reportType) => {
+          console.log("🎯 onOpenReport called with:", reportType);
+          setShowCheckoutStatsModal(true);
+          setSelectedReportType(reportType);
+        }}
+      />
+
+      {/* XÓA phần dưới - đã tích hợp vào CheckoutStatistics */}
+      <div style={{ display: "none" }}>
+        <h5>📊 Báo Cáo và Thống Kê Sau Check-out</h5>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: "15px",
+          }}
+        >
+          {/* Button 1: Thống kê checkout theo ngày/tháng */}
+          <button
+            onClick={() => {
+              setShowCheckoutStatsModal(true);
+              setSelectedReportType("checkout-stats");
+            }}
+            style={{
+              padding: "20px",
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              color: "white",
+              border: "none",
+              borderRadius: "12px",
+              fontSize: "16px",
+              fontWeight: "600",
+              cursor: "pointer",
+              textAlign: "left",
+              boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)",
+              transition: "all 0.3s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-4px)";
+              e.currentTarget.style.boxShadow =
+                "0 8px 20px rgba(102, 126, 234, 0.5)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow =
+                "0 4px 12px rgba(102, 126, 234, 0.4)";
+            }}
+          >
+            <div style={{ fontSize: "24px", marginBottom: "8px" }}>📈</div>
+            <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
+              Thống Kê Checkout
+            </div>
+            <div style={{ fontSize: "13px", opacity: 0.9 }}>
+              Số lượt trả phòng theo ngày/tháng
+            </div>
+          </button>
+
+          {/* Button 2: Doanh thu thực tế */}
+          <button
+            onClick={() => {
+              setShowCheckoutStatsModal(true);
+              setSelectedReportType("revenue");
+            }}
+            style={{
+              padding: "20px",
+              background: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)",
+              color: "white",
+              border: "none",
+              borderRadius: "12px",
+              fontSize: "16px",
+              fontWeight: "600",
+              cursor: "pointer",
+              textAlign: "left",
+              boxShadow: "0 4px 12px rgba(17, 153, 142, 0.4)",
+              transition: "all 0.3s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-4px)";
+              e.currentTarget.style.boxShadow =
+                "0 8px 20px rgba(17, 153, 142, 0.5)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow =
+                "0 4px 12px rgba(17, 153, 142, 0.4)";
+            }}
+          >
+            <div style={{ fontSize: "24px", marginBottom: "8px" }}>💰</div>
+            <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
+              Doanh Thu Thực Tế
+            </div>
+            <div style={{ fontSize: "13px", opacity: 0.9 }}>
+              Tính doanh thu đã thanh toán
+            </div>
+          </button>
+
+          {/* Button 3: Trả trễ & phụ phí */}
+          <button
+            onClick={() => {
+              setShowCheckoutStatsModal(true);
+              setSelectedReportType("late-fee");
+            }}
+            style={{
+              padding: "20px",
+              background: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+              color: "white",
+              border: "none",
+              borderRadius: "12px",
+              fontSize: "16px",
+              fontWeight: "600",
+              cursor: "pointer",
+              textAlign: "left",
+              boxShadow: "0 4px 12px rgba(250, 112, 154, 0.4)",
+              transition: "all 0.3s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-4px)";
+              e.currentTarget.style.boxShadow =
+                "0 8px 20px rgba(250, 112, 154, 0.5)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow =
+                "0 4px 12px rgba(250, 112, 154, 0.4)";
+            }}
+          >
+            <div style={{ fontSize: "24px", marginBottom: "8px" }}>⏰</div>
+            <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
+              Trả Trễ & Phụ Phí
+            </div>
+            <div style={{ fontSize: "13px", opacity: 0.9 }}>
+              Thống kê trả trễ, phụ phí phát sinh
+            </div>
+          </button>
+
+          {/* Button 4: Tỷ lệ lấp đầy */}
+          <button
+            onClick={() => {
+              setShowCheckoutStatsModal(true);
+              setSelectedReportType("occupancy");
+            }}
+            style={{
+              padding: "20px",
+              background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+              color: "white",
+              border: "none",
+              borderRadius: "12px",
+              fontSize: "16px",
+              fontWeight: "600",
+              cursor: "pointer",
+              textAlign: "left",
+              boxShadow: "0 4px 12px rgba(79, 172, 254, 0.4)",
+              transition: "all 0.3s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-4px)";
+              e.currentTarget.style.boxShadow =
+                "0 8px 20px rgba(79, 172, 254, 0.5)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow =
+                "0 4px 12px rgba(79, 172, 254, 0.4)";
+            }}
+          >
+            <div style={{ fontSize: "24px", marginBottom: "8px" }}>🏨</div>
+            <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
+              Tỷ Lệ Lấp Đầy
+            </div>
+            <div style={{ fontSize: "13px", opacity: 0.9 }}>
+              Hiệu suất sử dụng phòng
+            </div>
+          </button>
+        </div>
+      </div>
 
       {/* Danh sách booking */}
       {bookings.length === 0 ? (
@@ -1596,6 +1774,86 @@ const CheckoutManager = () => {
                 >
                   Đóng
                 </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {/* Modal Báo cáo chi tiết */}
+      {showCheckoutStatsModal &&
+        ReactDOM.createPortal(
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: "rgba(0,0,0,0.7)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 9999,
+              padding: "20px",
+            }}
+            onClick={() => setShowCheckoutStatsModal(false)}
+          >
+            <div
+              style={{
+                background: "white",
+                borderRadius: "16px",
+                maxWidth: "1200px",
+                width: "100%",
+                maxHeight: "90vh",
+                overflow: "auto",
+                boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div
+                style={{
+                  position: "sticky",
+                  top: 0,
+                  background: "white",
+                  zIndex: 10,
+                  borderBottom: "2px solid #f0f0f0",
+                  padding: "20px",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <h4 style={{ margin: 0, color: "#2c3e50" }}>
+                    {selectedReportType === "checkout-stats" &&
+                      "📈 Thống Kê Checkout"}
+                    {selectedReportType === "revenue" && "💰 Doanh Thu Thực Tế"}
+                    {selectedReportType === "late-fee" &&
+                      "⏰ Trả Trễ & Phụ Phí"}
+                    {selectedReportType === "occupancy" && "🏨 Tỷ Lệ Lấp Đầy"}
+                  </h4>
+                  <button
+                    onClick={() => setShowCheckoutStatsModal(false)}
+                    style={{
+                      background: "#e74c3c",
+                      color: "white",
+                      border: "none",
+                      padding: "8px 16px",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontWeight: "600",
+                    }}
+                  >
+                    ✕ Đóng
+                  </button>
+                </div>
+              </div>
+              <div style={{ padding: "20px" }}>
+                <CheckoutAdvancedStats initialTab={selectedReportType} />
               </div>
             </div>
           </div>,

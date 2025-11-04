@@ -1,55 +1,70 @@
 // components/rooms/RoomDetail.jsx
-import React from 'react';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation } from 'swiper/modules';
-import { 
-  FaBed, FaUsers, FaRulerCombined, FaCheckCircle, 
-  FaWifi, FaTv, FaBath, FaSnowflake, FaCocktail 
-} from 'react-icons/fa';
-import { formatCurrency } from '../../utils/formatCurrency';
-import { getRoomImageUrl } from '../../config/constants';
+import React from "react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation } from "swiper/modules";
+import {
+  FaBed,
+  FaUsers,
+  FaRulerCombined,
+  FaCheckCircle,
+  FaWifi,
+  FaTv,
+  FaBath,
+  FaSnowflake,
+  FaCocktail,
+} from "react-icons/fa";
+import { formatCurrency } from "../../utils/formatCurrency";
+import { getRoomImageUrl } from "../../config/constants";
+import RoomRatingDisplay from "./RoomRatingDisplay";
 
 function RoomDetail({ room }) {
   if (!room) return null;
 
   // Sử dụng trực tiếp Vietnamese schema
   const roomData = {
-    title: room.TenPhong || 'Phòng không tên',
-    description: room.MoTa || 'Không có mô tả',
+    title: room.TenPhong || "Phòng không tên",
+    description: room.MoTa || "Không có mô tả",
     pricePerNight: room.GiaPhong || 0,
-    roomType: room.LoaiPhong || 'Standard',
+    roomType: room.LoaiPhong || "Standard",
     floor: room.Tang || 1,
-    bedType: room.LoaiGiuong || 'Standard',
+    bedType: room.LoaiGiuong || "Standard",
     maxGuests: room.SoGiuong || 1,
     area: room.DienTich || 0,
-    roomCode: room.MaPhong || 'Unknown',
-    status: room.TinhTrang || 'Trống',
-    images: [{
-      url: getRoomImageUrl(room.HinhAnh),
-      altText: room.TenPhong || 'Room Image'
-    }],
+    roomCode: room.MaPhong || "Unknown",
+    status: room.TinhTrang || "Trống",
+    images: [
+      {
+        url: getRoomImageUrl(room.HinhAnh),
+        altText: room.TenPhong || "Room Image",
+      },
+    ],
     amenities: (room.MaTienNghi || []).map((ma) => ({
       name: getAmenityName(ma),
-      icon: getAmenityIcon(ma)
+      icon: getAmenityIcon(ma),
     })),
     promotions: (room.MaKhuyenMai || []).map((ma) => ({
       code: ma,
       description: `Khuyến mãi ${ma}`,
-      discountPercent: 10
-    }))
+      discountPercent: 10,
+    })),
   };
 
   return (
     <div>
       {/* Slider ảnh */}
-      <Swiper modules={[Navigation]} navigation loop className="mb-4 rounded-4 overflow-hidden">
+      <Swiper
+        modules={[Navigation]}
+        navigation
+        loop
+        className="mb-4 rounded-4 overflow-hidden"
+      >
         {roomData.images.map((img, index) => (
           <SwiperSlide key={index}>
-            <img 
-              src={img.url} 
-              alt={img.altText} 
-              className="img-fluid w-100" 
-              style={{ height: '500px', objectFit: 'cover' }} 
+            <img
+              src={img.url}
+              alt={img.altText}
+              className="img-fluid w-100"
+              style={{ height: "500px", objectFit: "cover" }}
             />
           </SwiperSlide>
         ))}
@@ -69,6 +84,21 @@ function RoomDetail({ room }) {
       {/* Mô tả */}
       <p className="lead mb-4">{roomData.description}</p>
 
+      {/* Đánh giá phòng */}
+      <div
+        className="mb-4 p-4"
+        style={{
+          background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+          borderRadius: "12px",
+          border: "1px solid rgba(209, 104, 6, 0.2)",
+        }}
+      >
+        <h5 className="mb-3" style={{ color: "#2c3e50" }}>
+          ⭐ Đánh giá của khách hàng
+        </h5>
+        <RoomRatingDisplay roomCode={room.MaPhong} showDetails={true} />
+      </div>
+
       {/* Chi tiết phòng */}
       <hr className="my-4" />
       <h3 className="mb-3">Thông tin chi tiết</h3>
@@ -83,7 +113,9 @@ function RoomDetail({ room }) {
         </div>
         <div className="col-md-4 text-center">
           <FaRulerCombined className="text-primary fs-1 mb-2" />
-          <h5>{roomData.floor}F - {roomData.roomType}</h5>
+          <h5>
+            {roomData.floor}F - {roomData.roomType}
+          </h5>
         </div>
       </div>
 
@@ -95,11 +127,11 @@ function RoomDetail({ room }) {
           <div key={index} className="col-md-6 col-lg-4">
             <div className="d-flex align-items-center">
               <span className="text-success me-2 fs-4">
-                {amenity.icon === 'wifi' && <FaWifi />}
-                {amenity.icon === 'tv' && <FaTv />}
-                {amenity.icon === 'bath' && <FaBath />}
-                {amenity.icon === 'ac' && <FaSnowflake />}
-                {amenity.icon === 'bar' && <FaCocktail />}
+                {amenity.icon === "wifi" && <FaWifi />}
+                {amenity.icon === "tv" && <FaTv />}
+                {amenity.icon === "bath" && <FaBath />}
+                {amenity.icon === "ac" && <FaSnowflake />}
+                {amenity.icon === "bar" && <FaCocktail />}
               </span>
               <span>{amenity.name}</span>
             </div>
@@ -117,7 +149,9 @@ function RoomDetail({ room }) {
               <div key={index} className="col-md-6">
                 <div className="card p-3">
                   <h6>{service.name}</h6>
-                  <span className="text-primary">{formatCurrency(service.price)}</span>
+                  <span className="text-primary">
+                    {formatCurrency(service.price)}
+                  </span>
                 </div>
               </div>
             ))}
@@ -131,8 +165,10 @@ function RoomDetail({ room }) {
           <hr className="my-4" />
           <h3 className="mb-3">Khuyến mãi</h3>
           <div className="alert alert-success">
-            <strong>{roomData.promotions[0].code}:</strong> {roomData.promotions[0].description} 
-            <br /><small>Khuyến mãi đặc biệt</small>
+            <strong>{roomData.promotions[0].code}:</strong>{" "}
+            {roomData.promotions[0].description}
+            <br />
+            <small>Khuyến mãi đặc biệt</small>
           </div>
         </>
       )}
@@ -143,24 +179,24 @@ function RoomDetail({ room }) {
 // Helper functions để map mã tiện nghi
 const getAmenityName = (ma) => {
   const amenityMap = {
-    'TN001': 'Wi-Fi miễn phí',
-    'TN002': 'TV màn hình phẳng',
-    'TN003': 'Điều hòa',
-    'TN004': 'Minibar',
-    'TN005': 'Phòng tắm riêng',
+    TN001: "Wi-Fi miễn phí",
+    TN002: "TV màn hình phẳng",
+    TN003: "Điều hòa",
+    TN004: "Minibar",
+    TN005: "Phòng tắm riêng",
   };
   return amenityMap[ma] || `Tiện nghi ${ma}`;
 };
 
 const getAmenityIcon = (ma) => {
   const iconMap = {
-    'TN001': 'wifi',
-    'TN002': 'tv', 
-    'TN003': 'ac',
-    'TN004': 'bar',
-    'TN005': 'bath',
+    TN001: "wifi",
+    TN002: "tv",
+    TN003: "ac",
+    TN004: "bar",
+    TN005: "bath",
   };
-  return iconMap[ma] || 'wifi';
+  return iconMap[ma] || "wifi";
 };
 
 export default RoomDetail;
