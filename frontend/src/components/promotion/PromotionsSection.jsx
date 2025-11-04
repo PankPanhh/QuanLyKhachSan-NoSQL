@@ -16,11 +16,31 @@ function normalizePromo(raw) {
   const endDate = raw.NgayKetThuc ? new Date(raw.NgayKetThuc) : raw.endDate ? new Date(raw.endDate) : null;
   const now = new Date();
 
+  // Prefer an explicit TrangThai field from backend/admin UI when present.
+  // Accept both 'Ngưng hoạt động' and legacy 'Tạm dừng' as manual inactive states.
+  const manualStatus = (raw.TrangThai || raw.trangThai || raw.status || "").toString();
   let status = "Hoạt động";
-  if (endDate && endDate < now) status = "Hết hạn";
-  else if (startDate && startDate > now) status = "Sắp diễn ra";
-  else if (startDate && endDate && startDate <= now && endDate >= now) status = "Hoạt động";
-  else status = "Hoạt động";
+  if (manualStatus) {
+    if (/ngưng|tạm dừng|tam d?ng/i.test(manualStatus)) {
+      status = 'Ngưng hoạt động';
+    } else if (/hết hạn/i.test(manualStatus)) {
+      status = 'Hết hạn';
+    } else if (/sắp/i.test(manualStatus)) {
+      status = 'Sắp diễn ra';
+    } else if (/hoạt/i.test(manualStatus)) {
+      status = 'Hoạt động';
+    } else {
+      // fallback to date logic if unrecognized
+    }
+  }
+
+  // If no manual status was provided or it was unrecognized, determine by dates
+  if (!manualStatus) {
+    if (endDate && endDate < now) status = "Hết hạn";
+    else if (startDate && startDate > now) status = "Sắp diễn ra";
+    else if (startDate && endDate && startDate <= now && endDate >= now) status = "Hoạt động";
+    else status = "Hoạt động";
+  }
 
   const result = {
     id: raw.MaKhuyenMai || raw.MaKM || raw._id || raw.id || null,
@@ -120,6 +140,9 @@ function PromotionsSection() {
   return { ...p, meta: { isActive, isExpired, isExpiringSoon, daysLeft, isUpcoming } };
     })
     .filter(({ promo, rooms, meta }) => {
+      // Always hide promos that were manually disabled (canonical label)
+      if ((promo && promo.status && String(promo.status).toLowerCase().includes('ngưng')) || (promo && promo.status === 'Ngưng hoạt động')) return false;
+
       // Default: show only active/current promos
   if (statusFilter === "active" && !meta.isActive) return false;
   if (statusFilter === "upcoming" && !meta.isUpcoming) return false;
@@ -174,6 +197,13 @@ function PromotionsSection() {
   const [modalOpen, setModalOpen] = useState(false);
 
   async function openPromoModal(item) {
+    // Do not open modal for manually disabled promos
+    const status = item && item.promo && item.promo.status;
+    if (status && String(status).toLowerCase().includes('ngưng')) {
+      // Optionally show a toast/alert — keepUX simple: ignore open
+      console.info('Attempted to open modal for inactive promo, ignoring');
+      return;
+    }
     // Try to fetch fresh detail from backend, fallback to item.raw
     try {
       const key = item.promo.id || item.promo.title;
@@ -349,8 +379,8 @@ function PromotionsSection() {
                     <button
                       className="btn btn-info text-white w-100"
                       onClick={() => openPromoModal(item)}
-                      disabled={isExpired || isUpcoming}
-                      title={isExpired ? 'Khuyến mãi đã hết hạn' : isUpcoming ? 'Khuyến mãi sắp diễn ra' : 'Xem chi tiết khuyến mãi'}
+                      disabled={isExpired || isUpcoming || !isActive}
+                      title={isExpired ? 'Khuyến mãi đã hết hạn' : isUpcoming ? 'Khuyến mãi sắp diễn ra' : (!isActive ? 'Khuyến mãi đã ngưng hoạt động' : 'Xem chi tiết khuyến mãi')}
                     >
                       Xem chi tiết khuyến mãi
                     </button>

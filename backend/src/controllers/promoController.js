@@ -11,6 +11,8 @@ export const getAllPromotions = async (req, res, next) => {
     const rooms = await Room.find({ KhuyenMai: { $exists: true, $ne: [] } });
     for (const room of rooms) {
       for (const km of room.KhuyenMai) {
+        // Don't auto-overwrite manually disabled promotions
+        if (km.TrangThai === 'Ngưng hoạt động') continue;
         const start = km.NgayBatDau ? new Date(km.NgayBatDau) : null;
         const end = km.NgayKetThuc ? new Date(km.NgayKetThuc) : null;
         let newStatus = 'Hoạt động';
@@ -123,7 +125,7 @@ export const getAllPromotions = async (req, res, next) => {
       // normalize start/end and status
       if (r.promoStart) promoObj.NgayBatDau = r.promoStart;
       if (r.promoEnd) promoObj.NgayKetThuc = r.promoEnd;
-      if (r.activeCount && r.activeCount > 0) promoObj.TrangThai = 'Hoạt động';
+  if ((!promoObj.TrangThai || promoObj.TrangThai === '') && r.activeCount && r.activeCount > 0) promoObj.TrangThai = 'Hoạt động';
       // normalize legacy/modern field names
       promoObj.LoaiGiamGia = promoObj.LoaiGiamGia || promoObj.LoaiKhuyenMai || null;
       // prefer GiaTriGiam, fallback to legacy GiaTri
@@ -241,9 +243,9 @@ export const getPromotionById = async (req, res, next) => {
     const r = results[0];
     const promoObj = r.promoFirst || r.promo || {};
     // normalize start/end and status across rooms
-    if (r.promoStart) promoObj.NgayBatDau = r.promoStart;
-    if (r.promoEnd) promoObj.NgayKetThuc = r.promoEnd;
-    if (r.activeCount && r.activeCount > 0) promoObj.TrangThai = 'Hoạt động';
+  if (r.promoStart) promoObj.NgayBatDau = r.promoStart;
+  if (r.promoEnd) promoObj.NgayKetThuc = r.promoEnd;
+  if ((!promoObj.TrangThai || promoObj.TrangThai === '') && r.activeCount && r.activeCount > 0) promoObj.TrangThai = 'Hoạt động';
   // normalize legacy/modern field names
   promoObj.LoaiGiamGia = promoObj.LoaiGiamGia || promoObj.LoaiKhuyenMai || null;
   promoObj.GiaTriGiam = promoObj.GiaTriGiam != null ? Number(promoObj.GiaTriGiam) : (promoObj.GiaTri != null ? Number(promoObj.GiaTri) : undefined);
@@ -321,6 +323,26 @@ export const createPromotion = async (req, res, next) => {
       MoTa,
       TrangThai = 'Hoạt động',
     } = req.body;
+
+    // Normalize incoming TrangThai values to a single canonical label so we don't
+    // end up with mixed labels like 'Tạm dừng' vs 'Ngưng hoạt động'. Accept
+    // common legacy variants and map them to 'Ngưng hoạt động'. If no value is
+    // provided, leave undefined so defaults can apply.
+    let normalizedTrangThai = undefined;
+    if (req.body.TrangThai !== undefined && req.body.TrangThai !== null) {
+      const rawStatus = String(req.body.TrangThai || '').trim();
+      if (/^\s*tam\s*dung\s*$/i.test(rawStatus) || /ngưng/i.test(rawStatus) || /tạm\s*dừng/i.test(rawStatus)) {
+        normalizedTrangThai = 'Ngưng hoạt động';
+      } else if (/hết\s*hạn/i.test(rawStatus)) {
+        normalizedTrangThai = 'Hết hạn';
+      } else if (/sắp/i.test(rawStatus)) {
+        normalizedTrangThai = 'Sắp diễn ra';
+      } else if (/hoạt/i.test(rawStatus)) {
+        normalizedTrangThai = 'Hoạt động';
+      } else {
+        normalizedTrangThai = rawStatus || undefined;
+      }
+    }
 
     // Basic validation
     if (!TenChuongTrinh) return res.status(400).json({ success: false, message: 'Tên chương trình là bắt buộc' });
@@ -444,6 +466,23 @@ export const updatePromotion = async (req, res, next) => {
       rooms, // Array of room IDs (MaPhong) to apply this promotion to
     } = req.body;
 
+    // Normalize incoming TrangThai for update as well (map legacy labels to canonical)
+    let normalizedTrangThai = undefined;
+    if (req.body.TrangThai !== undefined && req.body.TrangThai !== null) {
+      const rawStatus = String(req.body.TrangThai || '').trim();
+      if (/^\s*tam\s*dung\s*$/i.test(rawStatus) || /ngưng/i.test(rawStatus) || /tạm\s*dừng/i.test(rawStatus)) {
+        normalizedTrangThai = 'Ngưng hoạt động';
+      } else if (/hết\s*hạn/i.test(rawStatus)) {
+        normalizedTrangThai = 'Hết hạn';
+      } else if (/sắp/i.test(rawStatus)) {
+        normalizedTrangThai = 'Sắp diễn ra';
+      } else if (/hoạt/i.test(rawStatus)) {
+        normalizedTrangThai = 'Hoạt động';
+      } else {
+        normalizedTrangThai = rawStatus || undefined;
+      }
+    }
+
     // Simple validation
     if (GiaTriGiam != null && (isNaN(GiaTriGiam) || Number(GiaTriGiam) <= 0)) {
       return res.status(400).json({ success: false, message: 'Giá trị giảm phải > 0' });
@@ -467,17 +506,35 @@ export const updatePromotion = async (req, res, next) => {
     }
 
     // Build promotion object for room assignment
+    // Build full promotion data used when adding a new promo instance to rooms
     const promotionData = {
       MaKhuyenMai: id,
       TenChuongTrinh,
       LoaiGiamGia,
-      GiaTriGiam: GiaTriGiam ? Number(GiaTriGiam) : 0, // Default to 0 instead of undefined
+      GiaTriGiam: GiaTriGiam != null ? Number(GiaTriGiam) : undefined,
+      GiaTri: GiaTriGiam != null ? Number(GiaTriGiam) : undefined,
       NgayBatDau: start,
       NgayKetThuc: end,
       DieuKien,
       MoTa,
-      TrangThai,
+      // Use normalizedTrangThai when available, otherwise use provided TrangThai
+      TrangThai: normalizedTrangThai !== undefined ? normalizedTrangThai : TrangThai,
     };
+
+    // Build a partial update object for updating existing promo instances.
+    // We only set fields that were explicitly provided in the request body to avoid
+    // overwriting other existing fields (this prevented data loss when only
+    // changing TrangThai before).
+    const partialSet = {};
+    if (TenChuongTrinh !== undefined) partialSet['KhuyenMai.$.TenChuongTrinh'] = TenChuongTrinh;
+    if (LoaiGiamGia !== undefined) partialSet['KhuyenMai.$.LoaiGiamGia'] = LoaiGiamGia;
+    if (GiaTriGiam !== undefined) partialSet['KhuyenMai.$.GiaTriGiam'] = Number(GiaTriGiam);
+    if (GiaTriGiam !== undefined) partialSet['KhuyenMai.$.GiaTri'] = Number(GiaTriGiam);
+    if (NgayBatDau !== undefined) partialSet['KhuyenMai.$.NgayBatDau'] = start;
+    if (NgayKetThuc !== undefined) partialSet['KhuyenMai.$.NgayKetThuc'] = end;
+    if (DieuKien !== undefined) partialSet['KhuyenMai.$.DieuKien'] = DieuKien;
+    if (MoTa !== undefined) partialSet['KhuyenMai.$.MoTa'] = MoTa;
+  if (TrangThai !== undefined) partialSet['KhuyenMai.$.TrangThai'] = (normalizedTrangThai !== undefined ? normalizedTrangThai : TrangThai);
 
     // Don't remove undefined fields - keep all fields for consistency
     // Object.keys(promotionData).forEach(key => {
@@ -489,9 +546,12 @@ export const updatePromotion = async (req, res, next) => {
     console.log('🔧 Promotion data to assign:', promotionData);
     console.log('🔧 Rooms to apply to:', rooms);
 
-    // Get current rooms that have this promotion
+    // Get current rooms that have this promotion (match by MaKhuyenMai OR TenChuongTrinh)
     const currentRoomsWithPromo = await Room.find({
-      'KhuyenMai.MaKhuyenMai': id
+      $or: [
+        { 'KhuyenMai.MaKhuyenMai': id },
+        { 'KhuyenMai.TenChuongTrinh': { $regex: new RegExp(`^${id}$`, 'i') } }
+      ]
     }).select('MaPhong _id').exec();
 
     console.log('🔧 Current rooms with this promo:', currentRoomsWithPromo.map(r => r.MaPhong));
@@ -517,10 +577,13 @@ export const updatePromotion = async (req, res, next) => {
     if (roomsToRemove.length > 0) {
       console.log(`🔧 Removing promotion from ${roomsToRemove.length} rooms...`);
       try {
-        const removeResult = await Room.updateMany(
-          { MaPhong: { $in: roomsToRemove } },
-          { $pull: { KhuyenMai: { MaKhuyenMai: id } } }
-        ).exec();
+        // Build a safe case-insensitive regex for matching TenChuongTrinh
+        const titleRegex = new RegExp('^' + id + '$', 'i');
+
+        const removeFilter = { MaPhong: { $in: roomsToRemove } };
+        const pullClause = { $pull: { KhuyenMai: { $or: [{ MaKhuyenMai: id }, { TenChuongTrinh: { $regex: titleRegex } }] } } };
+
+        const removeResult = await Room.updateMany(removeFilter, pullClause).exec();
         console.log('🔧 Remove from rooms result:', removeResult);
         totalModified += removeResult.modifiedCount || 0;
       } catch (removeError) {
@@ -549,12 +612,48 @@ export const updatePromotion = async (req, res, next) => {
     if (roomsToUpdate.length > 0) {
       console.log(`🔧 Updating promotion in ${roomsToUpdate.length} existing rooms...`);
       try {
-        const updateResult = await Room.updateMany(
-          { MaPhong: { $in: roomsToUpdate }, 'KhuyenMai.MaKhuyenMai': id },
-          { $set: { 'KhuyenMai.$': promotionData } }
-        ).exec();
-        console.log('🔧 Update in existing rooms result:', updateResult);
-        totalModified += updateResult.modifiedCount || 0;
+        if (Object.keys(partialSet).length > 0) {
+          // perform partial updates using arrayFilters so we target the correct promo instance
+          // Build title regex for matching TenChuongTrinh
+          const titleRegex = new RegExp('^' + id + '$', 'i');
+
+          // Convert partialSet keys from 'KhuyenMai.$.Field' -> 'KhuyenMai.$[elem].Field' for arrayFilters usage
+          const partialSetArray = {};
+          Object.keys(partialSet).forEach((k) => {
+            const newKey = k.replace('KhuyenMai.$.', 'KhuyenMai.$[elem].');
+            partialSetArray[newKey] = partialSet[k];
+          });
+
+          // 1) Update where embedded promo has MaKhuyenMai === id
+          try {
+            const updateByCode = await Room.updateMany(
+              { MaPhong: { $in: roomsToUpdate }, 'KhuyenMai.MaKhuyenMai': id },
+              { $set: partialSet }
+            ).exec();
+            console.log('🔧 Partial update (by MaKhuyenMai) result:', updateByCode);
+            totalModified += updateByCode.modifiedCount || 0;
+          } catch (errCode) {
+            console.error('🔧 Error updating by MaKhuyenMai:', errCode);
+            throw errCode;
+          }
+
+          // 2) Update where embedded promo has TenChuongTrinh matching titleRegex
+          try {
+            const updateByTitle = await Room.updateMany(
+              { MaPhong: { $in: roomsToUpdate }, 'KhuyenMai.TenChuongTrinh': { $regex: titleRegex } },
+              { $set: partialSetArray },
+              { arrayFilters: [{ 'elem.TenChuongTrinh': { $regex: titleRegex } }] }
+            ).exec();
+            console.log('🔧 Partial update (by TenChuongTrinh) result:', updateByTitle);
+            totalModified += updateByTitle.modifiedCount || 0;
+          } catch (errTitle) {
+            console.error('🔧 Error updating by TenChuongTrinh:', errTitle);
+            throw errTitle;
+          }
+        } else {
+          // nothing to update on existing promo instances
+          console.log('🔧 No promo fields provided to update for existing rooms; skipping update step.');
+        }
       } catch (updateError) {
         console.error('🔧 Error updating promotion in existing rooms:', updateError);
         throw updateError;

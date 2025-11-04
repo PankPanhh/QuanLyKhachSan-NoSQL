@@ -88,6 +88,7 @@ function PromotionsManager() {
   const [inlineConflicts, setInlineConflicts] = useState({});
   const [debugMessage, setDebugMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [toggleLoadingId, setToggleLoadingId] = useState(null);
 
   const generatePromoCode = () => {
     const prefix = "KM_AUTO";
@@ -236,10 +237,36 @@ function PromotionsManager() {
     setShowEditModal(true);
   };
 
+  // Enhanced edit show: fetch promo details (rooms) and pre-select applied rooms
+  useEffect(() => {
+    // no-op: placeholder to keep hooks order stable if needed in future
+  }, []);
+
   const handleEditClose = () => setShowEditModal(false);
 
   const handleEditChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, checked, type } = e.target;
+    if (name === 'LoaiPhongApDung') {
+      setEditForm(f => {
+        const setTypes = new Set(f.LoaiPhongApDung || []);
+        const prevRoomIds = new Set(f.RoomIds || []);
+        const typeRooms = (rooms || []).filter(r => r.LoaiPhong === value).map(r => String(r._id));
+        if (checked) {
+          setTypes.add(value);
+          typeRooms.forEach(id => prevRoomIds.add(id));
+        } else {
+          setTypes.delete(value);
+          typeRooms.forEach(id => prevRoomIds.delete(id));
+        }
+        return { ...f, LoaiPhongApDung: Array.from(setTypes), RoomIds: Array.from(prevRoomIds) };
+      });
+      return;
+    }
+    if (name === 'ApDungTatCaPhong' && type === 'checkbox') {
+      setEditForm(f => ({ ...f, ApDungTatCaPhong: checked, LoaiPhongApDung: checked ? [] : f.LoaiPhongApDung, RoomIds: checked ? [] : f.RoomIds }));
+      return;
+    }
+    // default
     setEditForm(f => ({ ...f, [name]: value }));
   };
 
@@ -247,7 +274,8 @@ function PromotionsManager() {
     const { name, value, type, checked } = e.target;
     if (name === 'TrangThai' && type === 'checkbox') {
       // only TrangThai uses switch mapping
-      setInlineForm(f => ({ ...f, TrangThai: checked ? 'Hoạt động' : 'Tạm dừng' }));
+      // Use 'Ngưng hoạt động' label to match the services UI
+      setInlineForm(f => ({ ...f, TrangThai: checked ? 'Hoạt động' : 'Ngưng hoạt động' }));
       return;
     }
     if (name === 'ApDungTatCaPhong' && type === 'checkbox') {
@@ -297,7 +325,9 @@ function PromotionsManager() {
       if ((!p.start || p.start <= now) && (!p.end || p.end >= now)) return 'Hoạt động';
       return 'Sắp diễn ra';
     })();
-    const newStatus = current === 'Hoạt động' ? 'Tạm dừng' : 'Hoạt động';
+    // Map to user-friendly label used across the app (match services style)
+    const newStatus = current === 'Hoạt động' ? 'Ngưng hoạt động' : 'Hoạt động';
+    setToggleLoadingId(id);
     try {
       await api.put(`/promotions/${encodeURIComponent(id)}`, { TrangThai: newStatus });
       const resp = await api.get('/promotions?status=all');
@@ -307,6 +337,8 @@ function PromotionsManager() {
     } catch (err) {
       console.error('Lỗi khi thay đổi trạng thái khuyến mãi', err);
       setError(err.message || 'Lỗi khi thay đổi trạng thái khuyến mãi');
+    } finally {
+      setToggleLoadingId(null);
     }
   };
 
@@ -905,7 +937,7 @@ function PromotionsManager() {
                         <Form.Label className="small text-muted">Trạng thái</Form.Label>
                         <Form.Select name="TrangThai" value={editForm.TrangThai || 'Hoạt động'} onChange={handleEditChange}>
                           <option>Hoạt động</option>
-                          <option>Tạm dừng</option>
+                          <option>Ngưng hoạt động</option>
                         </Form.Select>
                       </Form.Group>
                     </Col>
@@ -1030,34 +1062,25 @@ function PromotionsManager() {
                     ) : (
                       <>
                         <td>
-                          <div className="d-flex align-items-center">
-                            <div className="form-check form-switch m-0">
-                              <input
-                                className="form-check-input"
-                                type="checkbox"
-                                id={`toggle-${p.id || idx}`}
-                                checked={(() => {
-                                  const promo = p && p.raw && p.raw.promo ? p.raw.promo : (p && p.promo ? p.promo : p);
-                                  if (promo && promo.TrangThai) return promo.TrangThai === 'Hoạt động';
-                                  const now = new Date();
-                                  if (p.end && p.end < now) return false;
-                                  if ((!p.start || p.start <= now) && (!p.end || p.end >= now)) return true;
-                                  return false;
-                                })()}
-                                onChange={() => togglePromoStatus(p)}
-                              />
-                              <label className="form-check-label small ms-2" htmlFor={`toggle-${p.id || idx}`}>
-                                {(() => {
-                                  const promo = p && p.raw && p.raw.promo ? p.raw.promo : (p && p.promo ? p.promo : p);
-                                  if (promo && promo.TrangThai) return promo.TrangThai;
-                                  const now = new Date();
-                                  if (p.end && p.end < now) return 'Hết hạn';
-                                  if ((!p.start || p.start <= now) && (!p.end || p.end >= now)) return 'Hoạt động';
-                                  return 'Sắp diễn ra';
-                                })()}
-                              </label>
-                            </div>
-                          </div>
+                          {(() => {
+                            const promo = p && p.raw && p.raw.promo ? p.raw.promo : (p && p.promo ? p.promo : p);
+                            const now = new Date();
+                            const isActive = promo && promo.TrangThai ? promo.TrangThai === 'Hoạt động' : (!p.end || p.end >= now) && (!p.start || p.start <= now);
+                            const label = promo && promo.TrangThai ? promo.TrangThai : (p.end && p.end < now ? 'Hết hạn' : ((!p.start || p.start <= now) && (!p.end || p.end >= now) ? 'Hoạt động' : 'Sắp diễn ra'));
+                            return (
+                              <span
+                                className={`badge px-3 py-2 rounded-pill fw-semibold ${isActive ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'}`}
+                                style={{ fontSize: '12px', cursor: 'pointer', transition: 'all 0.15s ease' }}
+                                onClick={() => togglePromoStatus(p)}
+                              >
+                                {toggleLoadingId === (getPromoApiId(p) || p.id) ? (
+                                  <><i className="fas fa-spinner fa-spin me-1"></i>Đang xử lý...</>
+                                ) : (
+                                  <><i className={`fas ${isActive ? 'fa-check-circle' : 'fa-pause-circle'} me-1`}></i>{label}</>
+                                )}
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td>
                           <Button size="sm" variant="outline-primary" onClick={() => handleQuickEditShow(p)}>Sửa nhanh</Button>
