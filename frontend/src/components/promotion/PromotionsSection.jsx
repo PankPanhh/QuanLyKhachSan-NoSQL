@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { getAllRooms } from "../../services/roomService";
+import { getAllRooms, getRoomById } from "../../services/roomService";
 import api from '../../services/api';
 import { BookingContext } from "../../context/BookingContext";
 import PromotionModal from './PromotionModal';
@@ -12,6 +12,16 @@ function normalizePromo(raw) {
   // Use nullish coalescing consistently to avoid mixing '||' and '??' which TypeScript disallows
   const giaTri = raw.GiaTriGiam ?? raw.giaTriGiam ?? raw.GiaTri ?? raw.value ?? raw.GiamGiaPhanTram ?? raw.discount ?? 0;
 
+  const startDate = raw.NgayBatDau ? new Date(raw.NgayBatDau) : raw.startDate ? new Date(raw.startDate) : null;
+  const endDate = raw.NgayKetThuc ? new Date(raw.NgayKetThuc) : raw.endDate ? new Date(raw.endDate) : null;
+  const now = new Date();
+
+  let status = "Hoạt động";
+  if (endDate && endDate < now) status = "Hết hạn";
+  else if (startDate && startDate > now) status = "Sắp diễn ra";
+  else if (startDate && endDate && startDate <= now && endDate >= now) status = "Hoạt động";
+  else status = "Hoạt động";
+
   const result = {
     id: raw.MaKhuyenMai || raw.MaKM || raw._id || raw.id || null,
     title: raw.TenChuongTrinh || raw.TenKM || raw.title || raw.name || "Ưu đãi",
@@ -20,9 +30,9 @@ function normalizePromo(raw) {
     discountPercent: loai && String(loai).toLowerCase().includes("phần") ? Number(giaTri) : null,
     discountAmount: loai && String(loai).toLowerCase().includes("phần") ? null : Number(giaTri),
     condition: raw.DieuKien || raw.dieuKien || raw.condition || "",
-    startDate: raw.NgayBatDau ? new Date(raw.NgayBatDau) : raw.startDate ? new Date(raw.startDate) : null,
-    endDate: raw.NgayKetThuc ? new Date(raw.NgayKetThuc) : raw.endDate ? new Date(raw.endDate) : null,
-    status: raw.TrangThai || raw.TrangThai || raw.status || "Hoạt động",
+    startDate,
+    endDate,
+    status,
     raw,
   };
 
@@ -33,7 +43,7 @@ function PromotionsSection() {
   const [promos, setPromos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [statusFilter, setStatusFilter] = useState("active");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [roomTypeFilter, setRoomTypeFilter] = useState("all");
   const [discountTypeFilter, setDiscountTypeFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -45,7 +55,7 @@ function PromotionsSection() {
     let mounted = true;
     setLoading(true);
     // Prefer backend aggregated promotions endpoint; fall back to client-side aggregation
-    api.get('/promotions')
+    api.get('/promotions?status=all')
       .then((resp) => {
         if (!mounted) return;
         // api.get returns parsed JSON. Expect shape { success: true, data: [...] } or array
@@ -102,7 +112,7 @@ function PromotionsSection() {
     .map((p) => {
       const promo = p.promo;
       const rooms = p.rooms;
-  const isActive = promo.status === "Hoạt động" && (!promo.startDate || !promo.endDate || (promo.startDate <= now && promo.endDate >= now));
+  const isActive = promo.status === "Hoạt động";
   const isExpired = promo.endDate && (promo.endDate instanceof Date ? promo.endDate : new Date(promo.endDate)) < now;
   const isUpcoming = promo.startDate && (promo.startDate instanceof Date ? promo.startDate : new Date(promo.startDate)) > now;
       const daysLeft = promo.endDate ? Math.ceil(((promo.endDate instanceof Date ? promo.endDate : new Date(promo.endDate)) - now) / (1000 * 3600 * 24)) : Infinity;
@@ -185,18 +195,53 @@ function PromotionsSection() {
     setModalData(null);
   }
 
-  function handleModalApply(roomId) {
+  async function handleModalApply(roomId) {
     // apply promo from modalData and navigate to room
     if (!modalData) return;
+    const promo = modalData.promo;
+
+    // Re-check room availability on server to avoid race conditions
+    try {
+      const latest = await getRoomById(roomId);
+      // getRoomById returns response.data or object; normalize
+      const room = latest && latest.data ? latest.data : latest;
+      if (!room) {
+        alert('Không thể kiểm tra trạng thái phòng. Vui lòng thử lại.');
+        return;
+      }
+      if (room.TinhTrang && room.TinhTrang !== 'Trống') {
+        alert('⚠️ Phòng này hiện không còn trống, vui lòng chọn phòng khác.');
+        // Close modal to force user to re-open or pick another
+        // Alternatively, we could re-fetch modal data here
+        setModalOpen(false);
+        setModalData(null);
+        return;
+      }
+    } catch (err) {
+      console.error('Lỗi khi kiểm tra trạng thái phòng', err);
+      alert('Lỗi khi kiểm tra trạng thái phòng. Vui lòng thử lại.');
+      return;
+    }
+
+    const loai = promo && (promo.LoaiGiamGia || promo.loaiGiamGia || promo.type || '');
+    const val = promo && (promo.GiaTriGiam ?? promo.giaTriGiam ?? promo.GiaTri ?? promo.value ?? null);
     const promoToApply = {
-      id: modalData.id || (modalData.promo && (modalData.promo.MaKhuyenMai || modalData.promo.id)),
-      title: modalData.title || (modalData.promo && (modalData.promo.TenChuongTrinh || modalData.promo.TenKM)),
-      LoaiGiamGia: modalData.promo && (modalData.promo.LoaiGiamGia || modalData.promo.loaiGiamGia || modalData.promo.type),
-      GiaTriGiam: modalData.promo && (modalData.promo.GiaTriGiam ?? modalData.promo.giaTriGiam ?? modalData.promo.GiaTri ?? modalData.promo.value),
-      NgayBatDau: modalData.promo && modalData.promo.NgayBatDau,
-      NgayKetThuc: modalData.promo && modalData.promo.NgayKetThuc,
-      DieuKien: modalData.promo && (modalData.promo.DieuKien || modalData.promo.dieuKien || modalData.promo.condition),
+      id: modalData.id || (promo && (promo.MaKhuyenMai || promo.id)),
+      title: modalData.title || (promo && (promo.TenChuongTrinh || promo.TenKM)),
+      LoaiGiamGia: loai,
+      GiaTriGiam: val,
+      NgayBatDau: promo && promo.NgayBatDau,
+      NgayKetThuc: promo && promo.NgayKetThuc,
+      DieuKien: promo && (promo.DieuKien || promo.dieuKien || promo.condition),
     };
+    // Set discountPercent or discountAmount for BookingSummary
+    if (loai && val != null) {
+      if (String(loai).toLowerCase().includes('phần') || String(loai).toLowerCase().includes('percent')) {
+        promoToApply.discountPercent = Number(val);
+      } else {
+        promoToApply.discountAmount = Number(val);
+      }
+    }
     updateBookingDetails({ promo: promoToApply, room: roomId });
     setModalOpen(false);
     setModalData(null);
@@ -221,7 +266,7 @@ function PromotionsSection() {
             <option value="active">Đang hoạt động</option>
             <option value="upcoming">Sắp diễn ra</option>
             <option value="all">Tất cả</option>
-            <option value="expired">Hết hạn</option>
+            <option value="expired">Đã hết hạn</option>
           </select>
           <select className="form-select" value={roomTypeFilter} onChange={(e) => setRoomTypeFilter(e.target.value)}>
             <option value="all">Tất cả loại phòng</option>
@@ -256,6 +301,23 @@ function PromotionsSection() {
                   <h5 className="card-title">{promo.title}</h5>
                   {promo.id && <div className="text-muted small mb-1">Mã: {promo.id}</div>}
                   <p className="card-text text-truncate">{promo.description}</p>
+                  {rooms.length > 0 && (
+                    <div className="mb-2">
+                      <strong className="small">Phòng áp dụng:</strong>
+                      <div className="row g-1 mt-1">
+                        {rooms.slice(0, 4).map((r, i) => (
+                          <div className="col-6" key={i}>
+                            <small className="text-muted">{r.room.TenPhong || r.room.MaPhong} ({r.room.LoaiPhong})</small>
+                          </div>
+                        ))}
+                        {rooms.length > 4 && (
+                          <div className="col-12">
+                            <small className="text-muted">... và {rooms.length - 4} phòng khác</small>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                           <div className="mb-2 d-flex justify-content-between align-items-center">
                             <div>
                               {promo.discountPercent ? (
@@ -269,7 +331,10 @@ function PromotionsSection() {
                               {(() => {
                                 const meta = (item && item.meta) || {};
                                 if (meta.isExpired) {
-                                  return <span className="badge bg-secondary">Hết hạn</span>;
+                                  return <span className="badge bg-secondary">Đã hết hạn</span>;
+                                }
+                                if (meta.isUpcoming) {
+                                  return <span className="badge bg-info">Sắp diễn ra</span>;
                                 }
                                 if (meta.isExpiringSoon) {
                                   return <span className="badge bg-warning text-dark">⏰ Sắp hết hạn</span>;
@@ -284,8 +349,8 @@ function PromotionsSection() {
                     <button
                       className="btn btn-info text-white w-100"
                       onClick={() => openPromoModal(item)}
-                      disabled={isExpired}
-                      title={isExpired ? 'Khuyến mãi đã hết hạn' : 'Xem chi tiết khuyến mãi'}
+                      disabled={isExpired || isUpcoming}
+                      title={isExpired ? 'Khuyến mãi đã hết hạn' : isUpcoming ? 'Khuyến mãi sắp diễn ra' : 'Xem chi tiết khuyến mãi'}
                     >
                       Xem chi tiết khuyến mãi
                     </button>

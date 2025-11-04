@@ -100,21 +100,15 @@ function BookingSummary() {
   let discount = 0;
   let totalAfterDiscount = total;
   if (promo) {
-    // check dates
-    const now = new Date();
-    const start = promo.startDate ? new Date(promo.startDate) : null;
-    const end = promo.endDate ? new Date(promo.endDate) : null;
-    const valid = (!start || start <= now) && (!end || end >= now);
-    if (valid) {
-      if (promo.discountPercent) {
-        discount = Math.round((total * Number(promo.discountPercent || 0)) / 100);
-      } else if (promo.discountAmount) {
-        discount = Number(promo.discountAmount) || 0;
-        // don't exceed total
-        if (discount > total) discount = total;
-      }
-      totalAfterDiscount = total - discount;
+    // Always apply if promo is selected, regardless of current date
+    if (promo.discountPercent) {
+      discount = Math.round((total * Number(promo.discountPercent || 0)) / 100);
+    } else if (promo.discountAmount) {
+      discount = Number(promo.discountAmount) || 0;
+      // don't exceed total
+      if (discount > total) discount = total;
     }
+    totalAfterDiscount = total - discount;
   }
 
   return (
@@ -152,6 +146,10 @@ function BookingSummary() {
         <strong>{roomData.price?.toLocaleString()}đ</strong>
       </div>
       <hr />
+      <div className="d-flex justify-content-between mb-2">
+        <span>Tổng tiền phòng:</span>
+        <strong>{total.toLocaleString()}đ</strong>
+      </div>
       {promo && promo.title && (
         <div className="mb-2 p-2 rounded" style={{ backgroundColor: '#fff6f0' }}>
           <div className="d-flex justify-content-between">

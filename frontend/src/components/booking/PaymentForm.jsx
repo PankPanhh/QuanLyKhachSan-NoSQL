@@ -46,6 +46,10 @@ function PaymentForm() {
     setFormData((prev) => ({ ...prev, [id]: value }));
   };
 
+  // NOTE: totalAmount is computed in the main compute effect below (which
+  // also applies promotions). This small placeholder effect was redundant and
+  // could cause the UI to briefly show an un-discounted total — remove it.
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -108,7 +112,8 @@ function PaymentForm() {
           : "Pending",
       paymentMeta: {},
       // provide totals so backend or local mapper can construct HoaDon correctly
-      totalRoomPrice: computedTotalRoomPrice,
+      totalRoomPrice: totalAmount,
+      promo: bookingDetails.promo, // Thêm khuyến mãi
     };
 
     if (paymentMethod === "bank") {
@@ -211,9 +216,37 @@ function PaymentForm() {
         }
 
         const roomsCount = bookingDetails.rooms || 1;
-        const total = Math.round((price || 0) * nights * roomsCount);
-        // allow override (if user manually edits amount)
-        setTotalAmount(overrideAmount !== null ? overrideAmount : total);
+        const subtotal = Math.round((price || 0) * nights * roomsCount);
+
+        // Apply promotion if present (support several promo field shapes)
+        const promo = bookingDetails.promo || bookingDetails.KhuyenMai || bookingDetails.promoApplied || null;
+        let discount = 0;
+        if (promo) {
+          // Prefer explicit percent/amount fields used by summary component
+          if (promo.discountPercent != null) {
+            discount = Math.round((subtotal * Number(promo.discountPercent || 0)) / 100);
+          } else if (promo.discountAmount != null) {
+            discount = Number(promo.discountAmount) || 0;
+          } else if (promo.GiaTriGiam != null) {
+            // Heuristic: determine whether GiaTriGiam is percent or absolute
+            const kind = (promo.LoaiGiamGia || promo.LoaiKhuyenMai || "").toString().toLowerCase();
+            const raw = String(promo.GiaTriGiam || promo.GiaTri || "").trim();
+            if (kind.includes('phần') || raw.includes('%')) {
+              const pct = Number(raw.replace('%', '')) || 0;
+              discount = Math.round((subtotal * pct) / 100);
+            } else {
+              discount = Number(promo.GiaTriGiam) || 0;
+            }
+          } else if (promo.GiaTri != null) {
+            discount = Number(promo.GiaTri) || 0;
+          }
+        }
+
+        if (discount > subtotal) discount = subtotal;
+        const totalAfterDiscount = subtotal - discount;
+
+        // allow override (if user manually edits amount) unless overrideAmount === null
+        setTotalAmount(overrideAmount !== null ? overrideAmount : totalAfterDiscount);
       } catch (err) {
         console.error("Lỗi khi tính giá phòng:", err);
       }

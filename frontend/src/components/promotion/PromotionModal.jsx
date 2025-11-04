@@ -14,6 +14,7 @@ export default function PromotionModal({ open, data, onClose, onApply, roomsLimi
 
   const promo = data.promo || {};
   const title = data.title || promo.TenChuongTrinh || promo.TenKM || promo.Ten || data.id || 'Chi tiết khuyến mãi';
+  const isActive = promo && promo.TrangThai === "Hoạt động" && (!promo.NgayBatDau || !promo.NgayKetThuc || (new Date(promo.NgayBatDau) <= new Date() && new Date(promo.NgayKetThuc) >= new Date()));
 
   function renderDiscountLabel(p) {
     const loai = p.LoaiGiamGia || p.loaiGiamGia || p.type || '';
@@ -38,11 +39,18 @@ export default function PromotionModal({ open, data, onClose, onApply, roomsLimi
             </div>
           </div>
 
-          <div className="mb-3">
-            <div className="mb-2"><strong>💸 Mức giảm:</strong> {renderDiscountLabel(promo)}</div>
-            <div className="mb-2"><strong>🗓️ Thời gian:</strong> {promo.NgayBatDau ? new Date(promo.NgayBatDau).toLocaleDateString('vi-VN') : ''} — {promo.NgayKetThuc ? new Date(promo.NgayKetThuc).toLocaleDateString('vi-VN') : ''}</div>
-            <div className="mb-2"><strong>📋 Điều kiện:</strong> {promo.DieuKien || promo.dieuKien || promo.condition || 'Không có'}</div>
-            <div className="mb-2"><strong>📝 Mô tả:</strong> {promo.MoTa || promo.MoTaChiTiet || promo.description || '—'}</div>
+          <div className="mb-3 d-flex align-items-center justify-content-between">
+            <div>
+              <div className="mb-2"><strong>💸 Mức giảm:</strong> {renderDiscountLabel(promo)}</div>
+              <div className="mb-2"><strong>� Điều kiện:</strong> {promo.DieuKien || promo.dieuKien || promo.condition || 'Không có'}</div>
+              <div className="mb-2"><strong>📝 Mô tả:</strong> {promo.MoTa || promo.MoTaChiTiet || promo.description || '—'}</div>
+            </div>
+            <div className="text-end">
+              <div className="badge bg-primary mb-2" title={`Thời gian: ${promo.NgayBatDau ? new Date(promo.NgayBatDau).toLocaleDateString('vi-VN') : ''} — ${promo.NgayKetThuc ? new Date(promo.NgayKetThuc).toLocaleDateString('vi-VN') : ''}`}>
+                {renderDiscountLabel(promo)} • {title}
+              </div>
+              <div className="small text-muted">{promo.NgayBatDau ? new Date(promo.NgayBatDau).toLocaleDateString('vi-VN') : ''} — {promo.NgayKetThuc ? new Date(promo.NgayKetThuc).toLocaleDateString('vi-VN') : ''}</div>
+            </div>
           </div>
 
           <div>
@@ -54,8 +62,9 @@ export default function PromotionModal({ open, data, onClose, onApply, roomsLimi
                 const base = room.GiaPhong ?? room.giaPhong ?? room.Gia ?? room.price ?? 0;
                 const loai = promo && (promo.LoaiGiamGia || promo.loaiGiamGia || promo.type || '');
                 const val = promo && (promo.GiaTriGiam ?? promo.giaTriGiam ?? promo.GiaTri ?? promo.value ?? null);
+                const isActive = promo && promo.TrangThai === "Hoạt động" && (!promo.NgayBatDau || !promo.NgayKetThuc || (new Date(promo.NgayBatDau) <= new Date() && new Date(promo.NgayKetThuc) >= new Date()));
                 let discPrice = base;
-                if (val != null && loai) {
+                if (isActive && val != null && loai) {
                   if (String(loai).toLowerCase().includes('phần') || String(loai).toLowerCase().includes('percent')) discPrice = Math.max(0, Math.round(base * (1 - Number(val) / 100)));
                   else discPrice = Math.max(0, Math.round(base - Number(val)));
                 }
@@ -68,9 +77,11 @@ export default function PromotionModal({ open, data, onClose, onApply, roomsLimi
                         <div className="fw-bold small">{room.TenPhong || room.name || `Phòng ${roomId}`}</div>
                         <div className="small text-muted">{room.LoaiPhong || room.type || ''}</div>
                         <div className="mt-2 small"><s>{Number(base).toLocaleString('vi-VN')}đ</s> <span className="fw-bold text-danger">{Number(discPrice).toLocaleString('vi-VN')}đ</span></div>
-                        <div className="mt-2">
-                          <button className="btn btn-sm btn-primary" onClick={() => onApply && onApply(roomId)}>Đặt ngay</button>
-                        </div>
+                        {r.promoInstanceStatus === "Hoạt động" && (
+                          <div className="mt-2">
+                            <button className="btn btn-sm btn-primary" onClick={() => onApply && onApply(roomId)}>Đặt ngay</button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

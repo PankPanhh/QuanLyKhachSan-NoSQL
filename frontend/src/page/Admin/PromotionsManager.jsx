@@ -259,7 +259,7 @@ function PromotionsManager() {
         const setTypes = new Set(f.LoaiPhongApDung || []);
         const prevRoomIds = new Set(f.RoomIds || []);
         const typeRooms = (rooms || [])
-          .filter(r => r.LoaiPhong === value && !inlineConflicts[String(r._id)])
+          .filter(r => r.LoaiPhong === value)
           .map(r => String(r._id));
         if (checked) {
           setTypes.add(value);
@@ -478,19 +478,34 @@ function PromotionsManager() {
     }
     console.log('🚀 Using promo ID:', id);
   setInlineSaving(true);
-    // build payload explicitly and show debug output - SIMPLIFIED VERSION
+    // build payload explicitly and show debug output - WITH ROOM ASSIGNMENT
+    // Convert RoomIds to room codes (MaPhong) for backend
+    let selectedRoomCodes = [];
+    if (inlineForm.ApDungTatCaPhong) {
+      // If applying to all rooms, send all available room codes
+      selectedRoomCodes = rooms.map(r => r.MaPhong).filter(Boolean);
+      console.log('🚀 Applying to ALL rooms:', selectedRoomCodes.length, 'rooms');
+    } else {
+      // Otherwise, convert selected RoomIds to room codes
+      selectedRoomCodes = (inlineForm.RoomIds || []).map(roomId => {
+        const room = rooms.find(r => String(r._id) === String(roomId));
+        return room ? room.MaPhong : roomId; // fallback to roomId if room not found
+      }).filter(Boolean);
+      console.log('🚀 Applying to selected rooms:', selectedRoomCodes.length, 'rooms');
+    }
+    
     const payload = {
       MaKhuyenMai: inlineForm.MaKhuyenMai,
       TenChuongTrinh: inlineForm.TenChuongTrinh,
       LoaiGiamGia: inlineForm.LoaiGiamGia,
-      GiaTriGiam: inlineForm.GiaTriGiam !== undefined && inlineForm.GiaTriGiam !== '' ? Number(inlineForm.GiaTriGiam) : undefined,
+      GiaTriGiam: inlineForm.GiaTriGiam !== undefined && inlineForm.GiaTriGiam !== '' ? Number(inlineForm.GiaTriGiam) : 0, // Default to 0 instead of undefined
       NgayBatDau: inlineForm.NgayBatDau || undefined,
       NgayKetThuc: inlineForm.NgayKetThuc || undefined,
       DieuKien: inlineForm.DieuKien,
       MoTa: inlineForm.MoTa,
       TrangThai: inlineForm.TrangThai,
-      // Temporarily removing room assignment to test basic update
-      // TODO: Add back room assignment after basic update works
+      // Include room assignment - send array of room codes (MaPhong)
+      rooms: selectedRoomCodes,
     };
     console.log('🚀 Built payload:', payload);
     const url = `/promotions/${encodeURIComponent(id)}`;
@@ -762,12 +777,25 @@ function PromotionsManager() {
                                 {roomsVisible[type] && (
                                   <div className="border rounded p-2 mt-2" style={{ maxHeight: 160, overflowY: 'auto', minWidth: 220 }}>
                                     {rooms.filter(r => r.LoaiPhong === type).length ? (
-                                      rooms.filter(r => r.LoaiPhong === type).map(rm => (
+                                      rooms.filter(r => r.LoaiPhong === type).map(rm => {
+                                        const hasConflict = form.NgayBatDau && form.NgayKetThuc && rm.KhuyenMai && rm.KhuyenMai.some(km => {
+                                          if (km.TrangThai !== 'Hoạt động') return false;
+                                          const start = new Date(km.NgayBatDau);
+                                          const end = new Date(km.NgayKetThuc);
+                                          const fstart = new Date(form.NgayBatDau);
+                                          const fend = new Date(form.NgayKetThuc);
+                                          return start <= fend && end >= fstart;
+                                        });
+                                        return (
                                         <div key={rm._id} className="form-check">
-                                          <input className="form-check-input" type="checkbox" id={`room-${rm._id}`} checked={(form.RoomIds || []).includes(String(rm._id))} onChange={e => toggleRoomSelection(String(rm._id), e.target.checked)} disabled={form.ApDungTatCaPhong} />
-                                          <label className="form-check-label ms-2" htmlFor={`room-${rm._id}`}>{rm.TenPhong || rm.MaPhong || rm._id}</label>
+                                          <input className="form-check-input" type="checkbox" id={`room-${rm._id}`} checked={(form.RoomIds || []).includes(String(rm._id))} onChange={e => toggleRoomSelection(String(rm._id), e.target.checked)} disabled={form.ApDungTatCaPhong || hasConflict} />
+                                          <label className={`form-check-label ms-2 ${hasConflict ? 'text-muted' : ''}`} htmlFor={`room-${rm._id}`}>
+                                            {rm.TenPhong || rm.MaPhong || rm._id}
+                                            {hasConflict && <small className="text-danger ms-1">(đã có KM)</small>}
+                                          </label>
                                         </div>
-                                      ))
+                                        );
+                                      })
                                     ) : (
                                       <div className="small text-muted">Không có phòng cho loại này</div>
                                     )}

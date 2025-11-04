@@ -6,14 +6,34 @@ import mongoose from 'mongoose';
 //   status=all|active|expired  (default: active)
 export const getAllPromotions = async (req, res, next) => {
   try {
-    const { status = 'active' } = req.query;
+    // Update promo statuses in DB based on dates
     const now = new Date();
+    const rooms = await Room.find({ KhuyenMai: { $exists: true, $ne: [] } });
+    for (const room of rooms) {
+      for (const km of room.KhuyenMai) {
+        const start = km.NgayBatDau ? new Date(km.NgayBatDau) : null;
+        const end = km.NgayKetThuc ? new Date(km.NgayKetThuc) : null;
+        let newStatus = 'Hoạt động';
+        if (end && end < now) newStatus = 'Hết hạn';
+        else if (start && start > now) newStatus = 'Sắp diễn ra';
+        if (km.TrangThai !== newStatus) {
+          await Room.updateOne(
+            { _id: room._id, 'KhuyenMai._id': km._id },
+            { $set: { 'KhuyenMai.$.TrangThai': newStatus } }
+          );
+        }
+      }
+    }
+
+    const { status = 'active' } = req.query;
 
     // Aggregate embedded KhuyenMai entries and attach parent room info
     const pipeline = [
       // Only rooms that have KhuyenMai array
       { $match: { KhuyenMai: { $exists: true, $ne: [] } } },
-      { $unwind: '$KhuyenMai' },
+  { $unwind: '$KhuyenMai' },
+  // Only include rooms that are currently available to customers
+  { $match: { TinhTrang: 'Trống' } },
       {
         $project: {
           roomId: '$_id',
@@ -132,12 +152,14 @@ export const getPromotionById = async (req, res, next) => {
     const { id } = req.params;
     const now = new Date();
     // roomStatus controls whether we return only rooms whose promo instance is active/expired/all
-    // default: 'active' to match list behavior
-    const roomStatus = (req.query.roomStatus || 'active').toLowerCase();
+    // default: 'all' to match list behavior
+    const roomStatus = (req.query.roomStatus || 'all').toLowerCase();
 
     const pipeline = [
       { $match: { KhuyenMai: { $exists: true, $ne: [] } } },
-      { $unwind: '$KhuyenMai' },
+  { $unwind: '$KhuyenMai' },
+  // Only include rooms that are currently available to customers
+  { $match: { TinhTrang: 'Trống' } },
       {
         $project: {
           roomId: '$_id',
@@ -273,6 +295,8 @@ export const getPromotionById = async (req, res, next) => {
       roomTypes,
     };
 
+    console.log('getPromotionById for id:', id, 'results length:', results.length, 'rooms length:', r.rooms ? r.rooms.length : 0, 'response rooms:', response.rooms.length);
+
     return res.status(200).json({ success: true, data: response });
   } catch (error) {
     console.error('Error getPromotionById:', error);
@@ -357,13 +381,38 @@ export const createPromotion = async (req, res, next) => {
       }
     }
 
-    // Update matching rooms: replace KhuyenMai array with single promo (enforce one-promo-per-room)
+    // Update matching rooms: but only those that don't already have promotions
+    // Combine the filter with condition for rooms without existing promotions
+    const finalFilter = {
+      ...filter,
+      $or: [
+        { KhuyenMai: { $exists: false } },
+        { KhuyenMai: { $size: 0 } },
+        { KhuyenMai: null }
+      ]
+    };
+
+    console.log('📝 createPromotion - Final filter (only rooms without promotions):', JSON.stringify(finalFilter, null, 2));
+
     const result = await Room.updateMany(
-      filter,
+      finalFilter,
       { $set: { KhuyenMai: [promoToAdd] } }
     ).exec();
 
-    return res.status(201).json({ success: true, message: 'Tạo chương trình khuyến mãi thành công', modifiedCount: result.modifiedCount });
+    // Count how many rooms were skipped because they already have promotions
+    const totalMatchingRooms = await Room.countDocuments(filter).exec();
+    const skippedRooms = totalMatchingRooms - result.modifiedCount;
+
+    console.log('📝 createPromotion - Total matching rooms:', totalMatchingRooms);
+    console.log('📝 createPromotion - Rooms with existing promotions (skipped):', skippedRooms);
+    console.log('📝 createPromotion - Rooms updated:', result.modifiedCount);
+
+    return res.status(201).json({ 
+      success: true, 
+      message: `Tạo chương trình khuyến mãi thành công. Đã áp dụng cho ${result.modifiedCount} phòng${skippedRooms > 0 ? ` (${skippedRooms} phòng đã có khuyến mãi khác)` : ''}`, 
+      modifiedCount: result.modifiedCount,
+      skippedCount: skippedRooms
+    });
   } catch (error) {
     console.error('Error createPromotion:', error);
     return res.status(500).json({ success: false, message: 'Lỗi server', error: error.message });
@@ -392,6 +441,7 @@ export const updatePromotion = async (req, res, next) => {
       DieuKien,
       MoTa,
       TrangThai,
+      rooms, // Array of room IDs (MaPhong) to apply this promotion to
     } = req.body;
 
     // Simple validation
@@ -416,60 +466,118 @@ export const updatePromotion = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'NgayBatDau phải nhỏ hơn hoặc bằng NgayKetThuc' });
     }
 
-    // Build update operations
-    const setOps = {};
-    if (TenChuongTrinh !== undefined) setOps['KhuyenMai.$[elem].TenChuongTrinh'] = TenChuongTrinh;
-    if (LoaiGiamGia !== undefined) {
-      setOps['KhuyenMai.$[elem].LoaiGiamGia'] = LoaiGiamGia;
-      setOps['KhuyenMai.$[elem].LoaiKhuyenMai'] = LoaiGiamGia; // legacy field
+    // Build promotion object for room assignment
+    const promotionData = {
+      MaKhuyenMai: id,
+      TenChuongTrinh,
+      LoaiGiamGia,
+      GiaTriGiam: GiaTriGiam ? Number(GiaTriGiam) : 0, // Default to 0 instead of undefined
+      NgayBatDau: start,
+      NgayKetThuc: end,
+      DieuKien,
+      MoTa,
+      TrangThai,
+    };
+
+    // Don't remove undefined fields - keep all fields for consistency
+    // Object.keys(promotionData).forEach(key => {
+    //   if (promotionData[key] === undefined) {
+    //     delete promotionData[key];
+    //   }
+    // });
+
+    console.log('🔧 Promotion data to assign:', promotionData);
+    console.log('🔧 Rooms to apply to:', rooms);
+
+    // Get current rooms that have this promotion
+    const currentRoomsWithPromo = await Room.find({
+      'KhuyenMai.MaKhuyenMai': id
+    }).select('MaPhong _id').exec();
+
+    console.log('🔧 Current rooms with this promo:', currentRoomsWithPromo.map(r => r.MaPhong));
+
+    // If no rooms specified in request, keep current room assignment
+    const targetRoomIds = rooms && rooms.length > 0 ? rooms : currentRoomsWithPromo.map(r => r.MaPhong);
+
+    console.log('🔧 Target rooms (using current if none specified):', targetRoomIds);
+
+    // Determine rooms to remove promotion from
+    const currentRoomIds = currentRoomsWithPromo.map(r => r.MaPhong);
+    const roomsToRemove = currentRoomIds.filter(roomId => !targetRoomIds.includes(roomId));
+    const roomsToAdd = targetRoomIds.filter(roomId => !currentRoomIds.includes(roomId));
+    const roomsToUpdate = targetRoomIds.filter(roomId => currentRoomIds.includes(roomId));
+
+    console.log('🔧 Rooms to remove promo from:', roomsToRemove);
+    console.log('🔧 Rooms to add promo to:', roomsToAdd);
+    console.log('🔧 Rooms to update promo in:', roomsToUpdate);
+
+    let totalModified = 0;
+
+    // 1. Remove promotion from rooms that should no longer have it
+    if (roomsToRemove.length > 0) {
+      console.log(`🔧 Removing promotion from ${roomsToRemove.length} rooms...`);
+      try {
+        const removeResult = await Room.updateMany(
+          { MaPhong: { $in: roomsToRemove } },
+          { $pull: { KhuyenMai: { MaKhuyenMai: id } } }
+        ).exec();
+        console.log('🔧 Remove from rooms result:', removeResult);
+        totalModified += removeResult.modifiedCount || 0;
+      } catch (removeError) {
+        console.error('🔧 Error removing promotion from rooms:', removeError);
+        throw removeError;
+      }
     }
-    if (GiaTriGiam !== undefined) {
-      setOps['KhuyenMai.$[elem].GiaTriGiam'] = Number(GiaTriGiam);
-      setOps['KhuyenMai.$[elem].GiaTri'] = Number(GiaTriGiam); // legacy field
+
+    // 2. Add promotion to new rooms
+    if (roomsToAdd.length > 0) {
+      console.log(`🔧 Adding promotion to ${roomsToAdd.length} rooms...`);
+      try {
+        const addResult = await Room.updateMany(
+          { MaPhong: { $in: roomsToAdd } },
+          { $push: { KhuyenMai: promotionData } }
+        ).exec();
+        console.log('🔧 Add to rooms result:', addResult);
+        totalModified += addResult.modifiedCount || 0;
+      } catch (addError) {
+        console.error('🔧 Error adding promotion to rooms:', addError);
+        throw addError;
+      }
     }
-    if (NgayBatDau !== undefined) setOps['KhuyenMai.$[elem].NgayBatDau'] = start;
-    if (NgayKetThuc !== undefined) setOps['KhuyenMai.$[elem].NgayKetThuc'] = end;
-    if (DieuKien !== undefined) setOps['KhuyenMai.$[elem].DieuKien'] = DieuKien;
-    if (MoTa !== undefined) setOps['KhuyenMai.$[elem].MoTa'] = MoTa;
-    if (TrangThai !== undefined) setOps['KhuyenMai.$[elem].TrangThai'] = TrangThai;
 
-    if (Object.keys(setOps).length === 0) {
-      return res.status(400).json({ success: false, message: 'Không có trường nào để cập nhật' });
+    // 3. Update promotion data in existing rooms
+    if (roomsToUpdate.length > 0) {
+      console.log(`🔧 Updating promotion in ${roomsToUpdate.length} existing rooms...`);
+      try {
+        const updateResult = await Room.updateMany(
+          { MaPhong: { $in: roomsToUpdate }, 'KhuyenMai.MaKhuyenMai': id },
+          { $set: { 'KhuyenMai.$': promotionData } }
+        ).exec();
+        console.log('🔧 Update in existing rooms result:', updateResult);
+        totalModified += updateResult.modifiedCount || 0;
+      } catch (updateError) {
+        console.error('🔧 Error updating promotion in existing rooms:', updateError);
+        throw updateError;
+      }
     }
 
-    console.log('🔧 Starting update operations with setOps:', setOps);
-
-    // Try simple update by MaKhuyenMai first
-    const updateById = await Room.updateMany(
-      { 'KhuyenMai.MaKhuyenMai': id },
-      { $set: setOps },
-      { arrayFilters: [{ 'elem.MaKhuyenMai': id }] }
-    ).exec();
+    console.log('🔧 Final response - success: true, totalModified:', totalModified);
+    console.log('🔧 Operation summary:');
+    console.log('🔧 - Rooms to remove:', roomsToRemove.length);
+    console.log('🔧 - Rooms to add:', roomsToAdd.length);
+    console.log('🔧 - Rooms to update:', roomsToUpdate.length);
+    console.log('🔧 - Total rooms targeted:', targetRoomIds.length);
+    console.log('🔧 - Total modified:', totalModified);
     
-    console.log('🔧 Update by ID result:', updateById);
-
-    // Then try by TenChuongTrinh if needed
-    const escapeRegex = (str) => String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(`^${escapeRegex(id)}$`, 'i');
-    
-    const updateByTitle = await Room.updateMany(
-      { 'KhuyenMai.TenChuongTrinh': { $regex: regex } },
-      { $set: setOps },
-      { arrayFilters: [{ 'elem.TenChuongTrinh': { $regex: regex } }] }
-    ).exec();
-    
-    console.log('🔧 Update by title result:', updateByTitle);
-
-    const modified = (updateById.modifiedCount || 0) + (updateByTitle.modifiedCount || 0);
-
-    console.log('🔧 Final response - success: true, modifiedCount:', modified);
     return res.status(200).json({ 
       success: true, 
       message: 'Cập nhật khuyến mãi thành công', 
-      modifiedCount: modified,
+      modifiedCount: totalModified,
       debug: {
-        updateById: updateById.modifiedCount || 0,
-        updateByTitle: updateByTitle.modifiedCount || 0
+        roomsToRemove: roomsToRemove.length,
+        roomsToAdd: roomsToAdd.length,
+        roomsToUpdate: roomsToUpdate.length,
+        totalTargeted: targetRoomIds.length
       }
     });
 
@@ -485,4 +593,82 @@ export const updatePromotion = async (req, res, next) => {
   }
 };
 
-export default { getAllPromotions, getPromotionById, createPromotion, updatePromotion };
+// GET /api/v1/rooms/available-for-promo
+// Query params: startDate, endDate (optional - if not provided, get currently active promotions)
+// Returns rooms that are available for new promotions (don't have conflicting active promotions)
+export const getAvailableRoomsForPromo = async (req, res, next) => {
+  try {
+    console.log('🏨 getAvailableRoomsForPromo called');
+    const { startDate, endDate } = req.query;
+
+    // Default to current time if no dates provided
+    const checkStart = startDate ? new Date(startDate) : new Date();
+    const checkEnd = endDate ? new Date(endDate) : new Date();
+
+    console.log('🏨 getAvailableRoomsForPromo - Checking period:', checkStart, 'to', checkEnd);
+
+    // Find rooms that have active promotions overlapping with the check period
+    const allRooms = await Room.find({}).select('MaPhong TenPhong LoaiPhong KhuyenMai').exec();
+
+    const roomsWithConflictingPromos = allRooms.filter(room => {
+      if (!room.KhuyenMai || !Array.isArray(room.KhuyenMai)) return false;
+      return room.KhuyenMai.some(km => {
+        if (km.TrangThai !== 'Hoạt động') return false;
+        const start = km.NgayBatDau ? new Date(km.NgayBatDau) : null;
+        const end = km.NgayKetThuc ? new Date(km.NgayKetThuc) : null;
+        if (!start || !end) return false;
+        return start <= checkEnd && end >= checkStart;
+      });
+    });
+
+    console.log('🏨 getAvailableRoomsForPromo - Rooms with conflicting promotions:', roomsWithConflictingPromos.length);
+
+    console.log('🏨 getAvailableRoomsForPromo - Rooms with conflicting promotions:', roomsWithConflictingPromos.length);
+
+    // Get all rooms
+    // const allRooms = await Room.find({}).select('MaPhong TenPhong LoaiPhong').exec();
+
+    console.log('🏨 getAvailableRoomsForPromo - Total rooms:', allRooms.length);
+
+    // Mark rooms as available/unavailable
+    const result = allRooms.map(room => {
+      const hasConflict = roomsWithConflictingPromos.some(conflictRoom =>
+        conflictRoom.MaPhong === room.MaPhong
+      );
+
+      return {
+        _id: room._id,
+        MaPhong: room.MaPhong,
+        TenPhong: room.TenPhong,
+        LoaiPhong: room.LoaiPhong,
+        available: !hasConflict,
+        hasActivePromotion: hasConflict
+      };
+    });
+
+    const availableCount = result.filter(r => r.available).length;
+    const unavailableCount = result.filter(r => !r.available).length;
+
+    console.log('🏨 getAvailableRoomsForPromo - Available rooms:', availableCount, 'Unavailable:', unavailableCount);
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+      summary: {
+        total: result.length,
+        available: availableCount,
+        unavailable: unavailableCount
+      }
+    });
+
+  } catch (error) {
+    console.error('Error getAvailableRoomsForPromo:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Lỗi server',
+      error: error.message
+    });
+  }
+};
+
+export default { getAllPromotions, getPromotionById, createPromotion, updatePromotion, getAvailableRoomsForPromo };
