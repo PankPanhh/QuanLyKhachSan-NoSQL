@@ -280,3 +280,93 @@ export const uploadRoomImage = async (req, res, next) => {
       .json({ success: false, message: "Lỗi server", error: error.message });
   }
 };
+
+// GET /api/v1/rooms/:id/availability - Kiểm tra phòng có sẵn trong khoảng thời gian
+export const checkRoomAvailability = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { startDate, endDate } = req.query;
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        success: false,
+        message: "Vui lòng cung cấp startDate và endDate",
+      });
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: "Định dạng ngày không hợp lệ",
+      });
+    }
+
+    if (start >= end) {
+      return res.status(400).json({
+        success: false,
+        message: "startDate phải nhỏ hơn endDate",
+      });
+    }
+
+    // Tìm phòng
+    const filter = findRoomFilter(id);
+    if (!filter) {
+      return res
+        .status(400)
+        .json({ success: false, message: "ID không hợp lệ" });
+    }
+
+    const room = await Room.findOne(filter).lean();
+    if (!room) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy phòng",
+      });
+    }
+
+    // Kiểm tra booking đang active (Đang chờ hoặc Đang sử dụng)
+    const activeStatuses = ["Đang chờ", "Đang sử dụng"];
+
+    const conflictBooking = await Booking.findOne({
+      MaPhong: room.MaPhong,
+      TrangThai: { $in: activeStatuses },
+      NgayNhanPhong: { $lte: end },
+      NgayTraPhong: { $gte: start },
+    }).lean();
+
+    const isAvailable = !conflictBooking;
+
+    return res.status(200).json({
+      success: true,
+      available: isAvailable,
+      room: {
+        _id: room._id,
+        MaPhong: room.MaPhong,
+        TenPhong: room.TenPhong,
+        LoaiPhong: room.LoaiPhong,
+        GiaPhong: room.GiaPhong,
+      },
+      message: isAvailable
+        ? "Phòng còn trống trong khoảng thời gian này"
+        : "Phòng đã được đặt trong khoảng thời gian này",
+      conflictBooking: conflictBooking
+        ? {
+            MaDatPhong: conflictBooking.MaDatPhong,
+            NgayNhanPhong: conflictBooking.NgayNhanPhong,
+            NgayTraPhong: conflictBooking.NgayTraPhong,
+            TrangThai: conflictBooking.TrangThai,
+          }
+        : null,
+    });
+  } catch (error) {
+    console.error("Lỗi checkRoomAvailability:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server",
+      error: error.message,
+    });
+  }
+};

@@ -19,7 +19,7 @@ import NotFoundPage from "../page/NotFoundPage.jsx";
 import AboutPage from "../page/Main/AboutPage.jsx";
 import ServicesListPage from "../page/Main/ServicesListPage.jsx";
 import ServiceDetailPage from "../page/Main/ServiceDetailPage.jsx";
-
+import BookingSuccessPage from "../page/Main/BookingSuccessPage.jsx";
 
 // Component layout riêng cho trang Auth (không Header/Footer)
 const AuthLayout = ({ children }) => (
@@ -33,12 +33,13 @@ function MainRoutes() {
       <Route path="/" element={<MainLayout />}>
         <Route index element={<MainPage />} />
         <Route path="rooms" element={<RoomsPage />} />
-  <Route path="services" element={<ServicesListPage />} />
+        <Route path="services" element={<ServicesListPage />} />
         <Route path="about" element={<AboutPage />} />
-  <Route path="room/:id" element={<RoomDetailPage />} />
-  <Route path="service/:id" element={<ServiceDetailPage />} />
+        <Route path="room/:id" element={<RoomDetailPage />} />
+        <Route path="service/:id" element={<ServiceDetailPage />} />
         <Route path="booking" element={<BookingPage />} />
-    <Route path="promotions" element={<PromotionsPage />} />
+        <Route path="booking-success" element={<BookingSuccessPage />} />
+        <Route path="promotions" element={<PromotionsPage />} />
         <Route path="contact" element={<ContactPage />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>

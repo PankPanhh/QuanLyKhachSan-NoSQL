@@ -440,6 +440,7 @@ function RoomsManager() {
                 <option value="">Tất cả trạng thái</option>
                 <option value="Trống">Sẵn sàng</option>
                 <option value="Đang dọn dẹp">Đang dọn</option>
+                <option value="Đang chờ xác nhận">Đang chờ xác nhận</option>
                 <option value="Đang sử dụng">Có khách</option>
                 <option value="Bảo trì">Bảo trì</option>
                 <option value="Hư">Hư hỏng</option>
