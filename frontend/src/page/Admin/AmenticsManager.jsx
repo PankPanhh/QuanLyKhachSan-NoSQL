@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from "react";
-// import ReactDOM from "react-dom"; // Đã xóa vì không còn dùng PortalModal
 import {
   getAmenities,
   createAmenity,
@@ -28,16 +27,7 @@ const AmenticsManager = () => {
   const [sortDir, setSortDir] = useState("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  // const [toasts, setToasts] = useState([]); // Đã xóa
-  /*
-  const [confirmModal, setConfirmModal] = useState({ // Đã xóa
-    open: false,
-    title: "",
-    message: "",
-    onConfirm: null,
-  });
-  */
-  // const [showRoomModal, setShowRoomModal] = useState(false); // Đã xóa (không được sử dụng)
+  
   const [roomForModal, setRoomForModal] = useState(null);
   const [showManageModal, setShowManageModal] = useState(false);
   const [toAssignCodes, setToAssignCodes] = useState([]);
@@ -128,17 +118,6 @@ const AmenticsManager = () => {
     return statusColors[status] || { bg: "bg-label-secondary", text: status };
   };
 
-  /* Đã xóa:
-  const openViewRoom = (r) => {
-    setRoomForModal(r);
-    setShowRoomModal(true);
-  };
-  const closeViewRoom = () => {
-    setRoomForModal(null);
-    setShowRoomModal(false);
-  };
-  */
-
   const openManageRoom = (r) => {
     setRoomForModal(r);
     setToAssignCodes([]);
@@ -175,10 +154,7 @@ const AmenticsManager = () => {
 
   const addSelectedToRoom = async () => {
     if (!roomForModal) return showAppError("Không có phòng được chọn");
-    // if (!toAssignCodes.length)
-    //   return showAppError("Chọn tiện nghi để thêm"); // Cho phép lưu rỗng (để gỡ)
 
-    // Tính toán sự khác biệt
     const beforeCodes =
       roomForModal?.TienNghi?.map((t) => t.MaTienNghi) || [];
     const afterCodes = toAssignCodes || [];
@@ -205,7 +181,6 @@ const AmenticsManager = () => {
       }
 
       await load(); // Tải lại cả hai danh sách
-      // Cập nhật lại roomForModal đang mở
       const freshRooms = await getRooms();
       const updatedRoom = (freshRooms || []).find(
         (r) => r._id === roomForModal._id
@@ -224,144 +199,142 @@ const AmenticsManager = () => {
     }
   };
 
-  const openCreate = () =>
-    setModal({
-      open: true,
-      mode: "create",
-      item: {
-        TenTienNghi: "",
-        TrangThai: "Hoạt động",
-        roomIds: [],
-        assignToAll: false,
-      },
-    });
   const openEdit = (it) =>
     setModal({ open: true, mode: "edit", item: { ...it } });
   const close = () => setModal({ open: false, mode: "create", item: null });
 
-  const handleSave = async () => {
+  const handleSave = async (e) => {
+    e.preventDefault(); // Thêm vào
     try {
-      if (modal.mode === "create") {
-        const payload = {
-          TenTienNghi: modal.item.TenTienNghi,
-          TrangThai: modal.item.TrangThai,
-          roomIds: modal.item.roomIds,
-          assignToAll: modal.item.assignToAll,
-        };
-        await createAmenity(payload);
-        await load();
-        close();
-        showSuccessMessage("Đã tạo tiện nghi mới.");
-        return;
-      }
-
-      // edit mode: logic giữ nguyên
-      const code = modal.item.MaTienNghi;
-      const newName =
-        modal.mode === "edit"
-          ? editAmenityInputRef.current
-            ? String(editAmenityInputRef.current.value || "")
-            : modal.item.TenTienNghi
-          : modal.item.TenTienNghi;
-      const newStatus = modal.item.TrangThai;
-
-      // ... (toàn bộ logic so sánh snapshot giữ nguyên) ...
-      const roomsBefore = Array.isArray(rooms) ? rooms.slice() : [];
-      const roomsWithBefore = roomsBefore.filter((r) =>
-        (r.TienNghi || []).some((t) => t.MaTienNghi === code)
-      );
-      const roomsAlreadyMatchingBefore = roomsWithBefore.filter((r) => {
-        const tn = (r.TienNghi || []).find((t) => t.MaTienNghi === code);
-        if (!tn) return false;
-        return (
-          String(tn.TenTienNghi || "").trim() ===
-            String(newName || "").trim() &&
-          String((tn.TrangThai || "").trim()) ===
-            String((newStatus || "").trim())
-        );
-      }).length;
-
-      await updateAmenity(code, { TenTienNghi: newName, TrangThai: newStatus });
-      await load();
-      let freshRooms = [];
-      try {
-        freshRooms = (await getRooms()) || [];
-      } catch (err) {
-        freshRooms = rooms;
-      }
-      const freshRoomsWith = freshRooms.filter((r) =>
-        (r.TienNghi || []).some((t) => t.MaTienNghi === code)
-      );
-      const freshMatching = freshRoomsWith.filter((r) => {
-        const tn = (r.TienNghi || []).find((t) => t.MaTienNghi === code);
-        if (!tn) return false;
-        return (
-          String(tn.TenTienNghi || "").trim() ===
-            String(newName || "").trim() &&
-          String((tn.TrangThai || "").trim()) ===
-            String((newStatus || "").trim())
-        );
-      }).length;
-
-      if (String(newStatus || "").trim() === "Ngưng sử dụng") {
-        try {
-          const roomsWith = freshRoomsWith || [];
-          if (!rooms || !rooms.length) {
-            showAppError("Không có phòng trong hệ thống để xử lý.");
-            close();
-            return;
-          }
+      // create mode (từ modal 1)
+      if (modal.mode === "create" && showNewAmenityModal) {
+          const val = newAmenityInputRef.current
+            ? String(newAmenityInputRef.current.value || "")
+            : newAmenityName || "";
+          if (!val || !val.trim()) return showAppError("Nhập tên tiện nghi");
+          if (!rooms || !rooms.length)
+            return showAppError(
+              "Không có phòng để chèn tiện nghi. Tạo phòng trước."
+            );
           const firstRoomId = rooms[0]._id;
-          const toRemove = roomsWith
-            .map((r) => r._id)
-            .filter((id) => id !== firstRoomId);
-          if (roomsWith.length === 0) {
-            await assignAmenityToRoom(code, firstRoomId, {});
-            await load();
-            showSuccessMessage(
-              `Đã cập nhật tiện nghi ‘${newName}’ và giữ trong danh sách chung.`
-            );
-            close();
-            return;
-          }
-          if (toRemove.length > 0) {
-            await Promise.all(
-              toRemove.map((rid) => removeAmenityFromRoom(code, rid))
-            );
-          }
-          const sentinelHas = (roomsWith || []).some(
-            (r) => r._id === firstRoomId
-          );
-          if (!sentinelHas) {
-            await assignAmenityToRoom(code, firstRoomId, {});
-          }
+          await createAmenity({
+            TenTienNghi: val.trim(),
+            TrangThai: "Chưa gán",
+            roomIds: [firstRoomId],
+          });
           await load();
-          const removedCount = toRemove.length;
           showSuccessMessage(
-            `Đã cập nhật tiện nghi ‘${newName}’ và đã gỡ khỏi ${removedCount} phòng (giữ trong danh sách chung).`
+            `Đã thêm tiện nghi '${val.trim()}' vào danh sách chung.`
           );
-          close();
+          if (newAmenityInputRef.current) newAmenityInputRef.current.value = "";
+          closeNewAmenity();
           return;
-        } catch (err) {
-          console.error(err);
-          showAppError("Lỗi khi gỡ tiện nghi khỏi phòng. Vui lòng thử lại.");
-          close();
-          return;
-        }
       }
 
-      // ... (logic hiển thị thông báo kết quả giữ nguyên) ...
-      if (roomsWithBefore.length === 0) {
-        showAppError("Không có thông tin nào được chỉnh sửa.");
-      } else if (roomsAlreadyMatchingBefore === roomsWithBefore.length) {
-        showAppError("Không có thông tin nào được chỉnh sửa.");
-      } else if (freshMatching > 0) {
-        showSuccessMessage(`Đã cập nhật tiện nghi ‘${newName}’ thành công.`);
-      } else {
-        showSuccessMessage("Đã cập nhật tiện nghi.");
+      // edit mode (từ modal 2)
+      if (modal.mode === "edit" && modal.open) {
+          const code = modal.item.MaTienNghi;
+          const newName =
+            editAmenityInputRef.current
+              ? String(editAmenityInputRef.current.value || "")
+              : modal.item.TenTienNghi;
+          const newStatus = modal.item.TrangThai;
+          
+          const roomsBefore = Array.isArray(rooms) ? rooms.slice() : [];
+          const roomsWithBefore = roomsBefore.filter((r) =>
+            (r.TienNghi || []).some((t) => t.MaTienNghi === code)
+          );
+          const roomsAlreadyMatchingBefore = roomsWithBefore.filter((r) => {
+            const tn = (r.TienNghi || []).find((t) => t.MaTienNghi === code);
+            if (!tn) return false;
+            return (
+              String(tn.TenTienNghi || "").trim() ===
+                String(newName || "").trim() &&
+              String((tn.TrangThai || "").trim()) ===
+                String((newStatus || "").trim())
+            );
+          }).length;
+    
+          await updateAmenity(code, { TenTienNghi: newName, TrangThai: newStatus });
+          await load();
+          let freshRooms = [];
+          try {
+            freshRooms = (await getRooms()) || [];
+          } catch (err) {
+            freshRooms = rooms;
+          }
+          const freshRoomsWith = freshRooms.filter((r) =>
+            (r.TienNghi || []).some((t) => t.MaTienNghi === code)
+          );
+          const freshMatching = freshRoomsWith.filter((r) => {
+            const tn = (r.TienNghi || []).find((t) => t.MaTienNghi === code);
+            if (!tn) return false;
+            return (
+              String(tn.TenTienNghi || "").trim() ===
+                String(newName || "").trim() &&
+              String((tn.TrangThai || "").trim()) ===
+                String((newStatus || "").trim())
+            );
+          }).length;
+    
+          if (String(newStatus || "").trim() === "Ngưng sử dụng") {
+            try {
+              const roomsWith = freshRoomsWith || [];
+              if (!rooms || !rooms.length) {
+                showAppError("Không có phòng trong hệ thống để xử lý.");
+                close();
+                return;
+              }
+              const firstRoomId = rooms[0]._id;
+              const toRemove = roomsWith
+                .map((r) => r._id)
+                .filter((id) => id !== firstRoomId);
+              if (roomsWith.length === 0) {
+                await assignAmenityToRoom(code, firstRoomId, {});
+                await load();
+                showSuccessMessage(
+                  `Đã cập nhật tiện nghi ‘${newName}’ và giữ trong danh sách chung.`
+                );
+                close();
+                return;
+              }
+              if (toRemove.length > 0) {
+                await Promise.all(
+                  toRemove.map((rid) => removeAmenityFromRoom(code, rid))
+                );
+              }
+              const sentinelHas = (roomsWith || []).some(
+                (r) => r._id === firstRoomId
+              );
+              if (!sentinelHas) {
+                await assignAmenityToRoom(code, firstRoomId, {});
+              }
+              await load();
+              const removedCount = toRemove.length;
+              showSuccessMessage(
+                `Đã cập nhật tiện nghi ‘${newName}’ và đã gỡ khỏi ${removedCount} phòng (giữ trong danh sách chung).`
+              );
+              close();
+              return;
+            } catch (err) {
+              console.error(err);
+              showAppError("Lỗi khi gỡ tiện nghi khỏi phòng. Vui lòng thử lại.");
+              close();
+              return;
+            }
+          }
+    
+          if (roomsWithBefore.length === 0) {
+            showAppError("Không có thông tin nào được chỉnh sửa.");
+          } else if (roomsAlreadyMatchingBefore === roomsWithBefore.length) {
+            showAppError("Không có thông tin nào được chỉnh sửa.");
+          } else if (freshMatching > 0) {
+            showSuccessMessage(`Đã cập nhật tiện nghi ‘${newName}’ thành công.`);
+          } else {
+            showSuccessMessage("Đã cập nhật tiện nghi.");
+          }
+          close();
       }
-
-      close();
     } catch (e) {
       console.error(e);
       showAppError("Lỗi hệ thống — vui lòng thử lại.");
@@ -377,7 +350,6 @@ const AmenticsManager = () => {
     setShowNewAmenityModal(false);
   };
 
-  // ... (useEffect focus giữ nguyên) ...
   useEffect(() => {
     if (showNewAmenityModal) {
       const t = setTimeout(() => {
@@ -403,7 +375,6 @@ const AmenticsManager = () => {
           if (input) {
             input.value = modal.item?.TenTienNghi || "";
             input.focus();
-            // place caret at end
             const len = String(input.value || "").length;
             input.setSelectionRange && input.setSelectionRange(len, len);
           }
@@ -413,7 +384,6 @@ const AmenticsManager = () => {
       }, 30);
       return () => clearTimeout(t);
     }
-    // when modal closes, clear ref value
     if (!modal.open && editAmenityInputRef.current) {
       try {
         editAmenityInputRef.current.value = "";
@@ -421,38 +391,13 @@ const AmenticsManager = () => {
     }
   }, [modal.open, modal.mode, modal.item]);
 
-  const handleAddNewAmenity = async () => {
-    const val = newAmenityInputRef.current
-      ? String(newAmenityInputRef.current.value || "")
-      : newAmenityName || "";
-    if (!val || !val.trim()) return showAppError("Nhập tên tiện nghi");
-    if (!rooms || !rooms.length)
-      return showAppError(
-        "Không có phòng để chèn tiện nghi. Tạo phòng trước."
-      );
-    try {
-      const firstRoomId = rooms[0]._id;
-      // create with default status 'Chưa gán' and assign to first room so it persists
-      await createAmenity({
-        TenTienNghi: val.trim(),
-        TrangThai: "Chưa gán",
-        roomIds: [firstRoomId],
-      });
-      await load();
-      showSuccessMessage(
-        `Đã thêm tiện nghi '${val.trim()}' vào danh sách chung.`
-      );
-      // clear the uncontrolled input
-      if (newAmenityInputRef.current) newAmenityInputRef.current.value = "";
-      closeNewAmenity();
-    } catch (e) {
-      console.error(e);
-      showAppError("Thêm tiện nghi thất bại: " + (e.message || e));
-    }
+  // Đổi tên: handleAddNewAmenity -> handleSaveNewAmenity (để khớp với modal)
+  const handleSaveNewAmenity = async (e) => {
+    e.preventDefault();
+    await handleSave(); // Gọi hàm save chung
   };
 
   const handleDelete = async (code) => {
-    // ... (logic kiểm tra phòng đang sử dụng giữ nguyên) ...
     try {
       const fresh = await getRooms();
       const roomsWith = (fresh || []).filter((r) =>
@@ -468,7 +413,6 @@ const AmenticsManager = () => {
         return;
       }
     } catch (e) {
-      // fallback to local state check
       const roomsWith = (rooms || []).filter((r) =>
         (r.TienNghi || []).some((t) => t.MaTienNghi === code)
       );
@@ -483,8 +427,6 @@ const AmenticsManager = () => {
       }
     }
 
-    // use confirm modal (simple delete without cascade)
-    // openConfirm( // Đã xóa
     if (
       window.confirm(
         `Bạn có chắc chắn muốn xóa tiện nghi ${code}? Hành động này sẽ gỡ tiện nghi khỏi tất cả các phòng.`
@@ -501,10 +443,7 @@ const AmenticsManager = () => {
     }
   };
 
-  // assign to room is no longer available from the global amenities table
-
   const handleUnassign = async (code, roomId) => {
-    // ... (logic kiểm tra phòng đang sử dụng giữ nguyên) ...
     try {
       const fresh = await getRooms();
       const target =
@@ -522,13 +461,10 @@ const AmenticsManager = () => {
       }
     }
 
-    // openConfirm("Gỡ tiện nghi", `Gỡ tiện nghi khỏi phòng?`, async () => { // Đã xóa
     if (window.confirm("Bạn có chắc chắn muốn gỡ tiện nghi này khỏi phòng?")) {
       try {
         await removeAmenityFromRoom(code, roomId);
-        // reload lists
         await load();
-        // ensure the open room modal reflects the updated room data
         try {
           const fresh = await getRooms();
           const updated = (fresh || []).find((r) => r._id === roomId);
@@ -541,7 +477,6 @@ const AmenticsManager = () => {
               ),
             }));
         } catch (er) {
-          // fallback: remove from local modal state
           setRoomForModal((prev) => ({
             ...(prev || {}),
             TienNghi: (prev?.TienNghi || []).filter(
@@ -557,27 +492,14 @@ const AmenticsManager = () => {
     }
   };
 
-  /* Đã xóa:
-  // Toast helper
-  const showToast = (message, variant = "success", ttl = 3500) => {
-    // ... existing code ...
+  // Tính toán stats
+  const stats = {
+    total: items.length,
+    active: items.filter(it => it.TrangThai === 'Hoạt động').length,
+    maintenance: items.filter(it => it.TrangThai === 'Bảo trì').length,
+    unassigned: items.filter(it => it.TrangThai === 'Chưa gán').length,
   };
 
-  // Confirm modal helper
-  const openConfirm = (title, message, onConfirm) => {
-    // ... existing code ...
-  };
-
-  const closeConfirm = () =>
-    // ... existing code ...
-
-  // Portal helper
-  const PortalModal = ({
-    // ... existing code ...
-  }) => {
-    // ... existing code ...
-  };
-  */
 
   // --- JSX BẮT ĐẦU ---
   return (
@@ -585,21 +507,88 @@ const AmenticsManager = () => {
       {/* Success/Error Messages */}
       {successMessage && (
         <div className="alert alert-success" role="alert">
-          <i className="fas fa-check-circle me-2"></i>
+          <i className="bx bx-check-circle me-2"></i>
           {successMessage}
         </div>
       )}
       {error && (
         <div className="alert alert-danger" role="alert">
-          <i className="fas fa-exclamation-triangle me-2"></i>
+          <i className="bx bx-error-circle me-2"></i>
           {error}
         </div>
       )}
 
+      {/* Thẻ thống kê (Mới) */}
+      {!loading && (
+        <div className="row g-4 mb-4">
+          <div className="col-lg-3 col-md-6">
+            <div className="card">
+              <div className="card-body">
+                <div className="card-title d-flex align-items-start justify-content-between">
+                  <div className="avatar shrink-0">
+                    <span className="avatar-initial rounded bg-label-primary">
+                      <i className="bx bx-list-ul"></i>
+                    </span>
+                  </div>
+                </div>
+                <span className="fw-semibold d-block mb-1">Tổng tiện nghi</span>
+                <h3 className="card-title mb-2">{stats.total}</h3>
+              </div>
+            </div>
+          </div>
+          <div className="col-lg-3 col-md-6">
+            <div className="card">
+              <div className="card-body">
+                <div className="card-title d-flex align-items-start justify-content-between">
+                  <div className="avatar shrink-0">
+                    <span className="avatar-initial rounded bg-label-success">
+                      <i className="bx bx-check-circle"></i>
+                    </span>
+                  </div>
+                </div>
+                <span className="fw-semibold d-block mb-1">Hoạt động</span>
+                <h3 className="card-title mb-2">{stats.active}</h3>
+              </div>
+            </div>
+          </div>
+          <div className="col-lg-3 col-md-6">
+            <div className="card">
+              <div className="card-body">
+                <div className="card-title d-flex align-items-start justify-content-between">
+                  <div className="avatar shrink-0">
+                    <span className="avatar-initial rounded bg-label-warning">
+                      <i className="bx bx-wrench"></i>
+                    </span>
+                  </div>
+                </div>
+                <span className="fw-semibold d-block mb-1">Bảo trì</span>
+                <h3 className="card-title mb-2">{stats.maintenance}</h3>
+              </div>
+            </div>
+          </div>
+          <div className="col-lg-3 col-md-6">
+            <div className="card">
+              <div className="card-body">
+                <div className="card-title d-flex align-items-start justify-content-between">
+                  <div className="avatar shrink-0">
+                    <span className="avatar-initial rounded bg-label-secondary">
+                      <i className="bx bx-help-circle"></i>
+                    </span>
+                  </div>
+                </div>
+                <span className="fw-semibold d-block mb-1">Chưa gán</span>
+                <h3 className="card-title mb-2">{stats.unassigned}</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
       {/* Card 1: Quản lý Tiện nghi (Global List) */}
       <div className="card mb-4">
         <div className="card-header d-flex justify-content-between align-items-center">
-          <h5 className="card-title mb-0">Quản lý Tiện nghi</h5>
+          <h5 className="card-title mb-0">Danh sách tiện nghi chung</h5>
           <Button
             className="btn btn-primary"
             onClick={openNewAmenity}
@@ -617,45 +606,45 @@ const AmenticsManager = () => {
             <Spinner />
           </div>
         ) : (
-          <div className="card-body">
-            <div className="table-responsive text-nowrap">
-              <table className="table table-hover">
-                <thead>
-                  <tr>
-                    <th>Mã</th>
-                    <th>Tên tiện nghi</th>
-                    <th>Trạng thái</th>
-                    <th>Số phòng đang có</th>
-                    <th>Hành động</th>
-                  </tr>
-                </thead>
-                <tbody className="table-border-bottom-0">
-                  {items.map((it) => {
-                    const statusInfo = getStatusColor(it.TrangThai);
-                    return (
-                      <tr key={it.MaTienNghi}>
-                        <td>
-                          <span className="fw-semibold">{it.MaTienNghi}</span>
-                        </td>
-                        <td>{it.TenTienNghi}</td>
-                        <td>
-                          <span className={`badge ${statusInfo.bg}`}>
-                            {statusInfo.text}
-                          </span>
-                        </td>
-                        <td>
-                          <span className="me-2">{it.countRooms ?? 0}</span>
-                          <Button
-                            className="btn btn-icon btn-sm btn-outline-success"
-                            onClick={() =>
-                              openRoomsList(it.MaTienNghi, it.TenTienNghi)
-                            }
-                            title="Xem danh sách phòng"
-                          >
-                            <i className="bx bx-show"></i>
-                          </Button>
-                        </td>
-                        <td>
+          <div className="table-responsive text-nowrap">
+            <table className="table table-hover">
+              <thead>
+                <tr>
+                  <th>Mã</th>
+                  <th>Tên tiện nghi</th>
+                  <th>Trạng thái</th>
+                  <th>Số phòng đang có</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody className="table-border-bottom-0">
+                {items.map((it) => {
+                  const statusInfo = getStatusColor(it.TrangThai);
+                  return (
+                    <tr key={it.MaTienNghi}>
+                      <td>
+                        <span className="fw-semibold">{it.MaTienNghi}</span>
+                      </td>
+                      <td>{it.TenTienNghi}</td>
+                      <td>
+                        <span className={`badge ${statusInfo.bg}`}>
+                          {statusInfo.text}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="me-2">{it.countRooms ?? 0}</span>
+                        <Button
+                          className="btn btn-icon btn-sm btn-outline-success"
+                          onClick={() =>
+                            openRoomsList(it.MaTienNghi, it.TenTienNghi)
+                          }
+                          title="Xem danh sách phòng"
+                        >
+                          <i className="bx bx-show"></i>
+                        </Button>
+                      </td>
+                      <td>
+                        <div className="d-flex gap-1">
                           <Button
                             title="Sửa"
                             className="btn btn-icon btn-sm btn-outline-primary"
@@ -663,13 +652,20 @@ const AmenticsManager = () => {
                           >
                             <i className="bx bx-edit-alt"></i>
                           </Button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          <Button
+                            title="Xóa"
+                            className="btn btn-icon btn-sm btn-outline-danger"
+                            onClick={() => handleDelete(it.MaTienNghi)}
+                          >
+                            <i className="bx bx-trash"></i>
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
@@ -982,29 +978,33 @@ const AmenticsManager = () => {
         onClose={closeNewAmenity}
         title="Thêm tiện nghi mới"
       >
-        <div className="card-body">
-          {" "}
-          {/* Thêm padding */}
-          <label className="form-label">Tên tiện nghi mới</label>
-          <input
-            ref={newAmenityInputRef}
-            type="text"
-            className="form-control"
-            placeholder="VD: Wifi, Bể bơi..."
-            onKeyDown={(e) => e.key === "Enter" && handleAddNewAmenity()}
-          />
+        <form onSubmit={handleSaveNewAmenity}>
+          <p className="text-muted">
+            Tiện nghi mới sẽ được thêm vào danh sách chung với trạng thái "Chưa gán".
+          </p>
+          <div className="mb-3">
+            <label className="form-label">Tên tiện nghi mới</label>
+            <input
+              ref={newAmenityInputRef}
+              type="text"
+              className="form-control"
+              placeholder="VD: Wifi, Bể bơi..."
+              // onKeyDown={(e) => e.key === "Enter" && handleSaveNewAmenity()} // Đã chuyển sang onSubmit
+            />
+          </div>
           <div className="text-end mt-4 pt-3 border-top">
             <Button
+              type="button"
               className="btn btn-outline-secondary me-2"
               onClick={closeNewAmenity}
             >
               Hủy
             </Button>
-            <Button className="btn btn-primary" onClick={handleAddNewAmenity}>
+            <Button type="submit" className="btn btn-primary">
               Thêm
             </Button>
           </div>
-        </div>
+        </form>
       </Modal>
 
       {/* Modal 2: Sửa Tiện nghi (Global) */}
@@ -1013,7 +1013,7 @@ const AmenticsManager = () => {
         onClose={close}
         title={modal.mode === "create" ? "Tạo tiện nghi mới" : "Chỉnh sửa tiện nghi"}
       >
-        <div className="card-body">
+        <form onSubmit={handleSave}>
           <div className="mb-3">
             <label className="form-label">Tên tiện nghi</label>
             <input
@@ -1027,7 +1027,7 @@ const AmenticsManager = () => {
             <label className="form-label">Trạng thái</label>
             <select
               className="form-select"
-              value={modal.item?.TrangThai}
+              value={modal.item?.TrangThai || 'Hoạt động'}
               onChange={(e) =>
                 setModal((p) => ({
                   ...p,
@@ -1046,14 +1046,14 @@ const AmenticsManager = () => {
           </div>
 
           <div className="text-end mt-4 pt-3 border-top">
-            <Button className="btn btn-outline-secondary me-2" onClick={close}>
+            <Button type="button" className="btn btn-outline-secondary me-2" onClick={close}>
               Hủy
             </Button>
-            <Button className="btn btn-primary" onClick={handleSave}>
+            <Button type="submit" className="btn btn-primary">
               Lưu
             </Button>
           </div>
-        </div>
+        </form>
       </Modal>
 
       {/* Modal 3: Quản lý Tiện nghi cho 1 PHÒNG */}
@@ -1063,7 +1063,7 @@ const AmenticsManager = () => {
         title={"Quản lý tiện nghi: " + (roomForModal?.MaPhong || "")}
         dialogClassName="modal-lg"
       >
-        <div className="card-body">
+        <div>
           <p>
             Phòng: <strong>{roomForModal?.TenPhong}</strong> (
             {roomForModal?.LoaiPhong})
@@ -1126,7 +1126,7 @@ const AmenticsManager = () => {
         title="Thêm/Gỡ tiện nghi"
         dialogClassName="modal-lg"
       >
-        <div className="card-body">
+        <div>
           <p>
             Chọn các tiện nghi để gán cho phòng{" "}
             <strong>{roomForModal?.MaPhong}</strong>. Bỏ chọn sẽ gỡ tiện nghi.
@@ -1178,7 +1178,7 @@ const AmenticsManager = () => {
         title={"Phòng có tiện nghi: " + roomsListAmenityName}
         dialogClassName="modal-lg"
       >
-        <div className="card-body">
+        <div>
           <div className="table-responsive text-nowrap">
             <table className="table">
               <thead>

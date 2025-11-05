@@ -7,22 +7,15 @@ import {
   apiAdminAddPointsByRevenue,
   apiAdminAddPointsByBookings,
   apiAdminRecalcTier
-} from '/src/services/adminUsers.js';
-import {
-  FaSearch,
-  FaFilter,
-  FaRedo,
-  FaLock,
-  FaUnlock,
-  FaPlus,
-  FaMoneyBillWave,
-  FaConciergeBell,
-  FaSyncAlt,
-  FaUsers
-} from 'react-icons/fa';
+} from '../../services/adminUsers.js'; // Đã sửa đường dẫn
+
+// Import các component UI chung
+import Spinner from '../../components/common/Spinner';
+import Button from '../../components/common/Button';
+// Xóa import react-icons/fa
 
 function UsersManager() {
-  const accent = '#D16806';
+  // const accent = '#D16806'; // Xóa
 
   const [rows, setRows] = useState([]);
   const [q, setQ] = useState('');
@@ -33,10 +26,17 @@ function UsersManager() {
   const [minPoints, setMinPoints] = useState('');
   const [maxPoints, setMaxPoints] = useState('');
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit] = useState(10); // Giữ nguyên limit, logic phân trang (nếu có) không bị ảnh hưởng
   const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState(null);
-  const [err, setErr] = useState(null);
+  
+  // State thông báo chuẩn
+  const [successMessage, setSuccessMessage] = useState(null);
+  const [error, setError] = useState(null);
+
+  const showSuccessMessage = (message) => {
+    setSuccessMessage(message);
+    setTimeout(() => setSuccessMessage(null), 3000);
+  };
 
   const resetFilters = () => {
     setQ('');
@@ -51,8 +51,8 @@ function UsersManager() {
 
   const load = async () => {
     setLoading(true);
-    setMsg(null);
-    setErr(null);
+    setSuccessMessage(null);
+    setError(null);
     try {
       const data = await apiAdminListUsers({
         q, role, rank, status, sort, page, limit,
@@ -61,7 +61,7 @@ function UsersManager() {
       });
       setRows(data.items || []);
     } catch (e) {
-      setErr(e?.message || 'Lỗi tải danh sách');
+      setError(e?.message || 'Lỗi tải danh sách');
     } finally {
       setLoading(false);
     }
@@ -69,13 +69,14 @@ function UsersManager() {
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [q, role, rank, status, sort, page]);
 
+  // --- Logic hàm xử lý (Giữ nguyên, chỉ đổi thông báo) ---
   const doStatus = async (id, TrangThai) => {
     try {
       await apiAdminUpdateUserStatus(id, TrangThai);
-      setMsg('Cập nhật trạng thái thành công');
+      showSuccessMessage('Cập nhật trạng thái thành công');
       load();
     } catch (e) {
-      setErr(e?.message || 'Lỗi cập nhật trạng thái');
+      setError(e?.message || 'Lỗi cập nhật trạng thái');
     }
   };
 
@@ -84,10 +85,10 @@ function UsersManager() {
     if (!delta || Number.isNaN(delta)) return;
     try {
       await apiAdminAddPoints(id, delta);
-      setMsg(`Đã cộng ${delta} điểm`);
+      showSuccessMessage(`Đã cộng ${delta} điểm`);
       load();
     } catch (e) {
-      setErr(e?.message || 'Lỗi cộng điểm');
+      setError(e?.message || 'Lỗi cộng điểm');
     }
   };
 
@@ -96,10 +97,10 @@ function UsersManager() {
     if (!amt || Number.isNaN(amt)) return;
     try {
       await apiAdminAddPointsByRevenue(id, amt);
-      setMsg(`Đã cộng điểm theo doanh thu ${amt.toLocaleString('vi-VN')} VND`);
+      showSuccessMessage(`Đã cộng điểm theo doanh thu ${amt.toLocaleString('vi-VN')} VND`);
       load();
     } catch (e) {
-      setErr(e?.message || 'Lỗi cộng điểm theo doanh thu');
+      setError(e?.message || 'Lỗi cộng điểm theo doanh thu');
     }
   };
 
@@ -108,395 +109,328 @@ function UsersManager() {
     if (!cnt || Number.isNaN(cnt)) return;
     try {
       await apiAdminAddPointsByBookings(id, cnt);
-      setMsg(`Đã cộng điểm theo ${cnt} lần đặt phòng`);
+      showSuccessMessage(`Đã cộng điểm theo ${cnt} lần đặt phòng`);
       load();
     } catch (e) {
-      setErr(e?.message || 'Lỗi cộng điểm theo lượt đặt');
+      setError(e?.message || 'Lỗi cộng điểm theo lượt đặt');
     }
   };
 
   const doRecalc = async (id) => {
     try {
       await apiAdminRecalcTier(id);
-      setMsg('Đã tính lại hạng theo điểm hiện tại');
+      showSuccessMessage('Đã tính lại hạng theo điểm hiện tại');
       load();
     } catch (e) {
-      setErr(e?.message || 'Lỗi tính lại hạng');
+      setError(e?.message || 'Lỗi tính lại hạng');
     }
   };
 
-  const badge = (text, colorBg, colorText = '#fff') => (
-    <span className="badge" style={{ background: colorBg, color: colorText }}>{text}</span>
-  );
-
+  // --- Hàm render (Cập nhật sang bg-label-*) ---
+  
   const renderStatus = (s) => {
-    if (s === 'Hoạt động') return badge('Hoạt động', 'linear-gradient(135deg,#16a34a,#22c55e)');
-    if (s === 'Bị khóa') return badge('Bị khóa', 'linear-gradient(135deg,#ef4444,#dc2626)');
-    return badge(s || '—', '#64748b');
+    if (s === 'Hoạt động') return <span className="badge bg-label-success">Hoạt động</span>;
+    if (s === 'Bị khóa') return <span className="badge bg-label-danger">Bị khóa</span>;
+    return <span className="badge bg-label-secondary">{s || '—'}</span>;
   };
 
   const renderRole = (r) => {
-    if (r === 'Admin') return badge('Admin', 'linear-gradient(135deg,#0ea5e9,#0284c7)');
-    if (r === 'NhanVien') return badge('Nhân viên', 'linear-gradient(135deg,#f59e0b,#d97706)');
-    return badge('Khách hàng', '#6366f1');
+    if (r === 'Admin') return <span className="badge bg-label-primary">Admin</span>;
+    if (r === 'NhanVien') return <span className="badge bg-label-info">Nhân viên</span>;
+    return <span className="badge bg-label-secondary">Khách hàng</span>;
   };
 
   const renderRank = (r) => {
-    if (r === 'Platinum') return badge('Platinum', 'linear-gradient(135deg,#a1a1aa,#fafafa)', '#1f2937');
-    if (r === 'Gold') return badge('Gold', 'linear-gradient(135deg,#fbbf24,#f59e0b)', '#111827');
-    return badge('Silver', 'linear-gradient(135deg,#e5e7eb,#cbd5e1)', '#111827');
+    if (r === 'Platinum') return <span className="badge bg-label-dark">Platinum</span>;
+    if (r === 'Gold') return <span className="badge bg-label-warning">Gold</span>;
+    return <span className="badge bg-label-secondary">Silver</span>;
+  };
+
+  // Tính toán stats
+  const stats = {
+    total: rows.length,
+    active: rows.filter(r => r.TrangThai === 'Hoạt động').length,
+    locked: rows.filter(r => r.TrangThai === 'Bị khóa').length,
+    staff: rows.filter(r => r.VaiTro === 'Admin' || r.VaiTro === 'NhanVien').length,
   };
 
   return (
-    <div style={{ padding: 24 }}>
-      <style>{`
-        .card {
-          background: #fff;
-          border: 1px solid rgba(209,104,6,0.12);
-          border-radius: 16px;
-          box-shadow: 0 12px 30px rgba(209,104,6,0.08);
-        }
-        .toolbar {
-          display: grid;
-          gap: 10px;
-          grid-template-columns: 1.6fr repeat(4, 1fr) 1fr 1fr 140px 120px;
-        }
-        @media (max-width: 1200px) {
-          .toolbar { grid-template-columns: 1fr 1fr; }
-        }
-        .input, .select {
-          width: 100%;
-          border: 2px solid #f3f4f6;
-          border-radius: 12px;
-          padding: 12px 14px;
-          font-size: 14px;
-          outline: none;
-          transition: all .2s ease;
-          background: #fff;
-          color: #111827;
-        }
-        .input:focus, .select:focus {
-          border-color: ${accent};
-          box-shadow: 0 0 0 4px rgba(209,104,6,.12);
-        }
-        .btn {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          border: none;
-          border-radius: 12px;
-          padding: 12px 16px;
-          cursor: pointer;
-          font-weight: 700;
-          transition: transform .15s ease, box-shadow .2s ease, opacity .2s;
-          color: #fff;
-          background: linear-gradient(135deg, ${accent}, #e67e22);
-          box-shadow: 0 6px 18px rgba(209,104,6,0.25);
-        }
-        .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(209,104,6,0.35); }
-        .btn:disabled { opacity: .6; cursor: not-allowed; }
-        .btn-ghost {
-          background: transparent; color: #111827; border: 1px solid #e5e7eb;
-        }
-        .header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 14px;
-        }
-        .title {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          color: #111827;
-        }
-        .title h2 { margin: 0; font-size: 22px; }
-        .sub { color: #6b7280; font-size: 13px; }
-        .badge {
-          padding: 6px 10px;
-          border-radius: 999px;
-          font-size: 12px;
-          font-weight: 700;
-          display: inline-block;
-          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
-        }
-        .table-wrap { overflow: auto; border-radius: 14px; border: 1px solid #eef2f7; }
-        table { width: 100%; border-collapse: collapse; background: #fff; }
-        thead th {
-          position: sticky; top: 0; z-index: 5;
-          background: linear-gradient(180deg,#fafafa,#f3f4f6);
-          color: #374151; text-align: left; font-size: 13px; letter-spacing: .3px;
-          border-bottom: 1px solid #e5e7eb; padding: 12px 14px;
-        }
-        tbody td { padding: 13px 14px; border-bottom: 1px solid #f3f4f6; font-size: 14px; color: #111827; }
-        tbody tr:hover { background: #fafafa; }
+    <div className="container-fluid px-0">
+      {/* Xóa thẻ <style> tùy chỉnh */}
 
-        /* Action buttons compact + tooltip (MỚI) */
-        .actions-compact {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-          position: relative;
-        }
-        .btn-icon {
-          width: 36px;
-          height: 36px;
-          display: grid;
-          place-items: center;
-          border: none;
-          border-radius: 12px;
-          color: #fff;
-          cursor: pointer;
-          background: #64748b;
-          box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-          transition: transform .15s ease, box-shadow .2s ease, filter .2s ease;
-        }
-        .btn-icon:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 10px 22px rgba(0,0,0,0.15);
-          filter: brightness(1.02);
-        }
-        .btn-icon .icon { font-size: 14px; }
+      {/* Thông báo chuẩn */}
+      {successMessage && (
+        <div className="alert alert-success" role="alert">
+          <i className="bx bx-check-circle me-2"></i>
+          {successMessage}
+        </div>
+      )}
+      {error && (
+        <div className="alert alert-danger" role="alert">
+          <i className="bx bx-error-circle me-2"></i>
+          {error}
+        </div>
+      )}
+      
+      {/* Thẻ thống kê (Mới) */}
+      {!loading && (
+        <div className="row g-4 mb-4">
+          <div className="col-lg-3 col-md-6">
+            <div className="card">
+              <div className="card-body">
+                <div className="card-title d-flex align-items-start justify-content-between">
+                  <div className="avatar shrink-0">
+                    <span className="avatar-initial rounded bg-label-primary">
+                      <i className="bx bx-group"></i>
+                    </span>
+                  </div>
+                </div>
+                <span className="fw-semibold d-block mb-1">Tổng người dùng</span>
+                <h3 className="card-title mb-2">{stats.total}</h3>
+              </div>
+            </div>
+          </div>
+          <div className="col-lg-3 col-md-6">
+            <div className="card">
+              <div className="card-body">
+                <div className="card-title d-flex align-items-start justify-content-between">
+                  <div className="avatar shrink-0">
+                    <span className="avatar-initial rounded bg-label-success">
+                      <i className="bx bx-user-check"></i>
+                    </span>
+                  </div>
+                </div>
+                <span className="fw-semibold d-block mb-1">Hoạt động</span>
+                <h3 className="card-title mb-2">{stats.active}</h3>
+              </div>
+            </div>
+          </div>
+          <div className="col-lg-3 col-md-6">
+            <div className="card">
+              <div className="card-body">
+                <div className="card-title d-flex align-items-start justify-content-between">
+                  <div className="avatar shrink-0">
+                    <span className="avatar-initial rounded bg-label-danger">
+                      <i className="bx bx-user-x"></i>
+                    </span>
+                  </div>
+                </div>
+                <span className="fw-semibold d-block mb-1">Bị khóa</span>
+                <h3 className="card-title mb-2">{stats.locked}</h3>
+              </div>
+            </div>
+          </div>
+          <div className="col-lg-3 col-md-6">
+            <div className="card">
+              <div className="card-body">
+                <div className="card-title d-flex align-items-start justify-content-between">
+                  <div className="avatar shrink-0">
+                    <span className="avatar-initial rounded bg-label-info">
+                      <i className="bx bx-briefcase-alt"></i>
+                    </span>
+                  </div>
+                </div>
+                <span className="fw-semibold d-block mb-1">Nhân viên/Admin</span>
+                <h3 className="card-title mb-2">{stats.staff}</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-        .btn-icon[data-tip] { position: relative; }
-        .btn-icon[data-tip]::after {
-          content: attr(data-tip);
-          position: absolute;
-          bottom: 44px;
-          left: 50%;
-          transform: translateX(-50%);
-          padding: 6px 10px;
-          font-size: 12px;
-          font-weight: 600;
-          color: #fff;
-          background: #111827;
-          border-radius: 8px;
-          white-space: nowrap;
-          box-shadow: 0 8px 18px rgba(17,24,39,0.25);
-          opacity: 0;
-          pointer-events: none;
-          transition: opacity .12s ease, transform .12s ease;
-          transform-origin: bottom center;
-        }
-        .btn-icon[data-tip]:hover::after {
-          opacity: 1;
-          transform: translateX(-50%) translateY(-2px);
-        }
 
-        .c-green { background: linear-gradient(135deg,#16a34a,#22c55e); }
-        .c-red   { background: linear-gradient(135deg,#ef4444,#dc2626); }
-        .c-indigo{ background: linear-gradient(135deg,#6366f1,#4f46e5); }
-        .c-amber { background: linear-gradient(135deg,#f59e0b,#d97706); }
-        .c-cyan  { background: linear-gradient(135deg,#06b6d4,#0891b2); }
-        .c-dark  { background: linear-gradient(135deg,#374151,#111827); }
+      {/* Thẻ Filter (Cập nhật) */}
+      <div className="card mb-4">
+        <div className="card-header">
+           <h5 className="card-title mb-0">Bộ lọc và Tìm kiếm</h5>
+        </div>
+        <div className="card-body">
+          <div className="row g-3 align-items-end">
+            <div className="col-lg-3 col-md-6">
+              <label className="form-label">Tìm kiếm</label>
+              <input
+                className="form-control"
+                value={q}
+                onChange={(e) => { setQ(e.target.value); setPage(1); }}
+                placeholder="Tìm tên / email / SĐT"
+              />
+            </div>
 
-        .info, .error {
-          padding: 10px 14px; border-radius: 12px; margin: 10px 0 14px;
-          font-size: 13px; font-weight: 600;
-        }
-        .info  { background: rgba(22,163,74,.08); color: #166534; border: 1px solid rgba(22,163,74,.2); }
-        .error { background: rgba(239,68,68,.08); color: #991b1b; border: 1px solid rgba(239,68,68,.2); }
+            <div className="col-lg-2 col-md-6">
+              <label className="form-label">Vai trò</label>
+              <select className="form-select" value={role} onChange={(e) => { setRole(e.target.value); setPage(1); }}>
+                <option value="">Tất cả vai trò</option>
+                <option value="KhachHang">Khách hàng</option>
+                <option value="NhanVien">Nhân viên</option>
+                <option value="Admin">Admin</option>
+              </select>
+            </div>
 
-        .loading {
-          position: absolute; inset: 0; background: rgba(255,255,255,.5);
-          display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px);
-          border-radius: 16px;
-        }
-        .spin {
-          width: 28px; height: 28px; border: 3px solid rgba(0,0,0,0.1); border-top-color: ${accent};
-          border-radius: 50%; animation: s .9s linear infinite;
-        }
-        @keyframes s { to { transform: rotate(360deg); } }
+            <div className="col-lg-2 col-md-6">
+              <label className="form-label">Hạng</label>
+              <select className="form-select" value={rank} onChange={(e) => { setRank(e.target.value); setPage(1); }}>
+                <option value="">Tất cả hạng</option>
+                <option value="Silver">Silver</option>
+                <option value="Gold">Gold</option>
+                <option value="Platinum">Platinum</option>
+              </select>
+            </div>
 
-        @media (max-width: 768px) {
-          .actions-compact { gap: 6px; }
-          .btn-icon { width: 34px; height: 34px; border-radius: 10px; }
-        }
-      `}</style>
+            <div className="col-lg-2 col-md-6">
+              <label className="form-label">Trạng thái</label>
+              <select className="form-select" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
+                <option value="">Tất cả trạng thái</option>
+                <option value="Hoạt động">Hoạt động</option>
+                <option value="Bị khóa">Bị khóa</option>
+              </select>
+            </div>
 
-      {/* Header */}
-      <div className="header">
-        <div className="title">
-          <FaUsers color={accent} size={22} />
-          <div>
-            <h2>Quản trị người dùng</h2>
-            <div className="sub">Quản lý trạng thái, lọc danh sách, tích điểm & nâng hạng</div>
+            <div className="col-lg-3 col-md-6">
+              <label className="form-label">Sắp xếp</label>
+              <select className="form-select" value={sort} onChange={(e) => { setSort(e.target.value); setPage(1); }}>
+                <option value="date_desc">Mới nhất</option>
+                <option value="date_asc">Cũ nhất</option>
+                <option value="name_asc">Tên A-Z</option>
+                <option value="name_desc">Tên Z-A</option>
+                <option value="points_desc">Điểm cao → thấp</option>
+                <option value="points_asc">Điểm thấp → cao</option>
+              </select>
+            </div>
+
+            <div className="col-lg-3 col-md-6">
+              <label className="form-label">Điểm tối thiểu</label>
+              <input
+                className="form-control"
+                type="number"
+                value={minPoints}
+                onChange={(e) => setMinPoints(e.target.value)}
+                placeholder="Min điểm"
+              />
+            </div>
+            
+            <div className="col-lg-3 col-md-6">
+              <label className="form-label">Điểm tối đa</label>
+              <input
+                className="form-control"
+                type="number"
+                value={maxPoints}
+                onChange={(e) => setMaxPoints(e.target.value)}
+                placeholder="Max điểm"
+              />
+            </div>
+
+            <div className="col-lg-3 col-md-12 d-flex gap-2">
+              <Button className="btn btn-primary flex-fill" onClick={() => { setPage(1); load(); }} disabled={loading}>
+                <i className="bx bx-filter-alt me-1"></i> Lọc
+              </Button>
+              <Button className="btn btn-outline-secondary flex-fill" onClick={resetFilters} disabled={loading}>
+                <i className="bx bx-x me-1"></i> Reset
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Filter card */}
-      <div className="card" style={{ padding: 16, position: 'relative', marginBottom: 16 }}>
-        <div className="toolbar">
-          <div style={{ position: 'relative' }}>
-            <FaSearch style={{ position: 'absolute', top: 13, left: 12, color: '#9ca3af' }} />
-            <input
-              className="input"
-              style={{ paddingLeft: 36 }}
-              value={q}
-              onChange={(e) => { setQ(e.target.value); setPage(1); }}
-              placeholder="Tìm tên / email / SĐT"
-            />
-          </div>
-
-          <select className="select" value={role} onChange={(e) => { setRole(e.target.value); setPage(1); }}>
-            <option value="">Vai trò</option>
-            <option value="KhachHang">Khách hàng</option>
-            <option value="NhanVien">Nhân viên</option>
-            <option value="Admin">Admin</option>
-          </select>
-
-          <select className="select" value={rank} onChange={(e) => { setRank(e.target.value); setPage(1); }}>
-            <option value="">Hạng</option>
-            <option value="Silver">Silver</option>
-            <option value="Gold">Gold</option>
-            <option value="Platinum">Platinum</option>
-          </select>
-
-          <select className="select" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
-            <option value="">Trạng thái</option>
-            <option value="Hoạt động">Hoạt động</option>
-            <option value="Bị khóa">Bị khóa</option>
-          </select>
-
-          <select className="select" value={sort} onChange={(e) => { setSort(e.target.value); setPage(1); }}>
-            <option value="date_desc">Mới nhất</option>
-            <option value="date_asc">Cũ nhất</option>
-            <option value="name_asc">Tên A-Z</option>
-            <option value="name_desc">Tên Z-A</option>
-            <option value="points_desc">Điểm cao → thấp</option>
-            <option value="points_asc">Điểm thấp → cao</option>
-          </select>
-
-          <input
-            className="input"
-            type="number"
-            value={minPoints}
-            onChange={(e) => setMinPoints(e.target.value)}
-            placeholder="Min điểm"
-          />
-          <input
-            className="input"
-            type="number"
-            value={maxPoints}
-            onChange={(e) => setMaxPoints(e.target.value)}
-            placeholder="Max điểm"
-          />
-
-          <button className="btn" onClick={() => { setPage(1); load(); }}>
-            <FaFilter /> Lọc
-          </button>
-          <button className="btn btn-ghost" onClick={resetFilters}>
-            <FaRedo /> Reset
-          </button>
+      {/* Thẻ Bảng (Cập nhật) */}
+      <div className="card">
+        <div className="card-header">
+           <h5 className="card-title mb-0">Danh sách người dùng</h5>
         </div>
+        
+        {loading ? (
+          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "300px" }}>
+            <Spinner />
+          </div>
+        ) : (
+          <div className="table-responsive text-nowrap">
+            <table className="table table-hover">
+              <thead>
+                <tr>
+                  <th>Tên</th>
+                  <th>Email</th>
+                  <th>Vai trò</th>
+                  <th>Hạng</th>
+                  <th>Điểm</th>
+                  <th>Trạng thái</th>
+                  <th style={{ minWidth: 280 }}>Hành động</th>
+                </tr>
+              </thead>
+              <tbody className="table-border-bottom-0">
+                {(rows || []).map((r) => (
+                  <tr key={r._id}>
+                    <td><span className="fw-semibold">{r.HoTen}</span></td>
+                    <td>{r.Email}</td>
+                    <td>{renderRole(r.VaiTro)}</td>
+                    <td>{renderRank(r.HangThanhVien)}</td>
+                    <td>{(r.DiemTichLuy || 0).toLocaleString('vi-VN')}</td>
+                    <td>{renderStatus(r.TrangThai)}</td>
+                    <td>
+                      {/* Cập nhật Action buttons */}
+                      <div className="d-flex gap-1">
+                        {r.TrangThai === 'Hoạt động' ? (
+                          <Button
+                            className="btn btn-icon btn-sm btn-outline-danger"
+                            title="Khoá tài khoản"
+                            onClick={() => doStatus(r._id, 'Bị khóa')}
+                          >
+                            <i className="bx bx-lock-alt" />
+                          </Button>
+                        ) : (
+                          <Button
+                            className="btn btn-icon btn-sm btn-outline-success"
+                            title="Mở khoá tài khoản"
+                            onClick={() => doStatus(r._id, 'Hoạt động')}
+                          >
+                            <i className="bx bx-unlock-alt" />
+                          </Button>
+                        )}
 
-        {loading && (
-          <div className="loading">
-            <div className="spin" />
+                        <Button
+                          className="btn btn-icon btn-sm btn-outline-primary"
+                          title="+ Điểm"
+                          onClick={() => doAddPoints(r._id)}
+                        >
+                          <i className="bx bx-plus" />
+                        </Button>
+
+                        <Button
+                          className="btn btn-icon btn-sm btn-outline-warning"
+                          title="+ Doanh thu"
+                          onClick={() => doAddRevenue(r._id)}
+                        >
+                          <i className="bx bx-dollar" />
+                        </Button>
+
+                        <Button
+                          className="btn btn-icon btn-sm btn-outline-info"
+                          title="+ Lượt đặt"
+                          onClick={() => doAddBookings(r._id)}
+                        >
+                          <i className="bx bx-bell" />
+                        </Button>
+
+                        <Button
+                          className="btn btn-icon btn-sm btn-outline-dark"
+                          title="Tính lại hạng"
+                          onClick={() => doRecalc(r._id)}
+                        >
+                          <i className="bx bx-sync" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {rows.length === 0 && !loading && (
+                  <tr>
+                    <td colSpan="7" className="text-center py-5">
+                      <h5 className="text-muted">Không có dữ liệu</h5>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         )}
-      </div>
-
-      {msg && <div className="info">{msg}</div>}
-      {err && <div className="error">{err}</div>}
-
-      {/* Table card */}
-      <div className="card" style={{ padding: 12 }}>
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Tên</th>
-                <th>Email</th>
-                <th>Vai trò</th>
-                <th>Hạng</th>
-                <th>Điểm</th>
-                <th>Trạng thái</th>
-                <th style={{ minWidth: 280 }}>Hành động</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(rows || []).map((r) => (
-                <tr key={r._id}>
-                  <td>{r.HoTen}</td>
-                  <td>{r.Email}</td>
-                  <td>{renderRole(r.VaiTro)}</td>
-                  <td>{renderRank(r.HangThanhVien)}</td>
-                  <td>{(r.DiemTichLuy || 0).toLocaleString('vi-VN')}</td>
-                  <td>{renderStatus(r.TrangThai)}</td>
-                  <td>
-                    <div className="actions-compact">
-                      {r.TrangThai === 'Hoạt động' ? (
-                        <button
-                          className="btn-icon c-red"
-                          data-tip="Khoá tài khoản"
-                          aria-label="Khoá tài khoản"
-                          onClick={() => doStatus(r._id, 'Bị khóa')}
-                        >
-                          <FaLock className="icon" />
-                        </button>
-                      ) : (
-                        <button
-                          className="btn-icon c-green"
-                          data-tip="Mở khoá tài khoản"
-                          aria-label="Mở khoá tài khoản"
-                          onClick={() => doStatus(r._id, 'Hoạt động')}
-                        >
-                          <FaUnlock className="icon" />
-                        </button>
-                      )}
-
-                      <button
-                        className="btn-icon c-indigo"
-                        data-tip="+ Điểm"
-                        aria-label="Cộng điểm"
-                        onClick={() => doAddPoints(r._id)}
-                      >
-                        <FaPlus className="icon" />
-                      </button>
-
-                      <button
-                        className="btn-icon c-amber"
-                        data-tip="+ Doanh thu"
-                        aria-label="Cộng điểm theo doanh thu"
-                        onClick={() => doAddRevenue(r._id)}
-                      >
-                        <FaMoneyBillWave className="icon" />
-                      </button>
-
-                      <button
-                        className="btn-icon c-cyan"
-                        data-tip="+ Lượt đặt"
-                        aria-label="Cộng điểm theo lượt đặt"
-                        onClick={() => doAddBookings(r._id)}
-                      >
-                        <FaConciergeBell className="icon" />
-                      </button>
-
-                      <button
-                        className="btn-icon c-dark"
-                        data-tip="Tính lại hạng"
-                        aria-label="Tính lại hạng"
-                        onClick={() => doRecalc(r._id)}
-                      >
-                        <FaSyncAlt className="icon" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {rows.length === 0 && !loading && (
-                <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', color: '#6b7280', padding: 20 }}>
-                    Không có dữ liệu
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
       </div>
     </div>
   );
