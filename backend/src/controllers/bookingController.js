@@ -64,6 +64,7 @@ export const createBooking = async (req, res, next) => {
       numGuests,
       numRooms,
       contactInfo,
+      DichVuSuDung: requestedServices,
     } = req.body;
 
     const userId = req.user._id; // Lay tu middleware 'protect'
@@ -94,6 +95,33 @@ export const createBooking = async (req, res, next) => {
     // Use computed totals (safer), ignore client-provided totals to prevent manipulation
     // const totalRoomPrice = computedTotalRoomPrice;
 
+    // Build DichVuSuDung server-side from room definition and client selection (prevent price manipulation)
+    // requestedServices is expected to be array of { MaDichVu, SoLuong }
+    let finalServices = [];
+    let tongTienDichVu = 0;
+    try {
+      const requested = Array.isArray(requestedServices) ? requestedServices : [];
+      for (const rs of requested) {
+        if (!rs || !rs.MaDichVu) continue;
+        const svc = (room.DichVu || []).find((d) => d.MaDichVu === rs.MaDichVu && d.TrangThai === 'Đang hoạt động');
+        if (!svc) continue; // ignore unknown or inactive services
+        const soLuong = Math.max(0, Number(rs.SoLuong || 1));
+        const thanhTien = Number(svc.GiaDichVu || 0) * soLuong;
+        tongTienDichVu += thanhTien;
+        finalServices.push({
+          MaDichVu: svc.MaDichVu,
+          TenDichVu: svc.TenDichVu,
+          GiaDichVu: Number(svc.GiaDichVu || 0),
+          SoLuong: soLuong,
+          ThanhTien: thanhTien,
+        });
+      }
+    } catch (e) {
+      console.warn('Error processing requested services', e);
+      finalServices = [];
+      tongTienDichVu = 0;
+    }
+
     // Payment data from client (optional)
     const paymentMeta = req.body.paymentMeta || {};
     const paidAmount = Number(paymentMeta.amount || 0);
@@ -102,13 +130,37 @@ export const createBooking = async (req, res, next) => {
 
     // Build HoaDon per Booking schema
     const now = new Date();
+    // Apply any active promotions defined on the room
+    let giamGia = 0;
+    try {
+      const now = new Date();
+      const activePromos = (room.KhuyenMai || []).filter((k) => k.TrangThai === 'Đang hoạt động' && (!k.NgayBatDau || new Date(k.NgayBatDau) <= now) && (!k.NgayKetThuc || new Date(k.NgayKetThuc) >= now));
+      if (activePromos.length > 0) {
+        // choose the first active promo (business rule can be changed later)
+        const promo = activePromos[0];
+        const type = promo.LoaiGiamGia || promo.LoaiKhuyenMai || '';
+        const value = Number(promo.GiaTriGiam ?? promo.GiaTri ?? 0) || 0;
+        const totalBeforeDiscount = Number(computedTotalRoomPrice || 0) + Number(tongTienDichVu || 0);
+        if (type && type.toLowerCase().includes('phần')) {
+          // percent
+          giamGia = Math.round((totalBeforeDiscount * value) / 100);
+        } else {
+          // fixed amount
+          giamGia = Math.min(value, totalBeforeDiscount);
+        }
+      }
+    } catch (e) {
+      console.warn('Error calculating promotion', e);
+      giamGia = 0;
+    }
+
     const hoaDon = {
       MaHoaDon: `HD${Date.now().toString().slice(-6)}`,
       NgayLap: now,
-      TongTienPhong: Number(totalRoomPrice) || 0,
-      TongTienDichVu: 0,
-      GiamGia: Number(discountAmount) || 0,
-      TongTien: Number(totalRoomPrice) || 0,
+      TongTienPhong: Number(totalRoomPrice) || 0,     // Lấy từ 'main' (tiền phòng đã giảm)
+      TongTienDichVu: Number(tongTienDichVu) || 0,  // Lấy từ 'cc' (tiền dịch vụ)
+      GiamGia: Number(discountAmount) || 0,        // Lấy từ 'main' (số tiền phòng đã giảm)
+      TongTien: finalTongTien,
       TinhTrang: "Chưa thanh toán", // Sẽ cập nhật sau
       GhiChu: paymentMeta.note || "",
       LichSuThanhToan: [],
@@ -138,16 +190,8 @@ export const createBooking = async (req, res, next) => {
     }
 
     // Cập nhật TinhTrang dựa trên tổng LichSuThanhToan
-    const totalPaid = hoaDon.LichSuThanhToan.reduce(
-      (sum, item) => sum + item.SoTien,
-      0
-    );
-    hoaDon.TinhTrang =
-      totalPaid >= hoaDon.TongTien
-        ? "Đã thanh toán"
-        : totalPaid > 0
-        ? "Thanh toán một phần"
-        : "Chưa thanh toán";
+    const totalPaid = hoaDon.LichSuThanhToan.reduce((sum, item) => sum + item.SoTien, 0);
+    hoaDon.TinhTrang = totalPaid >= hoaDon.TongTien ? "Đã thanh toán" : totalPaid > 0 ? "Thanh toán một phần" : "Chưa thanh toán";
 
     // Map user identifier: prefer IDKhachHang (client) or IDNguoiDung in user, else ObjectId string
     const IDKhachHang =
@@ -190,7 +234,8 @@ export const createBooking = async (req, res, next) => {
       // Trạng thái đặt phòng luôn là "Đang chờ" khi tạo, bất kể thanh toán
       TrangThai: "Đang chờ",
       GhiChu: req.body.note || "",
-      DichVuSuDung: req.body.services || [],
+      // Save computed service items (server authoritative)
+      DichVuSuDung: finalServices,
       HoaDon: hoaDon,
     };
 

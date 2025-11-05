@@ -1,0 +1,266 @@
+/* Service list container with smooth animation */
+.services-container {
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out, opacity 0.2s ease;
+}
+
+.services-container.collapsed {
+  max-height: 0;
+  opacity: 0;
+}
+
+.services-container.expanded {
+  max-height: 1000px;
+  opacity: 1;
+}
+
+/* Beautiful service cards */
+.service-card {
+  background: #ffffff;
+  border: 1px solid #e8ecf0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  word-wrap: break-word;
+}
+
+.service-card:hover {
+  border-color: #d0e8ff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.service-card.selected {
+  background: linear-gradient(135deg, #f8fbff 0%, #f0f8ff 100%);
+  border-color: #4f94cd;
+  box-shadow: 0 4px 16px rgba(79, 148, 205, 0.15);
+}
+
+.service-image {
+  width: 80px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Service info container */
+.service-info-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0; /* Allow shrinking */
+  overflow: hidden;
+}
+
+.service-details {
+  flex: 1;
+  min-width: 0; /* Allow shrinking */
+  overflow: hidden;
+}
+
+.price-container {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.controls-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0; /* Don't shrink controls */
+}
+
+.service-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.service-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e74c3c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+}
+
+.service-unit {
+  font-size: 12px;
+  color: #7f8c8d;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Quantity controls */
+.qty-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.qty-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #495057;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.qty-btn:hover {
+  background: #e9ecef;
+  transform: scale(1.05);
+}
+
+.qty-btn:active {
+  transform: scale(0.95);
+}
+
+.qty-btn:disabled {
+  background: #f8f9fa;
+  color: #ced4da;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.qty-display {
+  min-width: 28px;
+  text-align: center;
+  font-weight: 600;
+  color: #495057;
+  font-size: 13px;
+}
+
+/* Temporary total */
+.temp-total {
+  font-size: 13px;
+  color: #28a745;
+  font-weight: 600;
+  background: #f8fff9;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #c3e6cb;
+  white-space: nowrap;
+  min-width: 80px;
+  text-align: center;
+}
+
+/* Selected indicator */
+.selected-indicator {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  background: #28a745;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3);
+}
+
+/* Invoice summary improvements */
+.invoice-summary {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.toggle-btn {
+  min-width: 120px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive design */
+@media (max-width: 767px) {
+  .service-card {
+    padding: 12px;
+  }
+  
+  .service-info-container {
+    gap: 8px;
+  }
+  
+  .controls-container {
+    gap: 8px;
+  }
+  
+  .service-image {
+    width: 50px;
+    height: 38px;
+  }
+  
+  .service-title {
+    font-size: 14px;
+  }
+  
+  .service-price {
+    font-size: 13px;
+  }
+  
+  .service-unit {
+    font-size: 11px;
+  }
+  
+  .qty-controls {
+    gap: 2px;
+  }
+  
+  .qty-btn {
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+  }
+  
+  .qty-display {
+    min-width: 24px;
+    font-size: 12px;
+  }
+  
+  .temp-total {
+    font-size: 12px;
+    padding: 2px 6px;
+    min-width: 60px;
+  }
+  
+  .invoice-summary { 
+    margin-top: 16px; 
+  }
+}

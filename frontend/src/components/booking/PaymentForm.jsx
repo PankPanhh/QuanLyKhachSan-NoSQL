@@ -116,6 +116,14 @@ function PaymentForm() {
       promo: bookingDetails.promo, // Thêm khuyến mãi
     };
 
+    // Include selected services (map to server expected shape)
+    if (Array.isArray(bookingDetails.DichVuDaChon) && bookingDetails.DichVuDaChon.length > 0) {
+      bookingData.DichVuSuDung = bookingDetails.DichVuDaChon.map((d) => ({
+        MaDichVu: d.MaDichVu,
+        SoLuong: d.SoLuong || 1,
+      }));
+    }
+
     if (paymentMethod === "bank") {
       const amountToPay =
         overrideAmount !== null ? overrideAmount : totalAmount;
@@ -225,6 +233,16 @@ function PaymentForm() {
         const roomsCount = bookingDetails.rooms || 1;
         const subtotal = Math.round((price || 0) * nights * roomsCount);
 
+        // Include selected services into subtotal
+        const selectedServices = Array.isArray(bookingDetails.DichVuDaChon) ? bookingDetails.DichVuDaChon : [];
+        const servicesTotal = selectedServices.reduce((sum, s) => {
+          const p = Number(s.GiaDichVu || s.Gia || 0);
+          const q = Number(s.SoLuong || 0);
+          return sum + p * q;
+        }, 0);
+
+        const subtotalWithServices = subtotal + servicesTotal;
+
         // Apply promotion if present (support several promo field shapes)
         const promo =
           bookingDetails.promo ||
@@ -257,8 +275,8 @@ function PaymentForm() {
           }
         }
 
-        if (discount > subtotal) discount = subtotal;
-        const totalAfterDiscount = subtotal - discount;
+  if (discount > subtotalWithServices) discount = subtotalWithServices;
+  const totalAfterDiscount = subtotalWithServices - discount;
 
         // allow override (if user manually edits amount) unless overrideAmount === null
         setTotalAmount(
