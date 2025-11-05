@@ -61,7 +61,6 @@ export const createBooking = async (req, res, next) => {
       numGuests,
       numRooms,
       contactInfo,
-      promo, // Khuyen mai tu client
     } = req.body;
 
     const userId = req.user._id; // Lay tu middleware 'protect'
@@ -81,25 +80,8 @@ export const createBooking = async (req, res, next) => {
     const pricePerNight = room.GiaPhong || room.pricePerNight || 0;
     const computedTotalRoomPrice = pricePerNight * nights * (numRooms || 1);
 
-    // Tinh tong tien voi khuyen mai
-    const totalWithPromo = calculateBookingTotal(
-      ciDate,
-      coDate,
-      pricePerNight,
-      numRooms || 1,
-      [], // extraServices
-      promo
-    );
-
-    // Use totals from client if provided (frontend computes totals using room price, nights and rooms)
-    // This keeps HoaDon in the backend aligned with the booking summary shown to users.
-    const clientTotalRoomPrice =
-      (req.body.totalRoomPrice !== undefined && req.body.totalRoomPrice !== null)
-        ? Number(req.body.totalRoomPrice)
-        : computedTotalRoomPrice;
-
-    // Giam gia: compute discount as difference between the (client or computed) room total and the total after promo
-    const discountAmount = clientTotalRoomPrice - totalWithPromo;
+    // Use computed totals (safer), ignore client-provided totals to prevent manipulation
+    const totalRoomPrice = computedTotalRoomPrice;
 
     // Payment data from client (optional)
     const paymentMeta = req.body.paymentMeta || {};
@@ -112,18 +94,11 @@ export const createBooking = async (req, res, next) => {
     const hoaDon = {
       MaHoaDon: `HD${Date.now().toString().slice(-6)}`,
       NgayLap: now,
-  TongTienPhong: Number(clientTotalRoomPrice) || 0, // Original room price (prefer client-provided total to match UI)
+      TongTienPhong: Number(totalRoomPrice) || 0,
       TongTienDichVu: 0,
-  GiamGia: Number(discountAmount) || 0,
-  // Final total after discount: prefer totalWithPromo (server-calculated from room price + promo)
-  // but if client provided an explicit total (e.g., due to rounding or extra adjustments), prefer that mapping
-  TongTien: Number(totalWithPromo) || Number(clientTotalRoomPrice - discountAmount) || 0,
-      TinhTrang:
-        paidAmount >= (Number(totalWithPromo) || 0)
-          ? "Đã thanh toán"
-          : paidAmount > 0
-          ? "Thanh toán một phần"
-          : "Chưa thanh toán",
+      GiamGia: 0,
+      TongTien: Number(totalRoomPrice) || 0,
+      TinhTrang: "Chưa thanh toán", // Sẽ cập nhật sau
       GhiChu: paymentMeta.note || "",
       LichSuThanhToan: [],
     };
@@ -139,7 +114,10 @@ export const createBooking = async (req, res, next) => {
             : "Chuyển khoản",
         SoTien: Number(paidAmount),
         NgayThanhToan: now,
-        TrangThai: "Đang xử lý",
+        TrangThai:
+          paidAmount >= (Number(totalRoomPrice) || 0)
+            ? "Thành công"
+            : "Thanh toán một phần",
         GhiChu:
           paymentMeta.bankReference ||
           paymentMeta.qrUrl ||
@@ -147,6 +125,18 @@ export const createBooking = async (req, res, next) => {
           "",
       });
     }
+
+    // Cập nhật TinhTrang dựa trên tổng LichSuThanhToan
+    const totalPaid = hoaDon.LichSuThanhToan.reduce(
+      (sum, item) => sum + item.SoTien,
+      0
+    );
+    hoaDon.TinhTrang =
+      totalPaid >= hoaDon.TongTien
+        ? "Đã thanh toán"
+        : totalPaid > 0
+        ? "Thanh toán một phần"
+        : "Chưa thanh toán";
 
     // Map user identifier: prefer IDKhachHang (client) or IDNguoiDung in user, else ObjectId string
     const IDKhachHang =
@@ -182,6 +172,7 @@ export const createBooking = async (req, res, next) => {
       NgayTraPhong: NgayTraPhong,
       SoNguoi: SoNguoi,
       TienCoc: paidAmount || 0,
+      // Trạng thái đặt phòng luôn là "Đang chờ" khi tạo, bất kể thanh toán
       TrangThai: "Đang chờ",
       GhiChu: req.body.note || "",
       DichVuSuDung: req.body.services || [],
@@ -216,16 +207,6 @@ export const createBooking = async (req, res, next) => {
     }
 
     const booking = await Booking.create(doc);
-
-    // Update room status so it reflects this booking immediately.
-    // If booking covers current time -> 'Đang sử dụng', otherwise mark as 'Đã đặt'
-    try {
-      const now = new Date();
-      const roomStatus = now >= NgayNhanPhong && now < NgayTraPhong ? 'Đang sử dụng' : 'Đã đặt';
-      await Room.findOneAndUpdate({ MaPhong }, { $set: { TinhTrang: roomStatus } });
-    } catch (err) {
-      console.error('[bookingController.createBooking] failed to update room status:', err);
-    }
 
     // TODO: Gui email xac nhan
     // await sendEmail(contactInfo.email, 'Xac nhan dat phong', `Cam on ban da dat phong...`, `...`);
@@ -275,31 +256,11 @@ export const cancelBooking = async (req, res, next) => {
       // use byMa
       byMa.TrangThai = "Đã hủy"; // set to 'Đã hủy' when cancelled
       await byMa.save();
-      // After cancellation, check if room should be freed (no other active bookings overlapping now)
-      try {
-        const roomId = byMa.MaPhong;
-        const overlapping = await Booking.findOne({ MaPhong: roomId, TrangThai: { $ne: 'Đã hủy' }, NgayNhanPhong: { $lt: new Date() }, NgayTraPhong: { $gt: new Date() } });
-        if (!overlapping) {
-          await Room.findOneAndUpdate({ MaPhong: roomId }, { $set: { TinhTrang: 'Trống' } });
-        }
-      } catch (err) {
-        console.error('[bookingController.cancelBooking] error updating room status after cancel:', err);
-      }
       return res.status(200).json({ success: true, data: byMa });
     }
 
     booking.TrangThai = "Đã hủy"; // set to 'Đã hủy' when cancelled
     await booking.save();
-    // After cancellation, check if room should be freed
-    try {
-      const roomId = booking.MaPhong;
-      const overlapping = await Booking.findOne({ MaPhong: roomId, TrangThai: { $ne: 'Đã hủy' }, NgayNhanPhong: { $lt: new Date() }, NgayTraPhong: { $gt: new Date() } });
-      if (!overlapping) {
-        await Room.findOneAndUpdate({ MaPhong: roomId }, { $set: { TinhTrang: 'Trống' } });
-      }
-    } catch (err) {
-      console.error('[bookingController.cancelBooking] error updating room status after cancel:', err);
-    }
     return res.status(200).json({ success: true, data: booking });
   } catch (error) {
     next(error);

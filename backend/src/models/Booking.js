@@ -25,7 +25,7 @@ const hoaDonSchema = new mongoose.Schema({
       NgayThanhToan: { type: Date, required: true },
       TrangThai: {
         type: String,
-        enum: ["Thành công", "Thất bại", "Đang xử lý"],
+        enum: ["Thành công", "Thất bại", "Đang xử lý", "Thanh toán một phần"],
         default: "Thành công",
       },
       GhiChu: { type: String },
@@ -84,9 +84,19 @@ const bookingSchema = new mongoose.Schema(
     },
     TrangThai: {
       type: String,
-      // Include 'Đang sử dụng' for confirmed-in-use and 'Phòng trống' when a booking is cancelled
-      enum: ["Đang chờ", "Đã xác nhận", "Đang sử dụng", "Đã hủy", "Hoàn thành"],
-      default: "Đang chờ",
+      // Trạng thái hiển thị lịch sử đặt phòng. Đồng bộ với trạng thái hóa đơn khi người dùng thanh toán
+      // và vẫn hỗ trợ các trạng thái vận hành (Đang sử dụng/Hoàn thành/Đã hủy/Đã xác nhận)
+      enum: [
+        "Chưa thanh toán",
+        "Thanh toán một phần",
+        "Đã thanh toán",
+        "Đang chờ",
+        "Đã xác nhận",
+        "Đang sử dụng",
+        "Đã hủy",
+        "Hoàn thành",
+      ],
+      default: "Chưa thanh toán",
     },
     GhiChu: {
       type: String,

@@ -74,6 +74,20 @@ export const getAvailableRooms = async (startDate, endDate) => {
   }
 };
 
+// Kiểm tra phòng có sẵn trong khoảng thời gian cụ thể
+export const checkRoomAvailability = async (roomId, startDate, endDate) => {
+  try {
+    const response = await api.get(
+      `/rooms/${roomId}/availability?startDate=${startDate}&endDate=${endDate}`
+    );
+    if (response && response.data) return response.data;
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi kiểm tra phòng trống:", error.message);
+    throw error;
+  }
+};
+
 // --- BỔ SUNG CÁC HÀM ADMIN ---
 
 // *** SỬA LỖI 404: Endpoint phải là '/rooms' ***
@@ -103,12 +117,15 @@ export const adminUpdateRoom = async (id, roomData) => {
 export const adminUploadRoomImage = async (id, file) => {
   try {
     const form = new FormData();
-    form.append('image', file);
-    const response = await api.putFormData(`${ADMIN_ENDPOINT}/${id}/image`, form);
+    form.append("image", file);
+    const response = await api.putFormData(
+      `${ADMIN_ENDPOINT}/${id}/image`,
+      form
+    );
     // response expected shape: { success: true, data: { HinhAnh: filename } }
     return response;
   } catch (error) {
-    console.error('Lỗi khi upload ảnh phòng (admin):', error.message || error);
+    console.error("Lỗi khi upload ảnh phòng (admin):", error.message || error);
     throw error;
   }
 };

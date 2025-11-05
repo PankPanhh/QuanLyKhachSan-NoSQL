@@ -22,6 +22,7 @@ import amenitiesRoutes from "./routes/amenitiesRoutes.js"; // thêm từ nhánh 
 import promoRoutes from "./routes/promoRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js"; // Đảm bảo reportRoutes được import
 import checkoutRoutes from "./routes/checkoutRoutes.js"; // thêm từ nhánh main
+import profileRoutes from "./routes/profileRoutes.js";
 
 const app = express();
 
@@ -43,8 +44,8 @@ app.use(cors(corsOptions));
 // 2. Body Parsers
 // Increase limits to allow large payloads (e.g. base64-encoded avatars sent in JSON).
 // Note: For production it's better to accept file uploads via multipart/form-data and handle them with multer.
-app.use(express.json({ limit: '10mb' })); // Parse JSON bodies (allow up to 10MB)
-app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Parse URL-encoded bodies
+app.use(express.json({ limit: "10mb" })); // Parse JSON bodies (allow up to 10MB)
+app.use(express.urlencoded({ extended: true, limit: "10mb" })); // Parse URL-encoded bodies
 
 // 3. Static Files - Serve images từ assets
 // Serve room images with no-cache so overwritten files are fetched immediately by browsers
@@ -87,6 +88,8 @@ app.use("/api/v1/reports", reportRoutes);
 app.use("/api/v1/amenities", amenitiesRoutes);
 app.use("/api/v1/checkout", checkoutRoutes);
 app.use("/api/v1/admin", userRoutes);
+// Hồ sơ người dùng (profile)
+app.use("/api/v1/profile", profileRoutes);
 
 // --- Error Handling ---
 // 404 Not Found (Phải đặt trước errorHandler)

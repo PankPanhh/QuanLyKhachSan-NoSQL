@@ -145,30 +145,37 @@ function PaymentForm() {
 
     try {
       // 2. Gọi service (giả lập)
-      await createBooking(bookingData);
+      const response = await createBooking(bookingData);
 
       // 3. Xử lý sau thanh toán (giả lập)
-      clearBookingDetails();
       setIsLoading(false);
 
-      // 4. Hiển thị hướng dẫn tùy theo phương thức
-      if (paymentMethod === "bank") {
-        alert(
-          "Đặt phòng thành công!\nVui lòng chuyển khoản theo hướng dẫn:\n" +
-            bookingData.paymentMeta.instructions +
-            (bankRef ? "\nMã tham chiếu: " + bankRef : "")
-        );
-      } else if (paymentMethod === "paypal") {
-        alert("Đặt phòng thành công (PayPal giả lập).");
-      } else if (paymentMethod === "onArrival") {
-        alert(
-          "Đặt phòng thành công! Vui lòng thanh toán tại khách sạn khi nhận phòng."
-        );
-      } else {
-        alert("Đặt phòng thành công!");
-      }
+      // 4. Chuẩn bị thông tin booking để hiển thị trên trang success
+      const bookingInfoForSuccess = {
+        MaDatPhong: response?.MaDatPhong || bookingData.MaDatPhong || "N/A",
+        room: bookingDetails.room || {
+          TenPhong: "Phòng đã đặt",
+          LoaiPhong: "",
+        },
+        contactInfo: bookingData.contactInfo,
+        checkIn: bookingData.checkIn,
+        checkOut: bookingData.checkOut,
+        numGuests: bookingData.numGuests,
+        numRooms: bookingData.numRooms,
+        paymentMethod: bookingData.paymentMethod,
+        totalAmount: totalAmount,
+        paymentMeta: bookingData.paymentMeta,
+        promo: bookingData.promo,
+        response: response, // Toàn bộ response từ API
+      };
 
-      navigate("/"); // Về trang chủ
+      // 5. Clear booking details sau khi lưu thông tin cần thiết
+      clearBookingDetails();
+
+      // 6. Navigate đến trang success với thông tin booking
+      navigate("/booking-success", {
+        state: { booking: bookingInfoForSuccess },
+      });
     } catch (err) {
       setError(err.message || "Đã xảy ra lỗi khi đặt phòng.");
       setIsLoading(false);
@@ -219,20 +226,28 @@ function PaymentForm() {
         const subtotal = Math.round((price || 0) * nights * roomsCount);
 
         // Apply promotion if present (support several promo field shapes)
-        const promo = bookingDetails.promo || bookingDetails.KhuyenMai || bookingDetails.promoApplied || null;
+        const promo =
+          bookingDetails.promo ||
+          bookingDetails.KhuyenMai ||
+          bookingDetails.promoApplied ||
+          null;
         let discount = 0;
         if (promo) {
           // Prefer explicit percent/amount fields used by summary component
           if (promo.discountPercent != null) {
-            discount = Math.round((subtotal * Number(promo.discountPercent || 0)) / 100);
+            discount = Math.round(
+              (subtotal * Number(promo.discountPercent || 0)) / 100
+            );
           } else if (promo.discountAmount != null) {
             discount = Number(promo.discountAmount) || 0;
           } else if (promo.GiaTriGiam != null) {
             // Heuristic: determine whether GiaTriGiam is percent or absolute
-            const kind = (promo.LoaiGiamGia || promo.LoaiKhuyenMai || "").toString().toLowerCase();
+            const kind = (promo.LoaiGiamGia || promo.LoaiKhuyenMai || "")
+              .toString()
+              .toLowerCase();
             const raw = String(promo.GiaTriGiam || promo.GiaTri || "").trim();
-            if (kind.includes('phần') || raw.includes('%')) {
-              const pct = Number(raw.replace('%', '')) || 0;
+            if (kind.includes("phần") || raw.includes("%")) {
+              const pct = Number(raw.replace("%", "")) || 0;
               discount = Math.round((subtotal * pct) / 100);
             } else {
               discount = Number(promo.GiaTriGiam) || 0;
@@ -246,7 +261,9 @@ function PaymentForm() {
         const totalAfterDiscount = subtotal - discount;
 
         // allow override (if user manually edits amount) unless overrideAmount === null
-        setTotalAmount(overrideAmount !== null ? overrideAmount : totalAfterDiscount);
+        setTotalAmount(
+          overrideAmount !== null ? overrideAmount : totalAfterDiscount
+        );
       } catch (err) {
         console.error("Lỗi khi tính giá phòng:", err);
       }
