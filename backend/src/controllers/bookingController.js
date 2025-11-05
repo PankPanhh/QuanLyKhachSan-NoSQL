@@ -65,6 +65,7 @@ export const createBooking = async (req, res, next) => {
       numRooms,
       contactInfo,
       DichVuSuDung: requestedServices,
+      promo, // Frontend promotion data
     } = req.body;
 
     const userId = req.user._id; // Lay tu middleware 'protect'
@@ -89,8 +90,11 @@ export const createBooking = async (req, res, next) => {
       checkOut,
       numRooms || 1
     );
-    const totalRoomPrice = priceCalculation.discountedTotal;
-    const discountAmount = priceCalculation.discountAmount;
+    // Use ORIGINAL total for promo calculation, not discounted total
+    const originalRoomPrice = priceCalculation.originalTotal;
+    const totalRoomPrice = originalRoomPrice; // Don't use pre-discounted price
+
+    console.log(`[bookingController] Price calculation - original: ${priceCalculation.originalTotal}, discounted by utils: ${priceCalculation.discountedTotal}, discount from calc: ${priceCalculation.discountAmount}`);
 
     // Use computed totals (safer), ignore client-provided totals to prevent manipulation
     // const totalRoomPrice = computedTotalRoomPrice;
@@ -130,25 +134,50 @@ export const createBooking = async (req, res, next) => {
 
     // Build HoaDon per Booking schema
     const now = new Date();
-    // Apply any active promotions defined on the room
+    // Apply promotion from frontend if provided, otherwise use room promotions
     let giamGia = 0;
     try {
       const now = new Date();
-      const activePromos = (room.KhuyenMai || []).filter((k) => k.TrangThai === 'Đang hoạt động' && (!k.NgayBatDau || new Date(k.NgayBatDau) <= now) && (!k.NgayKetThuc || new Date(k.NgayKetThuc) >= now));
-      if (activePromos.length > 0) {
-        // choose the first active promo (business rule can be changed later)
-        const promo = activePromos[0];
-        const type = promo.LoaiGiamGia || promo.LoaiKhuyenMai || '';
-        const value = Number(promo.GiaTriGiam ?? promo.GiaTri ?? 0) || 0;
-        const totalBeforeDiscount = Number(computedTotalRoomPrice || 0) + Number(tongTienDichVu || 0);
+      
+      if (promo && promo.GiaTriGiam) {
+        // Use promotion data from frontend (already validated)
+        const type = promo.LoaiGiamGia || '';
+        const value = Number(promo.GiaTriGiam || 0);
+        const roomPriceOnly = Number(totalRoomPrice || 0);
+        
+        console.log(`[bookingController] Using frontend promo: ${promo.title || promo.id}, type: ${type}, value: ${value}`);
+        console.log(`[bookingController] Room price only: ${roomPriceOnly}, Service total: ${tongTienDichVu}`);
+        
         if (type && type.toLowerCase().includes('phần')) {
-          // percent
-          giamGia = Math.round((totalBeforeDiscount * value) / 100);
+          // percent - apply only to room price
+          giamGia = Math.round((roomPriceOnly * value) / 100);
         } else {
-          // fixed amount
-          giamGia = Math.min(value, totalBeforeDiscount);
+          // fixed amount - apply only to room price (don't exceed room price)
+          giamGia = Math.min(value, roomPriceOnly);
+        }
+        
+        console.log(`[bookingController] Calculated discount: ${giamGia} (${value}% of ${roomPriceOnly})`);
+      } else {
+        // Fallback: check room promotions
+        const activePromos = (room.KhuyenMai || []).filter((k) => k.TrangThai === 'Đang hoạt động' && (!k.NgayBatDau || new Date(k.NgayBatDau) <= now) && (!k.NgayKetThuc || new Date(k.NgayKetThuc) >= now));
+        if (activePromos.length > 0) {
+          // choose the first active promo (business rule can be changed later)
+          const promo = activePromos[0];
+          const type = promo.LoaiGiamGia || promo.LoaiKhuyenMai || '';
+          const value = Number(promo.GiaTriGiam ?? promo.GiaTri ?? 0) || 0;
+          // Apply discount ONLY to room price, not services
+          const roomPriceOnly = Number(totalRoomPrice || 0);
+          if (type && type.toLowerCase().includes('phần')) {
+            // percent - apply only to room price
+            giamGia = Math.round((roomPriceOnly * value) / 100);
+          } else {
+            // fixed amount - apply only to room price (don't exceed room price)
+            giamGia = Math.min(value, roomPriceOnly);
+          }
         }
       }
+      
+      console.log(`[bookingController] Final discount amount: ${giamGia}`);
     } catch (e) {
       console.warn('Error calculating promotion', e);
       giamGia = 0;
@@ -157,10 +186,10 @@ export const createBooking = async (req, res, next) => {
     const hoaDon = {
       MaHoaDon: `HD${Date.now().toString().slice(-6)}`,
       NgayLap: now,
-      TongTienPhong: Number(totalRoomPrice) || 0,     // Lấy từ 'main' (tiền phòng đã giảm)
-      TongTienDichVu: Number(tongTienDichVu) || 0,  // Lấy từ 'cc' (tiền dịch vụ)
-      GiamGia: Number(discountAmount) || 0,        // Lấy từ 'main' (số tiền phòng đã giảm)
-      TongTien: finalTongTien,
+      TongTienPhong: Number(totalRoomPrice) || 0,     // Tiền phòng trước khi giảm
+      TongTienDichVu: Number(tongTienDichVu) || 0,    // Tiền dịch vụ (không giảm giá)
+      GiamGia: Number(giamGia) || 0,                  // Giảm giá chỉ áp dụng cho phòng
+      TongTien: Number(totalRoomPrice) + Number(tongTienDichVu) - Number(giamGia), // Total = room + services - discount
       TinhTrang: "Chưa thanh toán", // Sẽ cập nhật sau
       GhiChu: paymentMeta.note || "",
       LichSuThanhToan: [],
@@ -178,7 +207,7 @@ export const createBooking = async (req, res, next) => {
         SoTien: Number(paidAmount),
         NgayThanhToan: now,
         TrangThai:
-          paidAmount >= (Number(totalRoomPrice) || 0)
+          paidAmount >= (Number(hoaDon.TongTien) || 0)
             ? "Thành công"
             : "Thanh toán một phần",
         GhiChu:
@@ -267,6 +296,12 @@ export const createBooking = async (req, res, next) => {
     }
 
     const booking = await Booking.create(doc);
+    console.log("[bookingController.createBooking] booking created successfully:", booking._id);
+
+    // Simple bookings count for debugging
+    const simpleBookings = await Booking.find({}).limit(5);
+    console.log("Simple bookings count:", simpleBookings.length);
+    console.log("First booking sample:", simpleBookings[0]?.MaDatPhong || "none");
 
     // Không cập nhật trạng thái phòng khi tạo booking - chỉ thay đổi trạng thái booking
     // Room status will be updated when admin confirms the booking or during check-in/out process
@@ -358,18 +393,10 @@ export const confirmBooking = async (req, res, next) => {
       byMa.TrangThai = "Đang sử dụng";
       await byMa.save();
 
-      // Cập nhật trạng thái phòng thành "Đang sử dụng" khi admin xác nhận booking
-      try {
-        await Room.findOneAndUpdate(
-          { MaPhong: byMa.MaPhong },
-          { $set: { TinhTrang: "Đang sử dụng" } }
-        );
-      } catch (err) {
-        console.error(
-          "[bookingController.confirmBooking] failed to update room status:",
-          err
-        );
-      }
+      // Per new management rule: do NOT change Room.TinhTrang automatically here.
+      // Keep room's TinhTrang as-is; management UI will present only two simplified
+      // statuses (Sẵn sàng / Bảo trì). If you want to change room status manually,
+      // use the Rooms management UI.
 
       return res.status(200).json({ success: true, data: byMa });
     }
@@ -377,19 +404,8 @@ export const confirmBooking = async (req, res, next) => {
     booking.TrangThai = "Đang sử dụng";
     await booking.save();
 
-    // Cập nhật trạng thái phòng thành "Đang sử dụng" khi admin xác nhận booking
-    try {
-      await Room.findOneAndUpdate(
-        { MaPhong: booking.MaPhong },
-        { $set: { TinhTrang: "Đang sử dụng" } }
-      );
-    } catch (err) {
-      console.error(
-        "[bookingController.confirmBooking] failed to update room status:",
-        err
-      );
-    }
-
+    // Per management rule: do NOT change Room.TinhTrang automatically here.
+    // Booking.TrangThai is updated, but room's TinhTrang remains unchanged.
     return res.status(200).json({ success: true, data: booking });
   } catch (error) {
     next(error);

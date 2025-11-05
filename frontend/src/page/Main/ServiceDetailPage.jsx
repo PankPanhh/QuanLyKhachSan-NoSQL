@@ -65,12 +65,6 @@ export default function ServiceDetailPage() {
     load();
   }, [id]);
 
-  const handleBook = async () => {
-    // Try to call booking API if present. We don't assume a specific booking client here.
-    // For now show a friendly message / placeholder behavior.
-    if (!service) return;
-    alert(`Gọi API đặt dịch vụ: ${service.TenDichVu} (Mã ${service.MaDichVu || service._id})`);
-  };
 
   if (loading) return <div className="text-center"><Spinner /> Đang tải...</div>;
   if (error) return <div className="alert alert-danger">{error}</div>;
@@ -120,9 +114,8 @@ export default function ServiceDetailPage() {
                 <div className="small text-muted"><FaRegClock className="me-1" /> {service.ThoiGianPhucVu || '—'}</div>
               </div>
 
-              <div className="mt-4 d-flex gap-2">
-                <button className="btn btn-primary" onClick={handleBook}>Đặt dịch vụ ngay</button>
-                <button className="btn btn-outline-secondary" onClick={() => alert('Thêm vào đơn phòng (tương lai)')}>Thêm vào đơn phòng</button>
+              <div className="mt-4">
+                <div className="text-muted small">Để đặt dịch vụ hoặc thêm vào đơn, vui lòng liên hệ lễ tân hoặc dùng chức năng đặt phòng.</div>
               </div>
             </div>
           </div>

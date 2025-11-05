@@ -20,10 +20,29 @@ function RoomCard({ room, onBook }) {
     floor: room.Tang || 1,
     bedType: room.LoaiGiuong || "Standard",
     maxGuests: room.SoGiuong || 1, // Assuming SoGiuong relates to capacity
-    status: room.TinhTrang || "Trống",
+  status: room.TinhTrang || "Trống",
     amenities: room.MaTienNghi || [],
     promotions: room.MaKhuyenMai || [],
   };
+
+  // Normalize server status to UI label used by management/public UI
+  const serverToUiStatus = (s) => {
+    if (!s) return "Sẵn sàng";
+    const v = String(s).trim();
+    if (v === "Trống") return "Sẵn sàng";
+    if (v === "Bảo trì") return "Bảo trì";
+    if (/bảo\s*tr[ií]|hư|hỏng/i.test(v)) return "Bảo trì";
+    return "Sẵn sàng";
+  };
+
+  const getStatusColor = (status) => {
+    const s = String(status || "").trim();
+    if (s === "Sẵn sàng") return { bg: "bg-label-success", text: "Sẵn sàng" };
+    if (s === "Bảo trì") return { bg: "bg-label-warning", text: "Bảo trì" };
+    return { bg: "bg-label-secondary", text: s || "Sẵn sàng" };
+  };
+
+  const uiStatus = serverToUiStatus(mappedRoom.status);
 
   const handleBook = () => {
     if (onBook) onBook(room._id);
@@ -170,7 +189,7 @@ function RoomCard({ room, onBook }) {
                       : servicesText}
                   </td>
                 </tr>
-                {mappedRoom.status !== "Trống" && (
+                {uiStatus !== "Sẵn sàng" && (
                   <tr className="text-white">
                     <td
                       className="pe-3"
@@ -180,12 +199,12 @@ function RoomCard({ room, onBook }) {
                     </td>
                     <td>
                       <span
-                        className="badge bg-warning"
+                        className={`badge ${getStatusColor(uiStatus).bg}`}
                         style={{
                           fontSize: isLongContent ? "0.7rem" : "0.8rem",
                         }}
                       >
-                        {mappedRoom.status}
+                        {getStatusColor(uiStatus).text}
                       </span>
                     </td>
                   </tr>
@@ -194,41 +213,32 @@ function RoomCard({ room, onBook }) {
             </table>
 
             <div className="d-flex gap-2 align-items-center flex-wrap">
-              {/* Dùng Link để điều hướng */}
-              <Link to={`/room/${room._id}`} className="text-decoration-none">
+              {/* Dùng Link để điều hướng; disable when room is under maintenance */}
+              {uiStatus === "Bảo trì" ? (
                 <p
-                  className={`text-decoration-underline text-white m-0 ${
-                    isLongContent ? "small" : ""
-                  }`}
+                  className={`text-white m-0 small text-muted`}
                   style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.8)" }}
                 >
-                  Xem chi tiết
+                  Đang bảo trì
                 </p>
-              </Link>
-
-              {/* Nút đặt phòng nếu phòng trống */}
-              {mappedRoom.status === "Trống" && (
-                <button
-                  className={`btn btn-light ${
-                    isLongContent ? "btn-sm" : "btn-sm"
-                  }`}
-                  onClick={handleBook}
-                  style={{
-                    backgroundColor: "rgba(255, 255, 255, 0.9)",
-                    border: "1px solid white",
-                    backdropFilter: "blur(5px)",
-                    fontSize: isLongContent ? "0.75rem" : "0.875rem",
-                  }}
-                >
-                  Đặt ngay
-                </button>
+              ) : (
+                <Link to={`/room/${room._id}`} className="text-decoration-none">
+                  <p
+                    className={`text-decoration-underline text-white m-0 ${
+                      isLongContent ? "small" : ""
+                    }`}
+                    style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.8)" }}
+                  >
+                    Xem chi tiết
+                  </p>
+                </Link>
               )}
             </div>
           </div>
         </div>
 
         {/* Hover effect */}
-        <style>{`
+        <style>{` 
           .room-item:hover .post-image {
             transform: scale(1.05);
           }

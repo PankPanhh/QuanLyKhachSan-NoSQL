@@ -7,6 +7,7 @@ import {
 import Spinner from "../../components/common/Spinner"; // Đã sửa đường dẫn
 import Button from "../../components/common/Button"; // Đã sửa đường dẫn
 import Modal from "../../components/common/Modal"; // Đã sửa đường dẫn
+import { isPaymentSuccessful } from "../../utils/paymentUtils";
 
 function BookingsManager() {
   const [bookings, setBookings] = useState([]);
@@ -634,14 +635,28 @@ function BookingsManager() {
                     </div>
                     <div className="list-group-item d-flex justify-content-between px-0">
                       <span className="text-muted">Giảm giá</span>
-                      <span>
-                        {formatCurrency(selectedBooking.HoaDon.GiamGia || 0)}
+                      <span className={selectedBooking.HoaDon.GiamGia > 0 ? "text-danger fw-bold" : ""}>
+                        {selectedBooking.HoaDon.GiamGia > 0 ? '-' : ''}{formatCurrency(selectedBooking.HoaDon.GiamGia || 0)}
                       </span>
                     </div>
                     <div className="list-group-item d-flex justify-content-between px-0">
                       <span className="text-muted">Tổng tiền</span>
                       <span className="fw-semibold text-success fs-5">
                         {formatCurrency(selectedBooking.HoaDon.TongTien || 0)}
+                      </span>
+                    </div>
+                    <div className="list-group-item d-flex justify-content-between px-0">
+                      <span className="text-muted">Số tiền đã thanh toán</span>
+                      <span className="fw-semibold text-primary">
+                        {formatCurrency(
+                          (selectedBooking.HoaDon.LichSuThanhToan || []).reduce(
+                            (s, p) => {
+                              const isSuccess = isPaymentSuccessful(p?.TrangThai);
+                              return isSuccess ? s + (Number(p?.SoTien) || 0) : s;
+                            },
+                            0
+                          )
+                        )}
                       </span>
                     </div>
                     <div className="list-group-item d-flex justify-content-between px-0">

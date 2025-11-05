@@ -27,7 +27,7 @@ const emptyRoom = {
   DienTich: 0,
   MoTa: "",
   HinhAnh: "",
-  TinhTrang: "Trống",
+  TinhTrang: "Sẵn sàng",
 };
 
 function RoomsManager() {
@@ -38,6 +38,7 @@ function RoomsManager() {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null); // Chỉ để edit, không add
   const [selectedRooms, setSelectedRooms] = useState([]); // For bulk operations
+  const [toggleLoadingId, setToggleLoadingId] = useState(null);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
 
@@ -105,11 +106,13 @@ function RoomsManager() {
       setError(null);
       const data = await adminGetAllRooms();
       // Be defensive: ensure we always set an array to avoid render-time errors
-      let safeData = [];
-      if (Array.isArray(data)) safeData = data;
-      else if (data && Array.isArray(data.data)) safeData = data.data;
-      else safeData = [];
-      setRooms(safeData);
+  let safeData = [];
+  if (Array.isArray(data)) safeData = data;
+  else if (data && Array.isArray(data.data)) safeData = data.data;
+  else safeData = [];
+  // Normalize server statuses into UI labels for the management UI
+  const normalized = safeData.map((r) => ({ ...r, TinhTrang: serverToUiStatus(r.TinhTrang) }));
+  setRooms(normalized);
     } catch (error) {
       console.error("Lỗi khi tải phòng:", error);
       setError("Không thể tải danh sách phòng. " + error.message);
@@ -147,19 +150,32 @@ function RoomsManager() {
   const getUniqueFloors = () =>
     [...new Set(rooms.map((room) => room.Tang))].sort((a, b) => a - b);
 
-  // Status color mapping - ĐÃ CẬP NHẬT CHO SNEAT
+  // Map between server canonical status values and UI labels used in management
+  const serverToUiStatus = (s) => {
+    if (!s) return "Sẵn sàng";
+    const v = String(s).trim();
+    if (v === "Trống") return "Sẵn sàng";
+    if (v === "Bảo trì") return "Bảo trì";
+    if (/bảo\s*tr[ií]|hư|hỏng/i.test(v)) return "Bảo trì";
+    return "Sẵn sàng";
+  };
+
+  const uiToServerStatus = (ui) => {
+    if (!ui) return "Trống";
+    const v = String(ui).trim();
+    if (v === "Sẵn sàng") return "Trống";
+    if (v === "Bảo trì") return "Bảo trì";
+    return v;
+  };
+
+  // Status color mapping - follow ServicesManager shape: return { bg, text }
+  // Keep mapping simple: "Sẵn sàng" => success, "Bảo trì" => warning, fallback => secondary
   const getStatusColor = (status) => {
-    const statusColors = {
-      "Đang chờ": { bg: "bg-label-warning", text: "Đang chờ" },
-      "Đang chờ xác nhận": { bg: "bg-label-warning", text: "Đang chờ" },
-      Trống: { bg: "bg-label-success", text: "Sẵn sàng" },
-      "Đang sử dụng": { bg: "bg-label-info", text: "Có khách" },
-      "Đang dọn dẹp": { bg: "bg-label-warning", text: "Đang dọn" },
-      "Bảo trì": { bg: "bg-label-secondary", text: "Bảo trì" },
-      Hư: { bg: "bg-label-danger", text: "Hư hỏng" },
-      "Đã đặt": { bg: "bg-label-primary", text: "Đã đặt" },
-    };
-    return statusColors[status] || { bg: "bg-label-secondary", text: status };
+    const s = String(status || "").trim();
+    if (s === "Sẵn sàng") return { bg: "bg-label-success", text: "Sẵn sàng" };
+    if (s === "Bảo trì") return { bg: "bg-label-warning", text: "Bảo trì" };
+    // Fallback: show the raw text with neutral styling
+    return { bg: "bg-label-secondary", text: s || "Sẵn sàng" };
   };
 
   // Cập nhật state của form khi người dùng nhập
@@ -215,12 +231,14 @@ function RoomsManager() {
         setLoading(true);
         setError(null);
 
-        // Update all selected rooms
-        await Promise.all(
-          selectedRooms.map((roomId) =>
-            adminUpdateRoom(roomId, { TinhTrang: newStatus })
-          )
-        );
+          // Convert UI label to server value before sending
+          const serverStatus = uiToServerStatus(newStatus);
+          // Update all selected rooms with canonical server status
+          await Promise.all(
+            selectedRooms.map((roomId) =>
+              adminUpdateRoom(roomId, { TinhTrang: serverStatus })
+            )
+          );
 
         setSelectedRooms([]);
         await fetchRooms();
@@ -238,6 +256,7 @@ function RoomsManager() {
 
   // Chỉ còn function để mở modal edit
   const handleOpenEditModal = (room) => {
+    // room.TinhTrang is already normalized to UI label by fetchRooms
     setSelectedRoom(room);
     setFormData(room); // Nạp dữ liệu của phòng vào form
     setSelectedImageFile(null);
@@ -287,6 +306,9 @@ function RoomsManager() {
       DienTich: Number(formData.DienTich) || 0,
     };
 
+    // Convert UI TinhTrang into server canonical value before sending
+    payload.TinhTrang = uiToServerStatus(payload.TinhTrang);
+
     try {
       setLoading(true);
       setError(null);
@@ -322,6 +344,10 @@ function RoomsManager() {
       const updatedRoom = await adminUpdateRoom(selectedRoom._id, payload);
 
       // Add transient image version to force browser reload of updated image
+      // Normalize server TinhTrang to UI label so local state stays consistent
+      if (updatedRoom && updatedRoom.TinhTrang) {
+        updatedRoom.TinhTrang = serverToUiStatus(updatedRoom.TinhTrang);
+      }
       updatedRoom._imgVersion = Date.now();
       // If we have a selectedImageFile, add a local preview URL so the thumbnail updates immediately
       if (selectedImageFile) {
@@ -361,7 +387,9 @@ function RoomsManager() {
       setLoading(true);
       setError(null);
 
-      await adminUpdateRoom(roomId, { TinhTrang: newStatus });
+      // newStatus is a UI label; convert to server canonical value
+      const serverStatus = uiToServerStatus(newStatus);
+      await adminUpdateRoom(roomId, { TinhTrang: serverStatus });
       await fetchRooms();
       showSuccessMessage(
         `Phòng ${roomCode} đã được cập nhật thành "${newStatus}"!`
@@ -371,6 +399,32 @@ function RoomsManager() {
       setError("Cập nhật trạng thái thất bại: " + error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Toggle status like ServicesManager: click badge to flip between Sẵn sàng <-> Bảo trì
+  const toggleRoomStatus = async (room) => {
+    if (!room || loading) return;
+    const id = room._id;
+    const current = room.TinhTrang || "Sẵn sàng";
+    const desired = current === "Sẵn sàng" ? "Bảo trì" : "Sẵn sàng";
+
+    try {
+      setToggleLoadingId(id);
+      setError(null);
+      // Convert UI label to server canonical value
+      const serverStatus = uiToServerStatus(desired);
+      await adminUpdateRoom(id, { TinhTrang: serverStatus });
+
+      // Update local state optimistically
+      setRooms((prev) => prev.map((r) => (r._id === id ? { ...r, TinhTrang: desired } : r)));
+      setFilteredRooms((prev) => prev.map((r) => (r._id === id ? { ...r, TinhTrang: desired } : r)));
+      showSuccessMessage(`Phòng ${room.MaPhong} đã chuyển sang "${desired}"`);
+    } catch (err) {
+      console.error("Toggle status failed:", err);
+      setError("Không thể thay đổi trạng thái: " + (err.message || String(err)));
+    } finally {
+      setToggleLoadingId(null);
     }
   };
 
@@ -440,12 +494,8 @@ function RoomsManager() {
                 onChange={(e) => handleFilterChange("status", e.target.value)}
               >
                 <option value="">Tất cả trạng thái</option>
-                <option value="Trống">Sẵn sàng</option>
-                <option value="Đang dọn dẹp">Đang dọn</option>
-                <option value="Đang chờ xác nhận">Đang chờ xác nhận</option>
-                <option value="Đang sử dụng">Có khách</option>
+                <option value="Sẵn sàng">Sẵn sàng</option>
                 <option value="Bảo trì">Bảo trì</option>
-                <option value="Hư">Hư hỏng</option>
               </select>
             </div>
 
@@ -504,18 +554,9 @@ function RoomsManager() {
                       <a
                         className="dropdown-item"
                         href="#"
-                        onClick={() => handleBulkStatusUpdate("Trống")}
+                        onClick={() => handleBulkStatusUpdate("Sẵn sàng")}
                       >
                         Sẵn sàng
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        className="dropdown-item"
-                        href="#"
-                        onClick={() => handleBulkStatusUpdate("Đang dọn dẹp")}
-                      >
-                        Đang dọn
                       </a>
                     </li>
                     <li>
@@ -525,15 +566,6 @@ function RoomsManager() {
                         onClick={() => handleBulkStatusUpdate("Bảo trì")}
                       >
                         Bảo trì
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        className="dropdown-item"
-                        href="#"
-                        onClick={() => handleBulkStatusUpdate("Hư")}
-                      >
-                        Hư hỏng
                       </a>
                     </li>
                   </ul>
@@ -553,18 +585,18 @@ function RoomsManager() {
       {!loading && rooms.length > 0 && (
         <div className="row g-4 mb-4">
           <div className="col-lg-3 col-md-6">
-            <div className="card">
+                <div className="card">
               <div className="card-body">
                 <div className="card-title d-flex align-items-start justify-content-between">
                   <div className="avatar shrink-0">
-                    <span className="avatar-initial rounded bg-label-success">
-                      <i className="bx bx-door-open"></i>
-                    </span>
-                  </div>
+                      <span className={`avatar-initial rounded ${getStatusColor("Sẵn sàng").bg}`}>
+                        <i className="bx bx-door-open"></i>
+                      </span>
+                    </div>
                 </div>
                 <span className="fw-semibold d-block mb-1">Sẵn sàng</span>
                 <h3 className="card-title mb-2">
-                  {filteredRooms.filter((r) => r.TinhTrang === "Trống").length}
+                  {filteredRooms.filter((r) => r.TinhTrang === "Sẵn sàng").length}
                 </h3>
               </div>
             </div>
@@ -574,55 +606,14 @@ function RoomsManager() {
               <div className="card-body">
                 <div className="card-title d-flex align-items-start justify-content-between">
                   <div className="avatar shrink-0">
-                    <span className="avatar-initial rounded bg-label-info">
-                      <i className="bx bx-user-check"></i>
-                    </span>
-                  </div>
-                </div>
-                <span className="fw-semibold d-block mb-1">Có khách</span>
-                <h3 className="card-title mb-2">
-                  {
-                    filteredRooms.filter((r) => r.TinhTrang === "Đang sử dụng")
-                      .length
-                  }
-                </h3>
-              </div>
-            </div>
-          </div>
-          <div className="col-lg-3 col-md-6">
-            <div className="card">
-              <div className="card-body">
-                <div className="card-title d-flex align-items-start justify-content-between">
-                  <div className="avatar shrink-0">
-                    <span className="avatar-initial rounded bg-label-warning">
+                    <span className={`avatar-initial rounded ${getStatusColor("Bảo trì").bg}`}>
                       <i className="bx bx-wrench"></i>
                     </span>
                   </div>
                 </div>
-                <span className="fw-semibold d-block mb-1">Bảo trì/Dọn</span>
+                <span className="fw-semibold d-block mb-1">Bảo trì</span>
                 <h3 className="card-title mb-2">
-                  {
-                    filteredRooms.filter((r) =>
-                      ["Bảo trì", "Hư", "Đang dọn dẹp"].includes(r.TinhTrang)
-                    ).length
-                  }
-                </h3>
-              </div>
-            </div>
-          </div>
-          <div className="col-lg-3 col-md-6">
-            <div className="card">
-              <div className="card-body">
-                <div className="card-title d-flex align-items-start justify-content-between">
-                  <div className="avatar shrink-0">
-                    <span className="avatar-initial rounded bg-label-primary">
-                      <i className="bx bx-calendar-check"></i>
-                    </span>
-                  </div>
-                </div>
-                <span className="fw-semibold d-block mb-1">Đã đặt</span>
-                <h3 className="card-title mb-2">
-                  {filteredRooms.filter((r) => r.TinhTrang === "Đã đặt").length}
+                  {filteredRooms.filter((r) => r.TinhTrang === "Bảo trì").length}
                 </h3>
               </div>
             </div>
@@ -760,93 +751,18 @@ function RoomsManager() {
                         </td>
                         <td>Tầng {room.Tang}</td>
                         <td>
-                          <div className="dropdown">
-                            <span
-                              className={`badge ${statusInfo.bg} dropdown-toggle`}
-                              data-bs-toggle="dropdown"
-                              style={{ cursor: "pointer" }}
-                              title="Click để thay đổi"
-                            >
-                              {statusInfo.text}
-                            </span>
-                            <ul className="dropdown-menu">
-                              <li>
-                                <a
-                                  className="dropdown-item"
-                                  href="#"
-                                  onClick={() =>
-                                    handleQuickStatusUpdate(
-                                      room._id,
-                                      "Trống",
-                                      room.MaPhong
-                                    )
-                                  }
-                                >
-                                  Sẵn sàng
-                                </a>
-                              </li>
-                              <li>
-                                <a
-                                  className="dropdown-item"
-                                  href="#"
-                                  onClick={() =>
-                                    handleQuickStatusUpdate(
-                                      room._id,
-                                      "Đang dọn dẹp",
-                                      room.MaPhong
-                                    )
-                                  }
-                                >
-                                  Đang dọn
-                                </a>
-                              </li>
-                              <li>
-                                <a
-                                  className="dropdown-item"
-                                  href="#"
-                                  onClick={() =>
-                                    handleQuickStatusUpdate(
-                                      room._id,
-                                      "Đang sử dụng",
-                                      room.MaPhong
-                                    )
-                                  }
-                                >
-                                  Có khách
-                                </a>
-                              </li>
-                              <li>
-                                <a
-                                  className="dropdown-item"
-                                  href="#"
-                                  onClick={() =>
-                                    handleQuickStatusUpdate(
-                                      room._id,
-                                      "Bảo trì",
-                                      room.MaPhong
-                                    )
-                                  }
-                                >
-                                  Bảo trì
-                                </a>
-                              </li>
-                              <li>
-                                <a
-                                  className="dropdown-item"
-                                  href="#"
-                                  onClick={() =>
-                                    handleQuickStatusUpdate(
-                                      room._id,
-                                      "Hư",
-                                      room.MaPhong
-                                    )
-                                  }
-                                >
-                                  Hư hỏng
-                                </a>
-                              </li>
-                            </ul>
-                          </div>
+                          <span
+                            className={`badge ${statusInfo.bg}`}
+                            style={{ cursor: "pointer" }}
+                            title="Click để chuyển trạng thái"
+                            onClick={() => toggleRoomStatus(room)}
+                          >
+                            {toggleLoadingId === room._id ? (
+                              <Spinner size="sm" />
+                            ) : (
+                              statusInfo.text
+                            )}
+                          </span>
                         </td>
                         <td>
                           <div className="d-flex gap-1">
@@ -1033,12 +949,8 @@ function RoomsManager() {
                   value={formData.TinhTrang}
                   onChange={handleFormChange}
                 >
-                  <option value="Trống">Trống (Sẵn sàng)</option>
-                  <option value="Đang dọn dẹp">Đang dọn dẹp</option>
-                  <option value="Đang sử dụng">Đang sử dụng</option>
-                  <option value="Đã đặt">Đã đặt</option>
+                  <option value="Sẵn sàng">Sẵn sàng</option>
                   <option value="Bảo trì">Bảo trì</option>
-                  <option value="Hư">Hư hỏng</option>
                 </select>
               </div>
             </div>

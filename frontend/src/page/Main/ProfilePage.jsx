@@ -21,6 +21,7 @@ import {
   FaTimes,
   FaImage,
 } from "react-icons/fa";
+import { isPaymentSuccessful } from "../../utils/paymentUtils";
 
 function ProfilePage() {
   const { user } = useContext(AuthContext);
@@ -1083,10 +1084,11 @@ function ProfilePage() {
                                   </div>
                                   {(() => {
                                     const hd = b.HoaDon || {};
-                                    const paid = (
-                                      hd.LichSuThanhToan || []
-                                    ).reduce(
-                                      (s, p) => s + (Number(p?.SoTien) || 0),
+                                    const paid = (hd.LichSuThanhToan || []).reduce(
+                                      (s, p) =>
+                                        isPaymentSuccessful(p?.TrangThai)
+                                          ? s + (Number(p?.SoTien) || 0)
+                                          : s,
                                       0
                                     );
 

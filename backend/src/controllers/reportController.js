@@ -30,7 +30,7 @@ export const getDailyRevenue = async (req, res, next) => {
       { $unwind: "$HoaDon.LichSuThanhToan" },
       {
         $match: {
-          "HoaDon.LichSuThanhToan.TrangThai": "Thành công",
+          "HoaDon.LichSuThanhToan.TrangThai": { $in: ["Thành công", "Thanh toán một phần"] },
           "HoaDon.LichSuThanhToan.NgayThanhToan": { $gte: start, $lte: end },
         },
       },
@@ -66,7 +66,7 @@ export const getDailyRevenue = async (req, res, next) => {
                   $filter: {
                     input: { $ifNull: ["$HoaDon.LichSuThanhToan", []] },
                     as: "p",
-                    cond: { $eq: ["$$p.TrangThai", "Thành công"] },
+                    cond: { $in: ["$$p.TrangThai", ["Thành công", "Thanh toán một phần"]] },
                   },
                 },
               },
@@ -154,7 +154,7 @@ export const getMonthlyRevenue = async (req, res, next) => {
       { $unwind: "$HoaDon.LichSuThanhToan" },
       {
         $match: {
-          "HoaDon.LichSuThanhToan.TrangThai": "Thành công",
+          "HoaDon.LichSuThanhToan.TrangThai": { $in: ["Thành công", "Thanh toán một phần"] },
           "HoaDon.LichSuThanhToan.NgayThanhToan": { $gte: start, $lte: end },
         },
       },
@@ -190,7 +190,7 @@ export const getMonthlyRevenue = async (req, res, next) => {
                   $filter: {
                     input: { $ifNull: ["$HoaDon.LichSuThanhToan", []] },
                     as: "p",
-                    cond: { $eq: ["$$p.TrangThai", "Thành công"] },
+                    cond: { $in: ["$$p.TrangThai", ["Thành công", "Thanh toán một phần"]] },
                   },
                 },
               },

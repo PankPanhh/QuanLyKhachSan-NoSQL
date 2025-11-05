@@ -1,5 +1,6 @@
 import Booking from "../models/Booking.js";
 import Room from "../models/Room.js";
+import { isPaymentSuccessful } from "../utils/paymentUtils.js";
 import { differenceInHours, differenceInDays } from "date-fns";
 import { calculateRoomPriceWithDiscount } from "../utils/calculateTotal.js";
 
@@ -174,11 +175,8 @@ export const confirmCheckout = async (req, res, next) => {
 
     await booking.save();
 
-    // Cập nhật trạng thái phòng về trống
-    await Room.findOneAndUpdate(
-      { MaPhong: booking.MaPhong },
-      { TinhTrang: "Trống" }
-    );
+    // Per management rule: do NOT change Room.TinhTrang automatically on checkout.
+    // The room's internal status should be managed manually via the Rooms UI.
 
     res.status(200).json({
       success: true,
@@ -255,7 +253,7 @@ export const processPayment = async (req, res, next) => {
     // Kiểm tra số tiền còn lại cần thanh toán (bao gồm cả phí trễ nếu có)
     const totalPaid =
       booking.HoaDon.LichSuThanhToan?.reduce((sum, payment) => {
-        return payment.TrangThai === "Thành công" ? sum + payment.SoTien : sum;
+        return isPaymentSuccessful(payment?.TrangThai) ? sum + (payment.SoTien || 0) : sum;
       }, 0) || 0;
 
     const totalAmountWithLateFee = booking.HoaDon.TongTien + lateFee;
@@ -298,7 +296,7 @@ export const processPayment = async (req, res, next) => {
     // Tính lại tổng tiền đã thanh toán sau khi thêm payment mới
     const totalPaidAfter = booking.HoaDon.LichSuThanhToan.reduce(
       (sum, payment) => {
-        return payment.TrangThai === "Thành công" ? sum + payment.SoTien : sum;
+  return isPaymentSuccessful(payment?.TrangThai) ? sum + (payment.SoTien || 0) : sum;
       },
       0
     );
@@ -493,7 +491,7 @@ export const downloadInvoice = async (req, res, next) => {
     // Tính tổng đã thanh toán
     const totalPaid =
       booking.HoaDon.LichSuThanhToan?.reduce((sum, payment) => {
-        return payment.TrangThai === "Thành công" ? sum + payment.SoTien : sum;
+        return isPaymentSuccessful(payment?.TrangThai) ? sum + (payment.SoTien || 0) : sum;
       }, 0) || 0;
 
     // Tạo hóa đơn HTML đẹp
@@ -1137,9 +1135,7 @@ export const getCheckoutStatistics = async (req, res, next) => {
       // Tính số tiền đã thanh toán
       const paidAmount =
         booking.HoaDon?.LichSuThanhToan?.reduce((sum, payment) => {
-          return payment.TrangThai === "Thành công"
-            ? sum + payment.SoTien
-            : sum;
+          return isPaymentSuccessful(payment?.TrangThai) ? sum + (payment.SoTien || 0) : sum;
         }, 0) || 0;
       stat.paidAmount += paidAmount;
 
@@ -1234,12 +1230,12 @@ export const getActualRevenue = async (req, res, next) => {
         // Tính tổng đã thanh toán
         const paidAmount =
           invoice.LichSuThanhToan?.reduce((sum, payment) => {
-            if (payment.TrangThai === "Thành công") {
+            if (isPaymentSuccessful(payment?.TrangThai)) {
               // Track by payment method
               if (paymentMethodStats.hasOwnProperty(payment.PhuongThuc)) {
-                paymentMethodStats[payment.PhuongThuc] += payment.SoTien;
+                paymentMethodStats[payment.PhuongThuc] += (payment.SoTien || 0);
               }
-              return sum + payment.SoTien;
+              return sum + (payment.SoTien || 0);
             }
             return sum;
           }, 0) || 0;

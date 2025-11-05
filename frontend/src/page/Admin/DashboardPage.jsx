@@ -1,266 +1,749 @@
-import React, { useContext, useEffect, useState } from "react";
-import RevenueChart from "../../components/charts/RevenueChart";
-import BookingChart from "../../components/charts/BookingChart";
-import SatisfactionChart from "../../components/charts/SatisfactionChart";
-import { AuthContext } from "../../context/AuthContext";
-import { getDailyRevenue } from "../../services/reportService";
+import React, { useState, useEffect } from 'react';
+import { 
+  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, 
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
+} from 'recharts';
+import { 
+  FaHome, FaBed, FaUsers, FaMoneyBillWave, FaUserPlus, FaClipboardList,
+  FaExclamationTriangle, FaClock, FaCreditCard, FaCalendarDay
+} from 'react-icons/fa';
+import dashboardService from '../../services/dashboardService';
 
-function DashboardPage() {
-  const { user } = useContext(AuthContext);
-  const [todayRevenue, setTodayRevenue] = useState(0);
-  const [todayBookings, setTodayBookings] = useState(0);
+// KPI Card Component
+const KPICard = ({ icon: Icon, title, value, subtitle, color, bgColor }) => (
+  <div className="card h-100 border-0 shadow-sm">
+    <div className="card-body d-flex align-items-center">
+      <div 
+        className="rounded-circle d-flex align-items-center justify-content-center me-3"
+        style={{ 
+          width: '60px', 
+          height: '60px', 
+          backgroundColor: bgColor 
+        }}
+      >
+        <Icon style={{ color, fontSize: '24px' }} />
+      </div>
+      <div className="flex-fill">
+        <h3 className="fw-bold mb-1 text-dark">{value}</h3>
+        <p className="text-muted mb-0 fw-medium">{title}</p>
+        {subtitle && <small className="text-secondary">{subtitle}</small>}
+      </div>
+    </div>
+  </div>
+);
+
+// Alert Item Component
+const AlertItem = ({ icon: Icon, text, color }) => (
+  <div 
+    className="d-flex align-items-start p-3 mb-3 rounded border-start border-4"
+    style={{ 
+      borderLeftColor: `${color} !important`,
+      backgroundColor: '#f8f9fa'
+    }}
+  >
+    <div className="me-3" style={{ color, fontSize: '16px', marginTop: '2px' }}>
+      <Icon />
+    </div>
+    <div className="flex-fill">
+      <small className="text-dark">{text}</small>
+    </div>
+  </div>
+);
+
+const DashboardPage = () => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [kpiStats, setKpiStats] = useState({
+    totalRooms: 0,
+    emptyRooms: 0,
+    occupiedRooms: 0,
+    todayBookings: 0,
+    todayRevenue: 0,
+    newCustomersToday: 0
+  });
+  const [recentBookings, setRecentBookings] = useState([]);
+  const [abnormalRooms, setAbnormalRooms] = useState([]);
+
+  const [alerts, setAlerts] = useState([]);
 
   useEffect(() => {
-    (async () => {
+    const loadDashboardData = async () => {
       try {
-        const now = new Date();
-        const start = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate()
-        );
-        const end = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate(),
-          23,
-          59,
-          59,
-          999
-        );
-        const rows = await getDailyRevenue(
-          start.toISOString(),
-          end.toISOString()
-        );
-        const r =
-          Array.isArray(rows) && rows.length
-            ? rows[0]
-            : { revenue: 0, bookingsCount: 0 };
-        setTodayRevenue(r.revenue || 0);
-        setTodayBookings(r.bookingsCount || 0);
-      } catch (e) {
-        console.error("Failed to fetch today revenue", e);
-        setTodayRevenue(0);
-        setTodayBookings(0);
+        setLoading(true);
+        setError(null);
+
+        // Fetch all data in parallel
+        const [
+          roomStatsData,
+          bookingStatsData,
+          userStatsData,
+          monthlyRevenueData,
+          dailyRevenueData,
+          serviceRevenueData
+        ] = await Promise.all([
+          dashboardService.getDashboardRoomStats(),
+          dashboardService.getDashboardBookingStats(),
+          dashboardService.getDashboardUserStats(),
+          dashboardService.getMonthlyRevenueData(),
+          dashboardService.getDailyRevenueData(),
+          dashboardService.getServiceRevenueData()
+        ]);
+
+        // Set KPI stats
+        setKpiStats({
+          totalRooms: roomStatsData.stats.totalRooms,
+          emptyRooms: roomStatsData.stats.emptyRooms,
+          occupiedRooms: roomStatsData.stats.occupiedRooms,
+          todayBookings: bookingStatsData.stats.todayBookings,
+          todayRevenue: bookingStatsData.stats.todayRevenue,
+          newCustomersToday: userStatsData.newCustomersToday
+        });
+
+        // Set recent bookings
+        setRecentBookings(bookingStatsData.stats.recentBookings.map(booking => ({
+          id: booking.MaDatPhong || booking._id || 'N/A',
+          customer: booking.IDKhachHang?.HoTen || booking.customerName || 'N/A',
+          room: booking.MaPhong || booking.roomCode || 'N/A',
+          checkIn: new Date(booking.NgayNhanPhong || booking.checkInDate).toLocaleDateString('vi-VN'),
+          checkOut: new Date(booking.NgayTraPhong || booking.checkOutDate).toLocaleDateString('vi-VN'),
+          status: booking.TrangThai || booking.status || 'N/A',
+          total: booking.TongTien || booking.total || 0
+        })));
+
+        // Set abnormal rooms
+        setAbnormalRooms(roomStatsData.stats.abnormalRooms.map(room => ({
+          code: room.MaPhong || room.code || 'N/A',
+          name: room.TenPhong || room.name || 'N/A',
+          status: room.TinhTrang || room.status,
+          note: room.GhiChu || room.note || 'Cần kiểm tra',
+          color: room.TinhTrang === 'Hư' ? '#dc3545' : '#ffc107'
+        })));
+
+        // Create room usage data for pie chart
+        const roomUsage = [
+          { 
+            name: 'Phòng trống', 
+            value: roomStatsData.stats.emptyRooms, 
+            color: '#28a745' 
+          },
+          { 
+            name: 'Đang sử dụng', 
+            value: roomStatsData.stats.occupiedRooms, 
+            color: '#007bff' 
+          },
+          { 
+            name: 'Bảo trì', 
+            value: roomStatsData.stats.maintenanceRooms, 
+            color: '#ffc107' 
+          },
+          { 
+            name: 'Hư hỏng', 
+            value: roomStatsData.stats.damagedRooms, 
+            color: '#dc3545' 
+          }
+        ];
+
+        // Set chart data
+        setData({
+          monthlyRevenue: monthlyRevenueData,
+          roomUsage: roomUsage.filter(item => item.value > 0), // Only show non-zero values
+          revenueSource: serviceRevenueData,
+          customerTraffic: dailyRevenueData.map(item => ({
+            date: item.date,
+            bookings: item.bookingsCount,
+            customers: Math.floor(item.bookingsCount * 1.5) // Estimate customers from bookings
+          }))
+        });
+
+        // Generate dynamic alerts
+        const dynamicAlerts = [];
+        
+        const maintenanceCount = roomStatsData.stats.maintenanceRooms;
+        const damagedCount = roomStatsData.stats.damagedRooms;
+        if (maintenanceCount > 0 || damagedCount > 0) {
+          dynamicAlerts.push({
+            icon: FaExclamationTriangle,
+            text: `${maintenanceCount} phòng đang bảo trì, ${damagedCount} phòng hư hỏng`,
+            color: '#dc3545',
+            bgColor: '#f8d7da'
+          });
+        }
+
+        // Check for pending payments (estimate)
+        const pendingPayments = bookingStatsData.bookings.filter(
+          b => b.TrangThai === 'Chờ thanh toán' || b.status === 'pending'
+        ).length;
+        if (pendingPayments > 0) {
+          dynamicAlerts.push({
+            icon: FaCreditCard,
+            text: `${pendingPayments} đơn đặt chờ thanh toán`,
+            color: '#fd7e14',
+            bgColor: '#fed8b1'
+          });
+        }
+
+        // Today's check-ins
+        if (bookingStatsData.stats.todayBookings > 0) {
+          dynamicAlerts.push({
+            icon: FaCalendarDay,
+            text: `${bookingStatsData.stats.todayBookings} khách sắp đến hôm nay`,
+            color: '#17a2b8',
+            bgColor: '#d1ecf1'
+          });
+        }
+
+        // Default alert for promotions (since we don't have promo API data)
+        dynamicAlerts.push({
+          icon: FaClock,
+          text: 'Kiểm tra khuyến mãi sắp hết hạn',
+          color: '#ffc107',
+          bgColor: '#fff3cd'
+        });
+
+        setAlerts(dynamicAlerts);
+
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        setError('Không thể tải dữ liệu dashboard. Sử dụng dữ liệu mẫu.');
+        
+        // Set fallback data on error
+        setKpiStats({
+          totalRooms: 45,
+          emptyRooms: 25,
+          occupiedRooms: 15,
+          todayBookings: 8,
+          todayRevenue: 12500000,
+          newCustomersToday: 3
+        });
+      } finally {
+        setLoading(false);
       }
-    })();
+    };
+
+    loadDashboardData();
   }, []);
+
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      'Hoàn tất': { bg: 'success', text: 'white' },
+      'Đang ở': { bg: 'primary', text: 'white' },
+      'Đã xác nhận': { bg: 'info', text: 'white' },
+      'Hủy': { bg: 'danger', text: 'white' }
+    };
+    const style = statusMap[status] || { bg: 'secondary', text: 'white' };
+    return `badge bg-${style.bg}`;
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(amount);
+  };
+
+  if (loading) {
+    return (
+      <div className="container-fluid p-5">
+        <div className="row justify-content-center">
+          <div className="col-md-6 text-center">
+            <div className="spinner-border text-primary mb-3" role="status" style={{ width: '3rem', height: '3rem' }}>
+              <span className="visually-hidden">Đang tải dữ liệu dashboard...</span>
+            </div>
+            <h5 className="text-muted">Đang tải thống kê từ cơ sở dữ liệu...</h5>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container-fluid p-4">
+        <div className="alert alert-warning" role="alert">
+          <h5 className="alert-heading">⚠️ Thông báo</h5>
+          <p className="mb-0">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="container-fluid p-5">
+        <div className="row justify-content-center">
+          <div className="col-md-6 text-center">
+            <div className="spinner-border text-secondary" role="status">
+              <span className="visually-hidden">Không có dữ liệu...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="row">
-      {/* Hàng 1: Welcome Card */}
-      <div className="col-lg-8 mb-4 order-0">
-        <div className="card">
-          <div className="d-flex align-items-end row">
-            <div className="col-sm-7">
-              <div className="card-body">
-                <h5 className="card-title text-primary">
-                  Welcome back, {user?.HoTen || "Mark Johnson"}! 🎉
-                </h5>
-                <p className="mb-4">Glad to see you again! Ask me anything.</p>
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline-primary"
-                >
-                  Tap to record
-                </button>
+    <div className="container-fluid py-4" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+      {/* Header */}
+      <div className="row mb-4">
+        <div className="col-12">
+          <h1 className="display-5 fw-bold text-dark mb-2">Dashboard</h1>
+          <p className="lead text-muted">Tổng quan hoạt động khách sạn</p>
+        </div>
+      </div>
+
+      {/* KPI Summary Cards */}
+      <div className="row g-4 mb-5">
+        <div className="col-xl-2 col-lg-4 col-md-6">
+          <KPICard
+            icon={FaHome}
+            title="Số phòng hiện có"
+            value={kpiStats.totalRooms.toString()}
+            subtitle="phòng"
+            color="#ffffff"
+            bgColor="#007bff"
+          />
+        </div>
+        <div className="col-xl-2 col-lg-4 col-md-6">
+          <KPICard
+            icon={FaBed}
+            title="Phòng đang trống"
+            value={kpiStats.emptyRooms.toString()}
+            subtitle="phòng"
+            color="#ffffff"
+            bgColor="#28a745"
+          />
+        </div>
+        <div className="col-xl-2 col-lg-4 col-md-6">
+          <KPICard
+            icon={FaUsers}
+            title="Phòng đang sử dụng"
+            value={kpiStats.occupiedRooms.toString()}
+            subtitle="phòng"
+            color="#ffffff"
+            bgColor="#17a2b8"
+          />
+        </div>
+        <div className="col-xl-2 col-lg-4 col-md-6">
+          <KPICard
+            icon={FaClipboardList}
+            title="Đơn đặt hôm nay"
+            value={kpiStats.todayBookings.toString()}
+            subtitle="đơn"
+            color="#ffffff"
+            bgColor="#fd7e14"
+          />
+        </div>
+        <div className="col-xl-2 col-lg-4 col-md-6">
+          <KPICard
+            icon={FaMoneyBillWave}
+            title="Doanh thu hôm nay"
+            value={`${(kpiStats.todayRevenue / 1000000).toFixed(1)}M`}
+            subtitle="VNĐ"
+            color="#ffffff"
+            bgColor="#6f42c1"
+          />
+        </div>
+        <div className="col-xl-2 col-lg-4 col-md-6">
+          <KPICard
+            icon={FaUserPlus}
+            title="Khách hàng mới"
+            value={kpiStats.newCustomersToday.toString()}
+            subtitle="người"
+            color="#ffffff"
+            bgColor="#20c997"
+          />
+        </div>
+      </div>
+
+      {/* Charts Section */}
+      <div className="row g-4 mb-5">
+        {/* Monthly Revenue Chart */}
+        <div className="col-xl-6 col-lg-12">
+          <div className="card h-100 shadow-sm border-0">
+            <div className="card-header bg-white border-0 pb-0">
+              <div className="d-flex justify-content-between align-items-center">
+                <h5 className="card-title fw-semibold mb-0">📈 Doanh thu theo tháng</h5>
+                <small className="text-muted">Năm {new Date().getFullYear()}</small>
               </div>
             </div>
-            <div className="col-sm-5 text-center text-sm-left">
-              <div className="card-body pb-0 px-0 px-md-4">
-                <img
-                  src="/images/illustrations/man-with-laptop-light.png"
-                  height="140"
-                  alt="View Badge User"
+            <div className="card-body">
+              <div style={{ height: '320px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={data.monthlyRevenue} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                    <defs>
+                      <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#007bff" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#007bff" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e9ecef" opacity={0.5} />
+                    <XAxis 
+                      dataKey="month" 
+                      stroke="#6c757d" 
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis 
+                      tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`} 
+                      stroke="#6c757d"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <Tooltip 
+                      formatter={(value) => [formatCurrency(value), 'Doanh thu']} 
+                      labelFormatter={(label) => `Tháng ${label}`}
+                      contentStyle={{
+                        backgroundColor: '#fff',
+                        border: '1px solid #dee2e6',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                        fontSize: '14px'
+                      }}
+                      cursor={{ stroke: '#007bff', strokeWidth: 1, strokeDasharray: '3 3' }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="revenue" 
+                      stroke="#007bff" 
+                      strokeWidth={3}
+                      fill="url(#revenueGradient)"
+                      dot={{ fill: '#007bff', strokeWidth: 2, r: 5 }}
+                      activeDot={{ r: 7, stroke: '#007bff', strokeWidth: 2, fill: '#fff' }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Room Usage Pie Chart */}
+        <div className="col-xl-6 col-lg-12">
+          <div className="card h-100 shadow-sm border-0">
+            <div className="card-header bg-white border-0 pb-0">
+              <div className="d-flex justify-content-between align-items-center">
+                <h5 className="card-title fw-semibold mb-0">🏠 Tỷ lệ sử dụng phòng</h5>
+                <small className="text-muted">Hiện tại</small>
+              </div>
+            </div>
+            <div className="card-body">
+              <div style={{ height: '320px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <defs>
+                      <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feDropShadow dx="2" dy="2" stdDeviation="3" floodOpacity="0.3"/>
+                      </filter>
+                    </defs>
+                    <Pie
+                      data={data.roomUsage}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={110}
+                      paddingAngle={2}
+                      dataKey="value"
+                      label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+                      labelLine={false}
+                      style={{ filter: "url(#shadow)" }}
+                    >
+                      {data.roomUsage.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={entry.color}
+                          stroke="#fff"
+                          strokeWidth={2}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value, name) => [value, name]}
+                      contentStyle={{
+                        backgroundColor: '#fff',
+                        border: '1px solid #dee2e6',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                        fontSize: '14px'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Revenue Source Bar Chart */}
+        <div className="col-xl-6 col-lg-12">
+          <div className="card h-100 shadow-sm border-0">
+            <div className="card-header bg-white border-0 pb-0">
+              <div className="d-flex justify-content-between align-items-center">
+                <h5 className="card-title fw-semibold mb-0">💳 Nguồn doanh thu</h5>
+                <small className="text-muted">Tháng này</small>
+              </div>
+            </div>
+            <div className="card-body">
+              <div style={{ height: '320px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data.revenueSource} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                    <defs>
+                      <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#28a745" stopOpacity={1}/>
+                        <stop offset="95%" stopColor="#20c997" stopOpacity={1}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e9ecef" opacity={0.5} />
+                    <XAxis 
+                      dataKey="source" 
+                      stroke="#6c757d" 
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis 
+                      tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`} 
+                      stroke="#6c757d"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <Tooltip 
+                      formatter={(value) => [formatCurrency(value), 'Doanh thu']} 
+                      contentStyle={{
+                        backgroundColor: '#fff',
+                        border: '1px solid #dee2e6',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                        fontSize: '14px'
+                      }}
+                      cursor={{ fill: 'rgba(40, 167, 69, 0.1)' }}
+                    />
+                    <Bar 
+                      dataKey="amount" 
+                      fill="url(#barGradient)"
+                      radius={[6, 6, 0, 0]}
+                      stroke="#fff"
+                      strokeWidth={1}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Customer Traffic Chart */}
+        <div className="col-xl-6 col-lg-12">
+          <div className="card h-100 shadow-sm border-0">
+            <div className="card-header bg-white border-0 pb-0">
+              <div className="d-flex justify-content-between align-items-center">
+                <h5 className="card-title fw-semibold mb-0">🧍‍♀️ Lượng khách theo thời gian</h5>
+                <small className="text-muted">7 ngày qua</small>
+              </div>
+            </div>
+            <div className="card-body">
+              <div style={{ height: '320px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={data.customerTraffic} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                    <defs>
+                      <linearGradient id="bookingGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#fd7e14" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#fd7e14" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="customerGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#17a2b8" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#17a2b8" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e9ecef" opacity={0.5} />
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="#6c757d" 
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis 
+                      stroke="#6c757d"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: '#fff',
+                        border: '1px solid #dee2e6',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                        fontSize: '14px'
+                      }}
+                      cursor={{ stroke: '#17a2b8', strokeWidth: 1, strokeDasharray: '3 3' }}
+                    />
+                    <Legend 
+                      wrapperStyle={{ paddingTop: '20px' }}
+                      iconType="circle"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="bookings" 
+                      stroke="#fd7e14" 
+                      strokeWidth={3}
+                      name="Đặt phòng"
+                      fill="url(#bookingGradient)"
+                      dot={{ fill: '#fd7e14', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, stroke: '#fd7e14', strokeWidth: 2, fill: '#fff' }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="customers" 
+                      stroke="#17a2b8" 
+                      strokeWidth={3}
+                      name="Khách hàng"
+                      fill="url(#customerGradient)"
+                      dot={{ fill: '#17a2b8', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, stroke: '#17a2b8', strokeWidth: 2, fill: '#fff' }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="row g-4">
+        {/* Recent Bookings Table */}
+        <div className="col-xl-8 col-lg-12">
+          <div className="card shadow-sm border-0 mb-4">
+            <div className="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+              <h5 className="card-title fw-semibold mb-0">📋 Đơn đặt phòng gần nhất</h5>
+              <select className="form-select form-select-sm" style={{ width: '200px' }}>
+                <option value="">Tất cả trạng thái</option>
+                <option value="Đang ở">Đang ở</option>
+                <option value="Hoàn tất">Hoàn tất</option>
+                <option value="Hủy">Hủy</option>
+              </select>
+            </div>
+            <div className="card-body p-0">
+              <div className="table-responsive">
+                <table className="table table-hover mb-0">
+                  <thead className="table-light">
+                    <tr>
+                      <th className="border-0 fw-semibold">Mã đơn</th>
+                      <th className="border-0 fw-semibold">Khách hàng</th>
+                      <th className="border-0 fw-semibold">Phòng</th>
+                      <th className="border-0 fw-semibold">Ngày nhận</th>
+                      <th className="border-0 fw-semibold">Ngày trả</th>
+                      <th className="border-0 fw-semibold">Trạng thái</th>
+                      <th className="border-0 fw-semibold">Tổng tiền</th>
+                      <th className="border-0"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentBookings.map((booking) => (
+                      <tr key={booking.id}>
+                        <td className="align-middle">
+                          <code className="bg-light text-dark px-2 py-1 rounded">
+                            {booking.id}
+                          </code>
+                        </td>
+                        <td className="align-middle">{booking.customer}</td>
+                        <td className="align-middle">
+                          <span className="fw-bold text-primary">{booking.room}</span>
+                        </td>
+                        <td className="align-middle">{booking.checkIn}</td>
+                        <td className="align-middle">{booking.checkOut}</td>
+                        <td className="align-middle">
+                          <span className={getStatusBadge(booking.status)}>
+                            {booking.status}
+                          </span>
+                        </td>
+                        <td className="align-middle fw-semibold">
+                          {formatCurrency(booking.total)}
+                        </td>
+                        <td className="align-middle">
+                          <button className="btn btn-sm btn-outline-primary">
+                            Xem chi tiết
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* Abnormal Rooms Table */}
+          <div className="card shadow-sm border-0">
+            <div className="card-header bg-white border-0">
+              <h5 className="card-title fw-semibold mb-0">⚠️ Danh sách phòng bất thường</h5>
+            </div>
+            <div className="card-body p-0">
+              <div className="table-responsive">
+                <table className="table table-hover mb-0">
+                  <thead className="table-light">
+                    <tr>
+                      <th className="border-0 fw-semibold">Mã phòng</th>
+                      <th className="border-0 fw-semibold">Tên phòng</th>
+                      <th className="border-0 fw-semibold">Tình trạng</th>
+                      <th className="border-0 fw-semibold">Ghi chú</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {abnormalRooms.map((room, index) => (
+                      <tr key={index}>
+                        <td className="align-middle">
+                          <code className="bg-light text-dark px-2 py-1 rounded">
+                            {room.code}
+                          </code>
+                        </td>
+                        <td className="align-middle">{room.name}</td>
+                        <td className="align-middle">
+                          <span 
+                            className="badge px-3 py-2"
+                            style={{ 
+                              backgroundColor: room.color,
+                              color: 'white'
+                            }}
+                          >
+                            {room.status}
+                          </span>
+                        </td>
+                        <td className="align-middle text-muted">{room.note}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Alerts Panel */}
+        <div className="col-xl-4 col-lg-12">
+          <div className="card shadow-sm border-0 h-100">
+            <div className="card-header bg-white border-0">
+              <h5 className="card-title fw-semibold mb-0">🔔 Cảnh báo & thông báo</h5>
+            </div>
+            <div className="card-body">
+              {alerts.map((alert, index) => (
+                <AlertItem
+                  key={index}
+                  icon={alert.icon}
+                  text={alert.text}
+                  color={alert.color}
                 />
-              </div>
+              ))}
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Hàng 1: Thẻ thống kê nhỏ (Sneat) */}
-      <div className="col-lg-4 col-md-4 order-1">
-        <div className="row">
-          <div className="col-lg-6 col-md-12 col-6 mb-4">
-            <div className="card">
-              <div className="card-body">
-                <div className="card-title d-flex align-items-start justify-content-between">
-                  <div className="avatar shrink-0">
-                    <img
-                      src="/images/icons/unicons/chart-success.png"
-                      alt="chart success"
-                      className="rounded"
-                    />
-                  </div>
-                </div>
-                <span className="fw-semibold d-block mb-1">
-                  Doanh thu hôm nay
-                </span>
-                <h3 className="card-title mb-2">
-                  {todayRevenue.toLocaleString("vi-VN", {
-                    style: "currency",
-                    currency: "VND",
-                  })}
-                </h3>
-              </div>
-            </div>
-          </div>
-          <div className="col-lg-6 col-md-12 col-6 mb-4">
-            <div className="card">
-              <div className="card-body">
-                <div className="card-title d-flex align-items-start justify-content-between">
-                  <div className="avatar shrink-0">
-                    <img
-                      src="/images/icons/unicons/wallet-info.png"
-                      alt="Credit Card"
-                      className="rounded"
-                    />
-                  </div>
-                </div>
-                <span>Booking hôm nay</span>
-                <h3 className="card-title text-nowrap mb-1">{todayBookings}</h3>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Hàng 2: Total Revenue (Sales Overview) */}
-      <div className="col-12 col-lg-8 order-2 order-md-3 order-lg-2 mb-4">
-        <div className="card">
-          <div className="card-header">
-            <h5 className="card-title m-0 me-2">Doanh thu theo tháng</h5>
-          </div>
-          <div className="card-body">
-            <div style={{ height: "350px" }}>
-              <RevenueChart />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Hàng 2: Thống kê còn lại */}
-      <div className="col-12 col-md-8 col-lg-4 order-3 order-md-2">
-        <div className="row">
-          <div className="col-6 mb-4">
-            <div className="card">
-              <div className="card-body">
-                <div className="card-title d-flex align-items-start justify-content-between">
-                  <div className="avatar shrink-0">
-                    <img
-                      src="/images/icons/unicons/paypal.png"
-                      alt="Credit Card"
-                      className="rounded"
-                    />
-                  </div>
-                </div>
-                <span className="d-block mb-1">New Clients</span>
-                <h3 className="card-title text-nowrap mb-2">+3,462</h3>
-              </div>
-            </div>
-          </div>
-          <div className="col-6 mb-4">
-            <div className="card">
-              <div className="card-body">
-                <div className="card-title d-flex align-items-start justify-content-between">
-                  <div className="avatar shrink-0">
-                    <img
-                      src="/images/icons/unicons/cc-primary.png"
-                      alt="Credit Card"
-                      className="rounded"
-                    />
-                  </div>
-                </div>
-                <span className="fw-semibold d-block mb-1">Total Sales</span>
-                <h3 className="card-title mb-2">$ 103,430</h3>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Hàng 3: Active Users & Satisfaction Rate */}
-
-      {/* Active Users (BookingChart) */}
-      <div className="col-md-6 col-lg-4 col-xl-4 order-0 mb-4">
-        <div className="card h-100">
-          <div className="card-header d-flex align-items-center justify-content-between pb-0">
-            <div className="card-title mb-0">
-              <h5 className="m-0 me-2">Doanh thu theo ngày</h5>
-            </div>
-          </div>
-          <div className="card-body">
-            <div style={{ height: "350px" }}>
-              <BookingChart />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Satisfaction Rate */}
-      <div className="col-md-6 col-lg-4 order-1 mb-4">
-        <div className="card h-100">
-          <div className="card-header">
-            <h5 className="card-title m-0 me-2">Satisfaction Rate</h5>
-          </div>
-          <div className="card-body">
-            <p>From all projects</p>
-            <div style={{ height: "250px", marginTop: "2rem" }}>
-              <SatisfactionChart />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Referral Tracking - Gộp vào "Transactions" card style */}
-      <div className="col-md-6 col-lg-4 order-2 mb-4">
-        <div className="card h-100">
-          <div className="card-header d-flex align-items-center justify-content-between">
-            <h5 className="card-title m-0 me-2">Referral Tracking</h5>
-          </div>
-          <div className="card-body">
-            <ul className="p-0 m-0">
-              <li className="d-flex mb-4 pb-1">
-                <div className="avatar shrink-0 me-3">
-                  <img
-                    src="/images/icons/unicons/wallet.png"
-                    alt="User"
-                    className="rounded"
-                  />
-                </div>
-                <div className="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                  <div className="me-2">
-                    <small className="text-muted d-block mb-1">Invited</small>
-                    <h6 className="mb-0">145 people</h6>
-                  </div>
-                  <div className="user-progress d-flex align-items-center gap-1">
-                    <h6 className="mb-0">1,465</h6>
-                    <span className="text-muted">Bonus</span>
-                  </div>
-                </div>
-              </li>
-              <li className="d-flex">
-                <div className="avatar shrink-0 me-3">
-                  <span className="avatar-initial rounded bg-label-primary">
-                    <i className="bx bx-shield-quarter"></i>
-                  </span>
-                </div>
-                <div className="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                  <div className="me-2">
-                    <h6 className="mb-0">Safety Score</h6>
-                    <small className="text-muted">Total Score</small>
-                  </div>
-                  <div className="user-progress">
-                    <h5 className="mb-0 text-primary">9.3</h5>
-                  </div>
-                </div>
-              </li>
-            </ul>
           </div>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default DashboardPage;
