@@ -1,18 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import api from '../../services/api';
-import Modal from "react-bootstrap/Modal";
-import Button from "react-bootstrap/Button";
-import Form from "react-bootstrap/Form";
-import Row from "react-bootstrap/Row";
-import Col from "react-bootstrap/Col";
+import api from '../../services/api'; // Đã sửa
+// import Modal from "react-bootstrap/Modal"; // Đã xóa
+// import Button from "react-bootstrap/Button"; // Đã xóa
+// import Form from "react-bootstrap/Form"; // Đã xóa
+// import Row from "react-bootstrap/Row"; // Đã xóa
+// import Col from "react-bootstrap/Col"; // Đã xóa
 import { format } from "date-fns";
+
+// Import component chung
+import Spinner from "../../components/common/Spinner"; // Đã sửa
+import Button from "../../components/common/Button"; // Đã sửa
+import Modal from "../../components/common/Modal"; // Đã sửa
 
 function PromotionsManager() {
   const [promos, setPromos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Filters
+  // const [error, setError] = useState(null); // Đã thay thế bằng state error/success mới
+  // [.. Các state filter giữ nguyên ..]
   const [statusFilter, setStatusFilter] = useState('all');
   const [roomTypeFilter, setRoomTypeFilter] = useState('all');
   const [discountTypeFilter, setDiscountTypeFilter] = useState('all');
@@ -56,8 +60,7 @@ function PromotionsManager() {
 
   const normalized = promos.map(normalize);
 
-  // roomTypes will be derived from the fetched rooms state below (defined after rooms state)
-  // Modal / form state (must be declared at top-level of component)
+  // [.. Các state form giữ nguyên ..]
   const [showAddModal, setShowAddModal] = useState(false);
   const [form, setForm] = useState({
     MaKhuyenMai: "",
@@ -76,7 +79,6 @@ function PromotionsManager() {
   const [formErrors, setFormErrors] = useState({});
   const [rooms, setRooms] = useState([]);
   const [roomsVisible, setRoomsVisible] = useState({});
-  // derive room types from the fetched rooms
   const roomTypes = Array.from(new Set((rooms || []).map(r => r.LoaiPhong).filter(Boolean)));
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({});
@@ -87,15 +89,29 @@ function PromotionsManager() {
   const [inlineSaving, setInlineSaving] = useState(false);
   const [inlineConflicts, setInlineConflicts] = useState({});
   const [debugMessage, setDebugMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  // const [successMessage, setSuccessMessage] = useState(''); // Đã thay thế
   const [toggleLoadingId, setToggleLoadingId] = useState(null);
 
+  // State Error/Success chuẩn
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
+
+  const showSuccessMessage = (message) => {
+    setSuccessMessage(message);
+    setTimeout(() => setSuccessMessage(null), 3000);
+  };
+  // const showAppError = (message) => { // Đã có setError
+  //   setError(message);
+  // };
+
+  // Helper tạo mã KM (giữ nguyên)
   const generatePromoCode = () => {
     const prefix = "KM_AUTO";
     const num = Math.floor(100 + Math.random() * 900);
     return `${prefix}${num}`;
   };
 
+  // [.. Các handler logic (handleShowAddModal, validateForm, v.v...) giữ nguyên ..]
   const handleShowAddModal = () => {
     setForm(f => ({
       ...f,
@@ -157,12 +173,10 @@ function PromotionsManager() {
     }
   };
 
-  // toggle showing list of rooms for a given room type
   const toggleRoomsForType = (type) => {
     setRoomsVisible(s => ({ ...s, [type]: !s[type] }));
   };
 
-  // toggle selection of a specific room id
   const toggleRoomSelection = (roomId, checked) => {
     setForm(f => {
       const setIds = new Set(f.RoomIds || []);
@@ -171,7 +185,6 @@ function PromotionsManager() {
     });
   };
 
-  // load rooms for selection
   useEffect(() => {
     let mounted = true;
     api.get('/rooms')
@@ -212,6 +225,7 @@ function PromotionsManager() {
       setPromos(Array.isArray(resp.data) ? resp.data : []);
       setError(null);
       setShowAddModal(false);
+      showSuccessMessage("Thêm khuyến mãi thành công!"); // Thêm thông báo
     } catch (err) {
       console.error(err);
       setError(err.message || 'Lỗi khi thêm khuyến mãi mới');
@@ -237,7 +251,6 @@ function PromotionsManager() {
     setShowEditModal(true);
   };
 
-  // Enhanced edit show: fetch promo details (rooms) and pre-select applied rooms
   useEffect(() => {
     // no-op: placeholder to keep hooks order stable if needed in future
   }, []);
@@ -304,14 +317,12 @@ function PromotionsManager() {
     setInlineForm(f => ({ ...f, [name]: value }));
   };
 
-  // Helper to pick a stable id for API calls (MaKhuyenMai preferred)
   const getPromoApiId = (p) => {
     const promo = p && p.raw && p.raw.promo ? p.raw.promo : (p && p.promo ? p.promo : p);
     // Prefer explicit MaKhuyenMai, then the group's id (which may be TenChuongTrinh normalized), then TenChuongTrinh
     return (promo && (promo.MaKhuyenMai)) || p.id || (promo && (promo.TenChuongTrinh || promo._id || promo.MaKM)) || null;
   };
 
-  // Toggle TrangThai for a promotion. Sends PUT /promotions/:id with { TrangThai }
   const togglePromoStatus = async (p) => {
     const id = getPromoApiId(p);
     if (!id) {
@@ -334,6 +345,7 @@ function PromotionsManager() {
       const data = resp && resp.data ? resp.data : resp;
       setPromos(Array.isArray(data) ? data : []);
       setError(null);
+      showSuccessMessage(`Đã cập nhật trạng thái: ${newStatus}`); // Thêm thông báo
     } catch (err) {
       console.error('Lỗi khi thay đổi trạng thái khuyến mãi', err);
       setError(err.message || 'Lỗi khi thay đổi trạng thái khuyến mãi');
@@ -342,8 +354,8 @@ function PromotionsManager() {
     }
   };
 
-  // Quick edit in-list handlers
   const handleQuickEditShow = async (p) => {
+    // ... (Toàn bộ logic RẤT PHỨC TẠP này được giữ nguyên) ...
     const id = getPromoApiId(p) || p.id;
     const promo = p && p.raw && p.raw.promo ? p.raw.promo : (p && p.promo ? p.promo : p);
     console.log('🎯 DEBUG: Starting handleQuickEditShow');
@@ -490,6 +502,7 @@ function PromotionsManager() {
   };
 
   const handleQuickEditSave = async (p) => {
+    // ... (Toàn bộ logic RẤT PHỨC TẠP này được giữ nguyên) ...
     console.log('🚀 DEBUG: Starting handleQuickEditSave');
     console.log('🚀 Promo object:', p);
     console.log('🚀 Current inlineForm:', inlineForm);
@@ -589,8 +602,8 @@ function PromotionsManager() {
     if (mismatches.length) {
       setDebugMessage(`Saved but mismatch:\n${mismatches.join('\n')}`);
     } else {
-      setSuccessMessage('Lưu thành công');
-      setTimeout(() => setSuccessMessage(''), 2500);
+      showSuccessMessage('Lưu thành công'); // Đã thay thế
+      // setTimeout(() => setSuccessMessage(''), 2500); // Đã thay thế
       setTimeout(() => setDebugMessage(''), 2000);
     }
   } else {
@@ -637,6 +650,7 @@ function PromotionsManager() {
       const resp = await api.get('/promotions?status=all');
       setPromos(Array.isArray(resp.data) ? resp.data : []);
       setShowEditModal(false);
+      showSuccessMessage("Cập nhật thành công!"); // Thêm thông báo
     } catch (err) {
       console.error('Lỗi cập nhật', err);
       setEditErrors({ _global: err.message || 'Lỗi khi cập nhật khuyến mãi' });
@@ -644,6 +658,7 @@ function PromotionsManager() {
   };
 
   const filtered = normalized.filter((p) => {
+    // ... (Logic filter giữ nguyên) ...
     // status
     const now = new Date();
     const isActive = (!p.start || p.start <= now) && (!p.end || p.end >= now);
@@ -671,285 +686,209 @@ function PromotionsManager() {
     return true;
   });
 
-  return (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1>Quản lý Khuyến mãi</h1>
-        <Button variant="success" onClick={handleShowAddModal}>➕ Thêm khuyến mãi mới</Button>
-      </div>
+  // Helper render trạng thái
+  const getStatusColor = (status, p) => {
+    const now = new Date();
+    const promo = p && p.raw && p.raw.promo ? p.raw.promo : (p && p.promo ? p.promo : p);
+    
+    // Ưu tiên trạng thái từ DB (Hoạt động / Ngưng hoạt động)
+    const dbStatus = promo?.TrangThai || status;
 
-      <div className="card mb-3 p-3">
-        <div className="row g-2">
-          <div className="col-md-3">
-            <input className="form-control" placeholder="Tìm theo mã hoặc tên" value={search} onChange={e => setSearch(e.target.value)} />
+    if (dbStatus === 'Hoạt động') {
+        // Nếu 'Hoạt động', kiểm tra xem có bị hết hạn không
+        if (p?.end && p.end < now) return { bg: 'bg-label-secondary', text: 'Hết hạn' };
+        // Kiểm tra xem có phải sắp diễn ra không
+        if (p?.start && p.start > now) return { bg: 'bg-label-info', text: 'Sắp diễn ra' };
+        // Nếu không, nó thực sự đang hoạt động
+        return { bg: 'bg-label-success', text: 'Hoạt động' };
+    }
+    if (dbStatus === 'Ngưng hoạt động') {
+        return { bg: 'bg-label-danger', text: 'Ngưng hoạt động' };
+    }
+    
+    // Logic dự phòng nếu không có TrangThai
+    if (p?.end && p.end < now) return { bg: 'bg-label-secondary', text: 'Hết hạn' };
+    if ((!p?.start || p.start <= now) && (!p?.end || p.end >= now)) return { bg: 'bg-label-success', text: 'Hoạt động' };
+    
+    return { bg: 'bg-label-info', text: 'Sắp diễn ra' };
+  };
+
+  // Tính toán các thẻ thống kê
+  const counts = {
+    active: 0,
+    expired: 0,
+    upcoming: 0,
+    disabled: 0,
+  };
+  const now = new Date();
+  normalized.forEach(p => {
+    const promo = p.raw?.promo || p.promo || p;
+    const dbStatus = promo?.TrangThai;
+
+    if (dbStatus === 'Ngưng hoạt động') {
+      counts.disabled++;
+    } else if (p.end && p.end < now) {
+      counts.expired++;
+    } else if (p.start && p.start > now) {
+      counts.upcoming++;
+    } else if ((!p.start || p.start <= now) && (!p.end || p.end >= now)) {
+      counts.active++;
+    }
+  });
+
+
+  return (
+    <div className="container-fluid px-0"> {/* Bố cục gốc */}
+      {/* Thông báo */}
+      {successMessage && (
+        <div className="alert alert-success" role="alert">
+          <i className="fas fa-check-circle me-2"></i>
+          {successMessage}
+        </div>
+      )}
+      {error && (
+        <div className="alert alert-danger" role="alert">
+          <i className="fas fa-exclamation-triangle me-2"></i>
+          {error}
+        </div>
+      )}
+      {debugMessage && (
+        <div className="alert alert-info small" role="alert">
+          <strong>Debug:</strong>
+          <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{debugMessage}</pre>
+        </div>
+      )}
+      
+      {/* Thẻ thống kê */}
+      {!loading && (
+        <div className="row g-4 mb-4">
+          <div className="col-lg-3 col-md-6">
+            <div className="card">
+              <div className="card-body">
+                <div className="card-title d-flex align-items-start justify-content-between">
+                  <div className="avatar shrink-0">
+                    <span className="avatar-initial rounded bg-label-success">
+                      <i className="bx bx-check-circle"></i>
+                    </span>
+                  </div>
+                </div>
+                <span className="fw-semibold d-block mb-1">Hoạt động</span>
+                <h3 className="card-title mb-2">{counts.active}</h3>
+              </div>
+            </div>
           </div>
-          <div className="col-md-2">
-            <select className="form-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-              <option value="all">Tất cả trạng thái</option>
-              <option value="active">Hoạt động</option>
-              <option value="expired">Hết hạn</option>
-            </select>
+          <div className="col-lg-3 col-md-6">
+            <div className="card">
+              <div className="card-body">
+                <div className="card-title d-flex align-items-start justify-content-between">
+                  <div className="avatar shrink-0">
+                    <span className="avatar-initial rounded bg-label-info">
+                      <i className="bx bx-time-five"></i>
+                    </span>
+                  </div>
+                </div>
+                <span className="fw-semibold d-block mb-1">Sắp diễn ra</span>
+                <h3 className="card-title mb-2">{counts.upcoming}</h3>
+              </div>
+            </div>
           </div>
-          <div className="col-md-2">
-            <select className="form-select" value={roomTypeFilter} onChange={e => setRoomTypeFilter(e.target.value)}>
-              <option value="all">Tất cả loại phòng</option>
-              {roomTypes.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
+          <div className="col-lg-3 col-md-6">
+            <div className="card">
+              <div className="card-body">
+                <div className="card-title d-flex align-items-start justify-content-between">
+                  <div className="avatar shrink-0">
+                    <span className="avatar-initial rounded bg-label-secondary">
+                      <i className="bx bx-calendar-exclamation"></i>
+                    </span>
+                  </div>
+                </div>
+                <span className="fw-semibold d-block mb-1">Hết hạn</span>
+                <h3 className="card-title mb-2">{counts.expired}</h3>
+              </div>
+            </div>
           </div>
-          <div className="col-md-2">
-            <select className="form-select" value={discountTypeFilter} onChange={e => setDiscountTypeFilter(e.target.value)}>
-              <option value="all">Tất cả loại giảm</option>
-              <option value="percent">Phần trăm</option>
-              <option value="amount">Số tiền</option>
-            </select>
+          <div className="col-lg-3 col-md-6">
+            <div className="card">
+              <div className="card-body">
+                <div className="card-title d-flex align-items-start justify-content-between">
+                  <div className="avatar shrink-0">
+                    <span className="avatar-initial rounded bg-label-danger">
+                      <i className="bx bx-x-circle"></i>
+                    </span>
+                  </div>
+                </div>
+                <span className="fw-semibold d-block mb-1">Ngưng hoạt động</span>
+                <h3 className="card-title mb-2">{counts.disabled}</h3>
+              </div>
+            </div>
           </div>
-          <div className="col-md-3 d-flex gap-2">
-            <input type="date" className="form-control" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
-            <input type="date" className="form-control" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+        </div>
+      )}
+
+      {/* Thẻ Bộ lọc */}
+      <div className="card mb-4">
+        <div className="card-header">
+          <h5 className="card-title mb-0">Bộ lọc và Tìm kiếm</h5>
+        </div>
+        <div className="card-body">
+          <div className="row g-3 align-items-end">
+            <div className="col-lg-3 col-md-6">
+              <label className="form-label"><i className="bx bx-search me-1"></i>Tìm kiếm</label>
+              <input className="form-control" placeholder="Tìm theo mã hoặc tên" value={search} onChange={e => setSearch(e.target.value)} />
+            </div>
+            <div className="col-lg-2 col-md-6">
+              <label className="form-label"><i className="bx bx-toggle-right me-1"></i>Trạng thái</label>
+              <select className="form-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+                <option value="all">Tất cả trạng thái</option>
+                <option value="active">Hoạt động</option>
+                <option value="expired">Hết hạn</option>
+              </select>
+            </div>
+            <div className="col-lg-2 col-md-6">
+              <label className="form-label"><i className="bx bx-bed me-1"></i>Loại phòng</label>
+              <select className="form-select" value={roomTypeFilter} onChange={e => setRoomTypeFilter(e.target.value)}>
+                <option value="all">Tất cả loại phòng</option>
+                {roomTypes.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div className="col-lg-2 col-md-6">
+              <label className="form-label"><i className="bx bx-purchase-tag-alt me-1"></i>Loại giảm</label>
+              <select className="form-select" value={discountTypeFilter} onChange={e => setDiscountTypeFilter(e.target.value)}>
+                <option value="all">Tất cả loại giảm</option>
+                <option value="percent">Phần trăm</option>
+                <option value="amount">Số tiền</option>
+              </select>
+            </div>
+            <div className="col-lg-3 col-md-12">
+              <label className="form-label"><i className="bx bx-calendar me-1"></i>Ngày diễn ra</label>
+              <div className="d-flex gap-2">
+                <input type="date" className="form-control" value={dateFrom} onChange={e => setDateFrom(e.target.value)} title="Từ ngày" />
+                <input type="date" className="form-control" value={dateTo} onChange={e => setDateTo(e.target.value)} title="Đến ngày" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div>
-        {loading && <div>Đang tải...</div>}
-        {error && <div className="alert alert-danger">{error}</div>}
+      {/* Thẻ Bảng chính */}
+      <div className="card">
+        <div className="card-header d-flex justify-content-between align-items-center">
+          <h5 className="card-title mb-0">Quản lý Khuyến mãi</h5>
+          <Button className="btn btn-primary" onClick={handleShowAddModal}>
+            <i className="bx bx-plus me-1"></i> Thêm mới
+          </Button>
+        </div>
 
-        {!loading && !error && (
-          <div className="table-responsive">
-            {debugMessage && (
-              <div className="alert alert-info small">
-                <strong>Debug:</strong>
-                <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{debugMessage}</pre>
-              </div>
-            )}
-            {successMessage && (
-              <div className="alert alert-success small">
-                {successMessage}
-              </div>
-            )}
-            {/* Modals rendered outside the table to ensure valid JSX nesting */}
-            <Modal show={showAddModal} onHide={handleCloseAddModal}>
-              <Form onSubmit={handleSubmit}>
-                <Modal.Header closeButton>
-                  <Modal.Title>Thêm chương trình khuyến mãi mới</Modal.Title>
-                </Modal.Header>
-                <Modal.Body className="py-3" style={{ maxHeight: '65vh', overflowY: 'auto' }}>
-                  <Row className="g-3">
-                    <Col xs={12}>
-                      <Form.Group>
-                        <Form.Label className="small text-muted">Mã khuyến mãi</Form.Label>
-                        <Form.Control type="text" value={form.MaKhuyenMai} disabled />
-                      </Form.Group>
-                    </Col>
+        {loading && (
+          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "300px" }}>
+            <Spinner />
+          </div>
+        )}
 
-                    <Col md={8} xs={12}>
-                      <Form.Group>
-                        <Form.Label className="small text-muted">Tên chương trình</Form.Label>
-                        <Form.Control name="TenChuongTrinh" value={form.TenChuongTrinh} onChange={handleFormChange} isInvalid={!!formErrors.TenChuongTrinh} placeholder="Nhập tên chương trình" />
-                        <Form.Control.Feedback type="invalid">{formErrors.TenChuongTrinh}</Form.Control.Feedback>
-                      </Form.Group>
-                    </Col>
-
-                    <Col md={4} xs={12}>
-                      <Form.Group>
-                        <Form.Label className="small text-muted">Loại giảm giá</Form.Label>
-                        <Form.Select name="LoaiGiamGia" value={form.LoaiGiamGia} onChange={handleFormChange}>
-                          <option value="Phần trăm">Phần trăm</option>
-                          <option value="Số tiền">Số tiền</option>
-                        </Form.Select>
-                      </Form.Group>
-                    </Col>
-
-                    <Col xs={12}>
-                      <Form.Group>
-                        <Form.Label className="small text-muted">Giá trị giảm</Form.Label>
-                        <Form.Control name="GiaTriGiam" type="number" value={form.GiaTriGiam} onChange={handleFormChange} isInvalid={!!formErrors.GiaTriGiam} placeholder="Nhập số (ví dụ: 20 hoặc 100000)" />
-                        <Form.Control.Feedback type="invalid">{formErrors.GiaTriGiam}</Form.Control.Feedback>
-                      </Form.Group>
-                    </Col>
-
-                    <Col md={6} xs={12}>
-                      <Form.Group>
-                        <Form.Label className="small text-muted">Ngày bắt đầu</Form.Label>
-                        <Form.Control name="NgayBatDau" type="date" value={form.NgayBatDau} onChange={handleFormChange} isInvalid={!!formErrors.NgayBatDau} />
-                        <Form.Control.Feedback type="invalid">{formErrors.NgayBatDau}</Form.Control.Feedback>
-                      </Form.Group>
-                    </Col>
-
-                    <Col md={6} xs={12}>
-                      <Form.Group>
-                        <Form.Label className="small text-muted">Ngày kết thúc</Form.Label>
-                        <Form.Control name="NgayKetThuc" type="date" value={form.NgayKetThuc} onChange={handleFormChange} isInvalid={!!formErrors.NgayKetThuc} />
-                        <Form.Control.Feedback type="invalid">{formErrors.NgayKetThuc}</Form.Control.Feedback>
-                      </Form.Group>
-                    </Col>
-
-                    <Col xs={12}>
-                      <Form.Group>
-                        <Form.Label className="small text-muted">Loại phòng áp dụng</Form.Label>
-                        <div className="mb-2">
-                          <div className="form-check">
-                            <input className="form-check-input" type="checkbox" id="chk-apdung-tatca" name="ApDungTatCaPhong" checked={form.ApDungTatCaPhong} onChange={handleFormChange} />
-                            <label className="form-check-label ms-2" htmlFor="chk-apdung-tatca">Áp dụng cho tất cả phòng</label>
-                          </div>
-                        </div>
-                        <div>
-                          <div className="d-flex flex-wrap gap-2">
-                            {roomTypes.length ? roomTypes.map((type) => (
-                              <div key={type} className="me-2">
-                                <div className="d-flex align-items-center">
-                                  <div className="form-check">
-                                    <input className="form-check-input" type="checkbox" id={`chk-${type}`} name="LoaiPhongApDung" value={type} checked={form.LoaiPhongApDung.includes(type)} onChange={handleFormChange} disabled={form.ApDungTatCaPhong} />
-                                    <label className="form-check-label ms-2" htmlFor={`chk-${type}`}>{type}</label>
-                                  </div>
-                                  <button type="button" className="btn btn-sm btn-link ms-2" onClick={() => toggleRoomsForType(type)} disabled={form.ApDungTatCaPhong}>
-                                    Chọn phòng
-                                  </button>
-                                </div>
-                                {roomsVisible[type] && (
-                                  <div className="border rounded p-2 mt-2" style={{ maxHeight: 160, overflowY: 'auto', minWidth: 220 }}>
-                                    {rooms.filter(r => r.LoaiPhong === type).length ? (
-                                      rooms.filter(r => r.LoaiPhong === type).map(rm => {
-                                        const hasConflict = form.NgayBatDau && form.NgayKetThuc && rm.KhuyenMai && rm.KhuyenMai.some(km => {
-                                          if (km.TrangThai !== 'Hoạt động') return false;
-                                          const start = new Date(km.NgayBatDau);
-                                          const end = new Date(km.NgayKetThuc);
-                                          const fstart = new Date(form.NgayBatDau);
-                                          const fend = new Date(form.NgayKetThuc);
-                                          return start <= fend && end >= fstart;
-                                        });
-                                        return (
-                                        <div key={rm._id} className="form-check">
-                                          <input className="form-check-input" type="checkbox" id={`room-${rm._id}`} checked={(form.RoomIds || []).includes(String(rm._id))} onChange={e => toggleRoomSelection(String(rm._id), e.target.checked)} disabled={form.ApDungTatCaPhong || hasConflict} />
-                                          <label className={`form-check-label ms-2 ${hasConflict ? 'text-muted' : ''}`} htmlFor={`room-${rm._id}`}>
-                                            {rm.TenPhong || rm.MaPhong || rm._id}
-                                            {hasConflict && <small className="text-danger ms-1">(đã có KM)</small>}
-                                          </label>
-                                        </div>
-                                        );
-                                      })
-                                    ) : (
-                                      <div className="small text-muted">Không có phòng cho loại này</div>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            )) : <div className="text-muted small">Không có loại phòng</div>}
-                          </div>
-                        </div>
-                        {formErrors.LoaiPhongApDung && <div className="text-danger small mt-1">{formErrors.LoaiPhongApDung}</div>}
-                      </Form.Group>
-                    </Col>
-
-                    <Col xs={12}>
-                      <Form.Group>
-                        <Form.Label className="small text-muted">Điều kiện</Form.Label>
-                        <Form.Control name="DieuKien" value={form.DieuKien} onChange={handleFormChange} placeholder="Ví dụ: Áp dụng cho đơn từ 2 đêm trở lên" />
-                      </Form.Group>
-                    </Col>
-
-                    <Col xs={12}>
-                      <Form.Group>
-                        <Form.Label className="small text-muted">Mô tả chi tiết</Form.Label>
-                        <Form.Control name="MoTa" as="textarea" rows={3} value={form.MoTa} onChange={handleFormChange} placeholder="Mô tả chi tiết chương trình..." />
-                      </Form.Group>
-                    </Col>
-
-                    <Col xs={12} className="mb-2">
-                      <Form.Group>
-                        <Form.Label className="small text-muted">Trạng thái</Form.Label>
-                        <Form.Control type="text" value={form.TrangThai} disabled />
-                      </Form.Group>
-                    </Col>
-                  </Row>
-                </Modal.Body>
-                <Modal.Footer>
-                  <Button variant="secondary" onClick={handleCloseAddModal}>Đóng</Button>
-                  <Button variant="primary" type="submit">Lưu</Button>
-                </Modal.Footer>
-              </Form>
-            </Modal>
-            {/* Edit modal */}
-            <Modal show={showEditModal} onHide={handleEditClose}>
-              <Form onSubmit={handleEditSubmit}>
-                <Modal.Header closeButton>
-                  <Modal.Title>Sửa chương trình khuyến mãi</Modal.Title>
-                </Modal.Header>
-                <Modal.Body className="py-3" style={{ maxHeight: '65vh', overflowY: 'auto' }}>
-                  <Row className="g-3">
-                    <Col xs={12}>
-                      <Form.Group>
-                        <Form.Label className="small text-muted">Mã khuyến mãi</Form.Label>
-                        <Form.Control type="text" value={editForm.MaKhuyenMai || editForm.id || ''} disabled />
-                      </Form.Group>
-                    </Col>
-                    <Col xs={12}>
-                      <Form.Group>
-                        <Form.Label className="small text-muted">Tên chương trình</Form.Label>
-                        <Form.Control name="TenChuongTrinh" value={editForm.TenChuongTrinh || ''} onChange={handleEditChange} isInvalid={!!editErrors.TenChuongTrinh} />
-                        <Form.Control.Feedback type="invalid">{editErrors.TenChuongTrinh}</Form.Control.Feedback>
-                      </Form.Group>
-                    </Col>
-                    <Col md={6} xs={12}>
-                      <Form.Group>
-                        <Form.Label className="small text-muted">Giá trị giảm</Form.Label>
-                        <Form.Control name="GiaTriGiam" type="number" value={editForm.GiaTriGiam || ''} onChange={handleEditChange} isInvalid={!!editErrors.GiaTriGiam} />
-                        <Form.Control.Feedback type="invalid">{editErrors.GiaTriGiam}</Form.Control.Feedback>
-                      </Form.Group>
-                    </Col>
-                    <Col md={6} xs={12}>
-                      <Form.Group>
-                        <Form.Label className="small text-muted">Loại giảm giá</Form.Label>
-                        <Form.Select name="LoaiGiamGia" value={editForm.LoaiGiamGia || ''} onChange={handleEditChange}>
-                          <option value="Phần trăm">Phần trăm</option>
-                          <option value="Số tiền">Số tiền</option>
-                        </Form.Select>
-                      </Form.Group>
-                    </Col>
-                    <Col md={6} xs={12}>
-                      <Form.Group>
-                        <Form.Label className="small text-muted">Ngày bắt đầu</Form.Label>
-                        <Form.Control name="NgayBatDau" type="date" value={editForm.NgayBatDau || ''} onChange={handleEditChange} isInvalid={!!editErrors.NgayBatDau} />
-                        <Form.Control.Feedback type="invalid">{editErrors.NgayBatDau}</Form.Control.Feedback>
-                      </Form.Group>
-                    </Col>
-                    <Col md={6} xs={12}>
-                      <Form.Group>
-                        <Form.Label className="small text-muted">Ngày kết thúc</Form.Label>
-                        <Form.Control name="NgayKetThuc" type="date" value={editForm.NgayKetThuc || ''} onChange={handleEditChange} isInvalid={!!editErrors.NgayKetThuc} />
-                        <Form.Control.Feedback type="invalid">{editErrors.NgayKetThuc}</Form.Control.Feedback>
-                      </Form.Group>
-                    </Col>
-                    <Col xs={12}>
-                      <Form.Group>
-                        <Form.Label className="small text-muted">Điều kiện</Form.Label>
-                        <Form.Control name="DieuKien" value={editForm.DieuKien || ''} onChange={handleEditChange} />
-                      </Form.Group>
-                    </Col>
-                    <Col xs={12}>
-                      <Form.Group>
-                        <Form.Label className="small text-muted">Mô tả</Form.Label>
-                        <Form.Control name="MoTa" as="textarea" rows={3} value={editForm.MoTa || ''} onChange={handleEditChange} />
-                      </Form.Group>
-                    </Col>
-                    <Col xs={12} className="mb-2">
-                      <Form.Group>
-                        <Form.Label className="small text-muted">Trạng thái</Form.Label>
-                        <Form.Select name="TrangThai" value={editForm.TrangThai || 'Hoạt động'} onChange={handleEditChange}>
-                          <option>Hoạt động</option>
-                          <option>Ngưng hoạt động</option>
-                        </Form.Select>
-                      </Form.Group>
-                    </Col>
-                  </Row>
-                </Modal.Body>
-                <Modal.Footer>
-                  <Button variant="secondary" onClick={handleEditClose}>Đóng</Button>
-                  <Button variant="primary" type="submit">Lưu</Button>
-                </Modal.Footer>
-              </Form>
-            </Modal>
-            <table className="table table-striped">
+        {!loading && (
+          <div className="table-responsive text-nowrap">
+            {/* Modals đã được chuyển ra ngoài */}
+            <table className="table table-hover">
               <thead>
                 <tr>
                   <th>Mã</th>
@@ -962,13 +901,14 @@ function PromotionsManager() {
                   <th>Hành động</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="table-border-bottom-0">
                 {filtered.map((p, idx) => (
                   <tr key={idx}>
-                    <td>{p.id}</td>
+                    <td><span className="fw-semibold">{p.id}</span></td>
                     <td>{p.title}</td>
                     <td>{p.type}</td>
                     <td>{(() => {
+                      // ... (logic render giá trị giữ nguyên) ...
                       if (p.value === null || p.value === undefined || p.value === '') return '—';
                       const t = (p.type || '').toString().toLowerCase();
                       const isPercent = t.includes('phần') || t.includes('percent') || String(p.value).includes('%');
@@ -986,8 +926,10 @@ function PromotionsManager() {
                     <td>{(p.rooms || []).join(', ')}</td>
                     {editingRow === (getPromoApiId(p) || p.id) ? (
                       <>
+                        {/* PHẦN SỬA NHANH (INLINE) - Giao diện giữ nguyên, chỉ đổi Button */}
                         <td colSpan={2}>
                           <div className="d-flex flex-column gap-2">
+                            {/* ... (Toàn bộ input của form inline giữ nguyên) ... */}
                             <div className="d-flex gap-2">
                               <input className="form-control form-control-sm" name="TenChuongTrinh" value={inlineForm.TenChuongTrinh || ''} onChange={handleInlineChange} placeholder="Tên chương trình" />
                               <input className="form-control form-control-sm" name="GiaTriGiam" type="number" value={inlineForm.GiaTriGiam || ''} onChange={handleInlineChange} placeholder="Giá trị" />
@@ -1005,6 +947,7 @@ function PromotionsManager() {
                             </div>
                             <textarea className="form-control form-control-sm" name="MoTa" value={inlineForm.MoTa || ''} onChange={handleInlineChange} placeholder="Mô tả (Tuỳ chọn)"></textarea>
                             <div className="mt-2 border rounded p-2 bg-light">
+                              {/* ... (Logic chọn phòng inline giữ nguyên) ... */}
                               <div className="d-flex align-items-center mb-2">
                                 <div className="form-check">
                                   <input className="form-check-input" type="checkbox" id={`inline-apdung-tatca-${p.id || idx}`} name="ApDungTatCaPhong" checked={!!inlineForm.ApDungTatCaPhong} onChange={handleInlineChange} />
@@ -1043,14 +986,16 @@ function PromotionsManager() {
                                 ))}
                               </div>
                             </div>
+                            
                             <div className="d-flex align-items-center gap-2">
                               <div className="form-check form-switch m-0">
                                 <input className="form-check-input" type="checkbox" id={`inline-toggle-${p.id || idx}`} name="TrangThai" checked={(inlineForm.TrangThai || 'Hoạt động') === 'Hoạt động'} onChange={handleInlineChange} />
                                 <label className="form-check-label small ms-2" htmlFor={`inline-toggle-${p.id || idx}`}>{inlineForm.TrangThai || 'Hoạt động'}</label>
                               </div>
                               <div className="ms-auto">
-                                <Button size="sm" variant="success" onClick={() => handleQuickEditSave(p)} disabled={inlineSaving}>Lưu</Button>
-                                <Button size="sm" className="ms-2" variant="secondary" onClick={handleQuickEditCancel} disabled={inlineSaving}>Hủy</Button>
+                                {/* Thay thế Button */}
+                                <Button size="sm" className="btn btn-success btn-sm" onClick={() => handleQuickEditSave(p)} disabled={inlineSaving}>Lưu</Button>
+                                <Button size="sm" className="btn btn-secondary btn-sm ms-2" onClick={handleQuickEditCancel} disabled={inlineSaving}>Hủy</Button>
                               </div>
                             </div>
                             {inlineErrors.TenChuongTrinh && <div className="text-danger small">{inlineErrors.TenChuongTrinh}</div>}
@@ -1063,27 +1008,40 @@ function PromotionsManager() {
                       <>
                         <td>
                           {(() => {
-                            const promo = p && p.raw && p.raw.promo ? p.raw.promo : (p && p.promo ? p.promo : p);
-                            const now = new Date();
-                            const isActive = promo && promo.TrangThai ? promo.TrangThai === 'Hoạt động' : (!p.end || p.end >= now) && (!p.start || p.start <= now);
-                            const label = promo && promo.TrangThai ? promo.TrangThai : (p.end && p.end < now ? 'Hết hạn' : ((!p.start || p.start <= now) && (!p.end || p.end >= now) ? 'Hoạt động' : 'Sắp diễn ra'));
+                            // ... (Logic render trạng thái) ...
+                            const statusInfo = getStatusColor(null, p);
                             return (
                               <span
-                                className={`badge px-3 py-2 rounded-pill fw-semibold ${isActive ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'}`}
-                                style={{ fontSize: '12px', cursor: 'pointer', transition: 'all 0.15s ease' }}
+                                className={`badge ${statusInfo.bg}`}
+                                style={{ cursor: 'pointer' }}
                                 onClick={() => togglePromoStatus(p)}
                               >
                                 {toggleLoadingId === (getPromoApiId(p) || p.id) ? (
-                                  <><i className="fas fa-spinner fa-spin me-1"></i>Đang xử lý...</>
+                                  <Spinner size="sm" />
                                 ) : (
-                                  <><i className={`fas ${isActive ? 'fa-check-circle' : 'fa-pause-circle'} me-1`}></i>{label}</>
+                                  statusInfo.text
                                 )}
                               </span>
                             );
                           })()}
                         </td>
                         <td>
-                          <Button size="sm" variant="outline-primary" onClick={() => handleQuickEditShow(p)}>Sửa nhanh</Button>
+                          {/* Thay thế Button */}
+                          <Button 
+                            className="btn btn-icon btn-sm btn-outline-primary" 
+                            onClick={() => handleQuickEditShow(p)}
+                            title="Sửa nhanh"
+                          >
+                            <i className="bx bx-edit-alt"></i>
+                          </Button>
+                          {/* Nút Sửa (modal) - bị ẩn vì logic QuickEdit, nhưng vẫn giữ để không làm mất logic */}
+                          {/* <Button 
+                            className="btn btn-icon btn-sm btn-outline-secondary ms-1" 
+                            onClick={() => handleEditShow(p)}
+                            title="Sửa (Modal)"
+                          >
+                            <i className="bx bx-window-open"></i>
+                          </Button> */}
                         </td>
                       </>
                     )}
@@ -1094,6 +1052,246 @@ function PromotionsManager() {
           </div>
         )}
       </div>
+
+      {/* --- MODALS (Đã chuyển đổi sang Modal chung) --- */}
+
+      {/* Modal Thêm mới */}
+      <Modal 
+        isOpen={showAddModal} 
+        onClose={handleCloseAddModal}
+        title="Thêm chương trình khuyến mãi mới"
+        dialogClassName="modal-lg"
+      >
+        <form onSubmit={handleSubmit}>
+          <div className="row g-3">
+            <div className="col-12">
+              <label className="form-label text-muted small">Mã khuyến mãi</label>
+              <input type="text" className="form-control" value={form.MaKhuyenMai} disabled />
+            </div>
+
+            <div className="col-md-8 col-12">
+              <label className="form-label text-muted small">Tên chương trình</label>
+              <input 
+                name="TenChuongTrinh" 
+                className={`form-control ${formErrors.TenChuongTrinh ? 'is-invalid' : ''}`}
+                value={form.TenChuongTrinh} 
+                onChange={handleFormChange} 
+                placeholder="Nhập tên chương trình" 
+              />
+              {formErrors.TenChuongTrinh && <div className="invalid-feedback">{formErrors.TenChuongTrinh}</div>}
+            </div>
+
+            <div className="col-md-4 col-12">
+              <label className="form-label text-muted small">Loại giảm giá</label>
+              <select name="LoaiGiamGia" className="form-select" value={form.LoaiGiamGia} onChange={handleFormChange}>
+                <option value="Phần trăm">Phần trăm</option>
+                <option value="Số tiền">Số tiền</option>
+              </select>
+            </div>
+
+            <div className="col-12">
+              <label className="form-label text-muted small">Giá trị giảm</label>
+              <input 
+                name="GiaTriGiam" 
+                type="number" 
+                className={`form-control ${formErrors.GiaTriGiam ? 'is-invalid' : ''}`}
+                value={form.GiaTriGiam} 
+                onChange={handleFormChange} 
+                placeholder="Nhập số (ví dụ: 20 hoặc 100000)" 
+              />
+              {formErrors.GiaTriGiam && <div className="invalid-feedback">{formErrors.GiaTriGiam}</div>}
+            </div>
+
+            <div className="col-md-6 col-12">
+              <label className="form-label text-muted small">Ngày bắt đầu</label>
+              <input 
+                name="NgayBatDau" 
+                type="date" 
+                className={`form-control ${formErrors.NgayBatDau ? 'is-invalid' : ''}`}
+                value={form.NgayBatDau} 
+                onChange={handleFormChange} 
+              />
+              {formErrors.NgayBatDau && <div className="invalid-feedback">{formErrors.NgayBatDau}</div>}
+            </div>
+
+            <div className="col-md-6 col-12">
+              <label className="form-label text-muted small">Ngày kết thúc</label>
+              <input 
+                name="NgayKetThuc" 
+                type="date" 
+                className={`form-control ${formErrors.NgayKetThuc ? 'is-invalid' : ''}`}
+                value={form.NgayKetThuc} 
+                onChange={handleFormChange} 
+              />
+              {formErrors.NgayKetThuc && <div className="invalid-feedback">{formErrors.NgayKetThuc}</div>}
+            </div>
+
+            <div className="col-12">
+              <label className="form-label text-muted small">Loại phòng áp dụng</label>
+              <div className="mb-2">
+                <div className="form-check">
+                  <input className="form-check-input" type="checkbox" id="chk-apdung-tatca" name="ApDungTatCaPhong" checked={form.ApDungTatCaPhong} onChange={handleFormChange} />
+                  <label className="form-check-label" htmlFor="chk-apdung-tatca">Áp dụng cho tất cả phòng</label>
+                </div>
+              </div>
+              <div>
+                <div className="d-flex flex-wrap gap-2">
+                  {/* ... (Logic render chọn phòng giữ nguyên) ... */}
+                  {roomTypes.length ? roomTypes.map((type) => (
+                    <div key={type} className="me-2">
+                      <div className="d-flex align-items-center">
+                        <div className="form-check">
+                          <input className="form-check-input" type="checkbox" id={`chk-${type}`} name="LoaiPhongApDung" value={type} checked={form.LoaiPhongApDung.includes(type)} onChange={handleFormChange} disabled={form.ApDungTatCaPhong} />
+                          <label className="form-check-label" htmlFor={`chk-${type}`}>{type}</label>
+                        </div>
+                        <button type="button" className="btn btn-sm btn-link ms-2" onClick={() => toggleRoomsForType(type)} disabled={form.ApDungTatCaPhong}>
+                          Chọn phòng
+                        </button>
+                      </div>
+                      {roomsVisible[type] && (
+                        <div className="border rounded p-2 mt-2" style={{ maxHeight: 160, overflowY: 'auto', minWidth: 220 }}>
+                          {rooms.filter(r => r.LoaiPhong === type).length ? (
+                            rooms.filter(r => r.LoaiPhong === type).map(rm => {
+                              const hasConflict = form.NgayBatDau && form.NgayKetThuc && rm.KhuyenMai && rm.KhuyenMai.some(km => {
+                                if (km.TrangThai !== 'Hoạt động') return false;
+                                const start = new Date(km.NgayBatDau);
+                                const end = new Date(km.NgayKetThuc);
+                                const fstart = new Date(form.NgayBatDau);
+                                const fend = new Date(form.NgayKetThuc);
+                                return start <= fend && end >= fstart;
+                              });
+                              return (
+                              <div key={rm._id} className="form-check">
+                                <input className="form-check-input" type="checkbox" id={`room-${rm._id}`} checked={(form.RoomIds || []).includes(String(rm._id))} onChange={e => toggleRoomSelection(String(rm._id), e.target.checked)} disabled={form.ApDungTatCaPhong || hasConflict} />
+                                <label className={`form-check-label ${hasConflict ? 'text-muted' : ''}`} htmlFor={`room-${rm._id}`}>
+                                  {rm.TenPhong || rm.MaPhong || rm._id}
+                                  {hasConflict && <small className="text-danger ms-1">(đã có KM)</small>}
+                                </label>
+                              </div>
+                              );
+                            })
+                          ) : (
+                            <div className="small text-muted">Không có phòng cho loại này</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )) : <div className="text-muted small">Không có loại phòng</div>}
+                </div>
+              </div>
+              {formErrors.LoaiPhongApDung && <div className="text-danger small mt-1">{formErrors.LoaiPhongApDung}</div>}
+            </div>
+
+            <div className="col-12">
+              <label className="form-label text-muted small">Điều kiện</label>
+              <input name="DieuKien" className="form-control" value={form.DieuKien} onChange={handleFormChange} placeholder="Ví dụ: Áp dụng cho đơn từ 2 đêm trở lên" />
+            </div>
+
+            <div className="col-12">
+              <label className="form-label text-muted small">Mô tả chi tiết</label>
+              <textarea name="MoTa" rows={3} className="form-control" value={form.MoTa} onChange={handleFormChange} placeholder="Mô tả chi tiết chương trình..."></textarea>
+            </div>
+
+            <div className="col-12 mb-2">
+              <label className="form-label text-muted small">Trạng thái</label>
+              <input type="text" className="form-control" value={form.TrangThai} disabled />
+            </div>
+          </div>
+
+          <div className="text-end mt-4 pt-3 border-top">
+            <Button type="button" className="btn btn-outline-secondary me-2" onClick={handleCloseAddModal}>Đóng</Button>
+            <Button type="submit" className="btn btn-primary">Lưu</Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal Sửa (Legacy - vẫn giữ logic) */}
+      <Modal 
+        isOpen={showEditModal} 
+        onClose={handleEditClose}
+        title="Sửa chương trình khuyến mãi"
+        dialogClassName="modal-lg"
+      >
+        <form onSubmit={handleEditSubmit}>
+          <div className="row g-3">
+            <div className="col-12">
+              <label className="form-label text-muted small">Mã khuyến mãi</label>
+              <input type="text" className="form-control" value={editForm.MaKhuyenMai || editForm.id || ''} disabled />
+            </div>
+            <div className="col-12">
+              <label className="form-label text-muted small">Tên chương trình</label>
+              <input 
+                name="TenChuongTrinh" 
+                className={`form-control ${editErrors.TenChuongTrinh ? 'is-invalid' : ''}`}
+                value={editForm.TenChuongTrinh || ''} 
+                onChange={handleEditChange} 
+              />
+              {editErrors.TenChuongTrinh && <div className="invalid-feedback">{editErrors.TenChuongTrinh}</div>}
+            </div>
+            <div className="col-md-6 col-12">
+              <label className="form-label text-muted small">Giá trị giảm</label>
+              <input 
+                name="GiaTriGiam" 
+                type="number" 
+                className={`form-control ${editErrors.GiaTriGiam ? 'is-invalid' : ''}`}
+                value={editForm.GiaTriGiam || ''} 
+                onChange={handleEditChange} 
+              />
+              {editErrors.GiaTriGiam && <div className="invalid-feedback">{editErrors.GiaTriGiam}</div>}
+            </div>
+            <div className="col-md-6 col-12">
+              <label className="form-label text-muted small">Loại giảm giá</label>
+              <select name="LoaiGiamGia" className="form-select" value={editForm.LoaiGiamGia || ''} onChange={handleEditChange}>
+                <option value="Phần trăm">Phần trăm</option>
+                <option value="Số tiền">Số tiền</option>
+              </select>
+            </div>
+            <div className="col-md-6 col-12">
+              <label className="form-label text-muted small">Ngày bắt đầu</label>
+              <input 
+                name="NgayBatDau" 
+                type="date" 
+                className={`form-control ${editErrors.NgayBatDau ? 'is-invalid' : ''}`}
+                value={editForm.NgayBatDau || ''} 
+                onChange={handleEditChange} 
+              />
+              {editErrors.NgayBatDau && <div className="invalid-feedback">{editErrors.NgayBatDau}</div>}
+            </div>
+            <div className="col-md-6 col-12">
+              <label className="form-label text-muted small">Ngày kết thúc</label>
+              <input 
+                name="NgayKetThuc" 
+                type="date" 
+                className={`form-control ${editErrors.NgayKetThuc ? 'is-invalid' : ''}`}
+                value={editForm.NgayKetThuc || ''} 
+                onChange={handleEditChange} 
+              />
+              {editErrors.NgayKetThuc && <div className="invalid-feedback">{editErrors.NgayKetThuc}</div>}
+            </div>
+            <div className="col-12">
+              <label className="form-label text-muted small">Điều kiện</label>
+              <input name="DieuKien" className="form-control" value={editForm.DieuKien || ''} onChange={handleEditChange} />
+            </div>
+            <div className="col-12">
+              <label className="form-label text-muted small">Mô tả</label>
+              <textarea name="MoTa" rows={3} className="form-control" value={editForm.MoTa || ''} onChange={handleEditChange}></textarea>
+            </div>
+            <div className="col-12 mb-2">
+              <label className="form-label text-muted small">Trạng thái</label>
+              <select name="TrangThai" className="form-select" value={editForm.TrangThai || 'Hoạt động'} onChange={handleEditChange}>
+                <option>Hoạt động</option>
+                <option>Ngưng hoạt động</option>
+              </select>
+            </div>
+          </div>
+          {editErrors._global && <div className="alert alert-danger mt-3">{editErrors._global}</div>}
+          <div className="text-end mt-4 pt-3 border-top">
+            <Button type="button" className="btn btn-outline-secondary me-2" onClick={handleEditClose}>Đóng</Button>
+            <Button type="submit" className="btn btn-primary">Lưu</Button>
+          </div>
+        </form>
+      </Modal>
+
     </div>
   );
 }
