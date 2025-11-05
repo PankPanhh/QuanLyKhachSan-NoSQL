@@ -1,6 +1,7 @@
 import Booking from "../models/Booking.js";
 import Room from "../models/Room.js";
 import { differenceInHours, differenceInDays } from "date-fns";
+import { calculateRoomPriceWithDiscount } from "../utils/calculateTotal.js";
 
 // @desc    Tinh phu phi tre hen
 // @route   GET /api/v1/checkout/:bookingId/late-fee
@@ -123,11 +124,16 @@ export const confirmCheckout = async (req, res, next) => {
 
     // Tính tổng tiền nếu chưa có
     if (!booking.HoaDon || !booking.HoaDon.TongTien) {
-      const nights = differenceInDays(
-        new Date(booking.NgayTraPhong),
-        new Date(booking.NgayNhanPhong)
+      // Calculate room price with discount
+      const priceCalculation = calculateRoomPriceWithDiscount(
+        room,
+        booking.NgayNhanPhong,
+        booking.NgayTraPhong,
+        1 // Assuming 1 room per booking
       );
-      const roomTotal = room.GiaPhong * nights;
+
+      const roomTotal = priceCalculation.discountedTotal;
+      const discountAmount = priceCalculation.discountAmount;
 
       const serviceTotal =
         booking.DichVuSuDung?.reduce(
@@ -141,9 +147,8 @@ export const confirmCheckout = async (req, res, next) => {
         NgayLap: new Date(),
         TongTienPhong: roomTotal,
         TongTienDichVu: serviceTotal,
-        GiamGia: booking.HoaDon?.GiamGia || 0,
-        TongTien:
-          roomTotal + serviceTotal + lateFee - (booking.HoaDon?.GiamGia || 0),
+        GiamGia: discountAmount,
+        TongTien: roomTotal + serviceTotal + lateFee - discountAmount,
         TinhTrang: "Chưa thanh toán",
         GhiChu:
           lateFee > 0
