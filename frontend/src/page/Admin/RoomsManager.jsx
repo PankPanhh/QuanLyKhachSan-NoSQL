@@ -150,6 +150,8 @@ function RoomsManager() {
   // Status color mapping - ĐÃ CẬP NHẬT CHO SNEAT
   const getStatusColor = (status) => {
     const statusColors = {
+      "Đang chờ": { bg: "bg-label-warning", text: "Đang chờ" },
+      "Đang chờ xác nhận": { bg: "bg-label-warning", text: "Đang chờ" },
       Trống: { bg: "bg-label-success", text: "Sẵn sàng" },
       "Đang sử dụng": { bg: "bg-label-info", text: "Có khách" },
       "Đang dọn dẹp": { bg: "bg-label-warning", text: "Đang dọn" },
