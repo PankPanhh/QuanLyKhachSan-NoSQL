@@ -1,6 +1,9 @@
 import Booking from "../models/Booking.js";
 import Room from "../models/Room.js";
-import { calculateBookingTotal } from "../utils/calculateTotal.js";
+import {
+  calculateBookingTotal,
+  calculateRoomPriceWithDiscount,
+} from "../utils/calculateTotal.js";
 import mongoose from "mongoose";
 // import { sendEmail } from '../services/emailService.js';
 
@@ -78,11 +81,19 @@ export const createBooking = async (req, res, next) => {
       1,
       Math.ceil((coDate.getTime() - ciDate.getTime()) / (1000 * 3600 * 24))
     );
-    const pricePerNight = room.GiaPhong || room.pricePerNight || 0;
-    const computedTotalRoomPrice = pricePerNight * nights * (numRooms || 1);
+
+    // Calculate room price with discount
+    const priceCalculation = calculateRoomPriceWithDiscount(
+      room,
+      checkIn,
+      checkOut,
+      numRooms || 1
+    );
+    const totalRoomPrice = priceCalculation.discountedTotal;
+    const discountAmount = priceCalculation.discountAmount;
 
     // Use computed totals (safer), ignore client-provided totals to prevent manipulation
-    const totalRoomPrice = computedTotalRoomPrice;
+    // const totalRoomPrice = computedTotalRoomPrice;
 
     // Build DichVuSuDung server-side from room definition and client selection (prevent price manipulation)
     // requestedServices is expected to be array of { MaDichVu, SoLuong }
@@ -146,10 +157,10 @@ export const createBooking = async (req, res, next) => {
     const hoaDon = {
       MaHoaDon: `HD${Date.now().toString().slice(-6)}`,
       NgayLap: now,
-      TongTienPhong: Number(computedTotalRoomPrice) || 0,
-      TongTienDichVu: Number(tongTienDichVu) || 0,
-      GiamGia: Number(giamGia) || 0,
-      TongTien: Number(computedTotalRoomPrice || 0) + Number(tongTienDichVu || 0) - Number(giamGia || 0),
+      TongTienPhong: Number(totalRoomPrice) || 0,     // Lấy từ 'main' (tiền phòng đã giảm)
+      TongTienDichVu: Number(tongTienDichVu) || 0,  // Lấy từ 'cc' (tiền dịch vụ)
+      GiamGia: Number(discountAmount) || 0,        // Lấy từ 'main' (số tiền phòng đã giảm)
+      TongTien: finalTongTien,
       TinhTrang: "Chưa thanh toán", // Sẽ cập nhật sau
       GhiChu: paymentMeta.note || "",
       LichSuThanhToan: [],
@@ -207,6 +218,10 @@ export const createBooking = async (req, res, next) => {
     const MaDatPhong =
       req.body.MaDatPhong || `DP${Date.now().toString().slice(-6)}`;
 
+    // Khi tạo booking, trạng thái luôn là "Đang chờ" - admin sẽ xác nhận sau
+    // Room status should reflect whether it's currently occupied or simply reserved
+    const initialRoomStatus = "Đã đặt"; // room state - phòng được đặt trước
+
     const doc = {
       MaDatPhong,
       IDKhachHang,
@@ -252,6 +267,22 @@ export const createBooking = async (req, res, next) => {
     }
 
     const booking = await Booking.create(doc);
+
+    // Không cập nhật trạng thái phòng khi tạo booking - chỉ thay đổi trạng thái booking
+    // Room status will be updated when admin confirms the booking or during check-in/out process
+    /*
+    try {
+      await Room.findOneAndUpdate(
+        { MaPhong },
+        { $set: { TinhTrang: initialRoomStatus } }
+      );
+    } catch (err) {
+      console.error(
+        "[bookingController.createBooking] failed to update room status:",
+        err
+      );
+    }
+    */
 
     // TODO: Gui email xac nhan
     // await sendEmail(contactInfo.email, 'Xac nhan dat phong', `Cam on ban da dat phong...`, `...`);
@@ -326,11 +357,39 @@ export const confirmBooking = async (req, res, next) => {
       }
       byMa.TrangThai = "Đang sử dụng";
       await byMa.save();
+
+      // Cập nhật trạng thái phòng thành "Đang sử dụng" khi admin xác nhận booking
+      try {
+        await Room.findOneAndUpdate(
+          { MaPhong: byMa.MaPhong },
+          { $set: { TinhTrang: "Đang sử dụng" } }
+        );
+      } catch (err) {
+        console.error(
+          "[bookingController.confirmBooking] failed to update room status:",
+          err
+        );
+      }
+
       return res.status(200).json({ success: true, data: byMa });
     }
 
     booking.TrangThai = "Đang sử dụng";
     await booking.save();
+
+    // Cập nhật trạng thái phòng thành "Đang sử dụng" khi admin xác nhận booking
+    try {
+      await Room.findOneAndUpdate(
+        { MaPhong: booking.MaPhong },
+        { $set: { TinhTrang: "Đang sử dụng" } }
+      );
+    } catch (err) {
+      console.error(
+        "[bookingController.confirmBooking] failed to update room status:",
+        err
+      );
+    }
+
     return res.status(200).json({ success: true, data: booking });
   } catch (error) {
     next(error);
