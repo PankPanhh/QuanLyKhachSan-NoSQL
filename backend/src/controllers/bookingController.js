@@ -163,6 +163,14 @@ export const createBooking = async (req, res, next) => {
     const MaDatPhong =
       req.body.MaDatPhong || `DP${Date.now().toString().slice(-6)}`;
 
+    // Determine booking and room status based on current time vs. booking dates
+    const nowForStatus = now;
+    const isActiveNow =
+      nowForStatus >= NgayNhanPhong && nowForStatus < NgayTraPhong;
+    const bookingStatus = isActiveNow ? "Đang sử dụng" : "Đang chờ"; // booking state
+    // Room status should reflect whether it's currently occupied or simply reserved
+    const initialRoomStatus = isActiveNow ? "Đang sử dụng" : "Đã đặt"; // room state
+
     const doc = {
       MaDatPhong,
       IDKhachHang,
@@ -174,6 +182,7 @@ export const createBooking = async (req, res, next) => {
       TienCoc: paidAmount || 0,
       // Trạng thái đặt phòng luôn là "Đang chờ" khi tạo, bất kể thanh toán
       TrangThai: "Đang chờ",
+      TrangThai: bookingStatus,
       GhiChu: req.body.note || "",
       DichVuSuDung: req.body.services || [],
       HoaDon: hoaDon,
@@ -207,6 +216,19 @@ export const createBooking = async (req, res, next) => {
     }
 
     const booking = await Booking.create(doc);
+
+    // Update room status so it reflects this booking immediately.
+    try {
+      await Room.findOneAndUpdate(
+        { MaPhong },
+        { $set: { TinhTrang: initialRoomStatus } }
+      );
+    } catch (err) {
+      console.error(
+        "[bookingController.createBooking] failed to update room status:",
+        err
+      );
+    }
 
     // TODO: Gui email xac nhan
     // await sendEmail(contactInfo.email, 'Xac nhan dat phong', `Cam on ban da dat phong...`, `...`);
