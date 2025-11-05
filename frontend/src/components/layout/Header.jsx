@@ -1,7 +1,7 @@
 // Đây là code đã refactor từ file MainPage.jsx gốc của bạn
 // CẬP NHẬT: Thêm useContext và AuthContext
 import React, { useContext } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext"; // Import AuthContext
 import {
   FaMapMarkerAlt,
@@ -21,6 +21,7 @@ function Header() {
   // Lấy trạng thái user và hàm logout từ Context
   const { user, logout } = useContext(AuthContext);
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Function để kiểm tra active state
   const isActive = (path) => {
@@ -133,7 +134,8 @@ function Header() {
                           className="nav-link p-0 btn btn-link" 
                           onClick={(e) => {
                             e.preventDefault();
-                            logout();
+                            try { logout(); } catch (err) { console.error(err); }
+                            navigate('/');
                           }}
                           style={{ border: 'none', background: 'none', textDecoration: 'none' }}
                         >
@@ -201,7 +203,8 @@ function Header() {
                           className="dropdown-item btn btn-link" 
                           onClick={(e) => {
                             e.preventDefault();
-                            logout();
+                            try { logout(); } catch (err) { console.error(err); }
+                            navigate('/');
                           }}
                           style={{ border: 'none', background: 'none', textAlign: 'left', width: '100%' }}
                         >

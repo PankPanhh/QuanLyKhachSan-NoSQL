@@ -1,4 +1,5 @@
 import React, { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 
 function TopbarAdmin() {
@@ -7,6 +8,7 @@ function TopbarAdmin() {
   const auth = useContext(AuthContext) || {};
   const user = auth.user;
   const logout = auth.logout || (() => {});
+  const navigate = useNavigate();
 
   return (
     <nav
@@ -63,7 +65,19 @@ function TopbarAdmin() {
                 <div className="dropdown-divider"></div>
               </li>
               <li>
-                <a className="dropdown-item" href="#" onClick={logout}>
+                <a
+                  className="dropdown-item"
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    try {
+                      logout();
+                    } catch (err) {
+                      console.error('Logout error', err);
+                    }
+                    navigate('/');
+                  }}
+                >
                   <i className="bx bx-power-off me-2"></i>
                   <span className="align-middle">Log Out</span>
                 </a>
