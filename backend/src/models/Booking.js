@@ -13,12 +13,20 @@ const hoaDonSchema = new mongoose.Schema({
     default: "Chưa thanh toán",
   },
   GhiChu: { type: String },
+  DaXuatHoaDon: { type: Boolean, default: false }, // Flag đánh dấu đã xuất hóa đơn
+  NgayXuatHoaDon: { type: Date }, // Ngày xuất hóa đơn
   LichSuThanhToan: [
     {
       MaThanhToan: { type: String, required: true },
       PhuongThuc: {
         type: String,
-        enum: ["Tiền mặt", "Chuyển khoản", "Thẻ tín dụng"],
+        enum: [
+          "Tiền mặt",
+          "Chuyển khoản",
+          "Thẻ tín dụng",
+          "PayPal",
+          "Ví điện tử",
+        ],
         default: "Tiền mặt",
       },
       SoTien: { type: Number, required: true },

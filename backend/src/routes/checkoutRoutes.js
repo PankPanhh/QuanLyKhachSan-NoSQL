@@ -7,13 +7,33 @@ import {
   submitReview,
   downloadInvoice,
   emailInvoice,
+  getLateFeeReport,
+  getOccupancyRate,
+  getRoomRating,
+  getTopRatedRooms,
+  getCheckoutStatistics,
+  getActualRevenue,
 } from "../controllers/checkoutController.js";
 import { protect, authorize } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Tất cả routes đều yêu cầu đăng nhập
+// Public routes (không cần đăng nhập)
+router.get("/rooms/top-rated", getTopRatedRooms);
+router.get("/rooms/:roomCode/rating", getRoomRating);
+
+// Tất cả routes còn lại đều yêu cầu đăng nhập
 router.use(protect);
+
+// Routes báo cáo cho admin
+router.get("/reports/late-checkouts", authorize("Admin"), getLateFeeReport);
+router.get("/reports/occupancy", authorize("Admin"), getOccupancyRate);
+router.get(
+  "/reports/checkout-stats",
+  authorize("Admin"),
+  getCheckoutStatistics
+);
+router.get("/reports/revenue", authorize("Admin"), getActualRevenue);
 
 // Routes cho admin
 router.get("/:bookingId/late-fee", authorize("Admin"), calculateLateFee);

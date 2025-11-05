@@ -81,8 +81,34 @@ class ApiClient {
     }
   }
 
-  async get(endpoint) {
-    return this.request(endpoint);
+  async get(endpoint, options = {}) {
+    return this.request(endpoint, options);
+  }
+
+  // Download file/text (không parse JSON)
+  async download(endpoint) {
+    const url = `${this.baseURL}${endpoint}`;
+    const token = localStorage.getItem("token");
+
+    const headers = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, { headers });
+    if (!response.ok) {
+      const errorText = await response.text();
+      // Thử parse JSON error từ backend
+      try {
+        const errorJson = JSON.parse(errorText);
+        throw new Error(errorJson.message || `HTTP ${response.status}`);
+      } catch (parseError) {
+        // Nếu không phải JSON, throw text thô
+        throw new Error(errorText || `HTTP ${response.status}`);
+      }
+    }
+
+    return await response.text(); // Trả về text thô
   }
 
   // sửa phòng

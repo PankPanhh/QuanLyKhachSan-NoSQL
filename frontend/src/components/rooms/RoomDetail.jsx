@@ -9,11 +9,12 @@ import {
 import { formatCurrency } from '../../utils/formatCurrency';
 import { getRoomImageUrl } from '../../config/constants';
 import { BookingContext } from '../../context/BookingContext';
+import RoomRatingDisplay from './RoomRatingDisplay';
 
 function RoomDetail({ room }) {
   if (!room) return null;
 
-  // Sử dụng trực tiếp Vietnamese schema
+  // Chuẩn hoá dữ liệu phòng theo schema tiếng Việt
   const roomData = {
     title: room.TenPhong || 'Phòng không tên',
     description: room.MoTa || 'Không có mô tả',
@@ -25,23 +26,24 @@ function RoomDetail({ room }) {
     area: room.DienTich || 0,
     roomCode: room.MaPhong || 'Unknown',
     status: room.TinhTrang || 'Trống',
-    images: [{
-      url: getRoomImageUrl(room.HinhAnh),
-      altText: room.TenPhong || 'Room Image'
-    }],
-    // Prefer the rich `TienNghi` objects (which include TenTienNghi and TrangThai).
-    // Show only amenities whose TrangThai === 'Hoạt động'. Fall back to the legacy
-    // `MaTienNghi` array when `TienNghi` is not present.
-    amenities: (Array.isArray(room.TienNghi) ? room.TienNghi
-      .filter(t => String((t.TrangThai || '')).trim() === 'Hoạt động')
-      .map(t => ({
-        name: t.TenTienNghi || getAmenityName(t.MaTienNghi),
-        icon: getAmenityIcon(t.MaTienNghi)
-      })) : (room.MaTienNghi || []).map((ma) => ({
-        name: getAmenityName(ma),
-        icon: getAmenityIcon(ma)
-      }))),
-    // Use embedded KhuyenMai array when present (newer schema). Fallback to MaKhuyenMai.
+    images: [
+      {
+        url: getRoomImageUrl(room.HinhAnh),
+        altText: room.TenPhong || 'Room Image',
+      },
+    ],
+    // Ưu tiên dùng object TienNghi (schema mới)
+    amenities: Array.isArray(room.TienNghi)
+      ? room.TienNghi.filter(t => String((t.TrangThai || '')).trim() === 'Hoạt động')
+        .map(t => ({
+          name: t.TenTienNghi || getAmenityName(t.MaTienNghi),
+          icon: getAmenityIcon(t.MaTienNghi, t.TenTienNghi),
+        }))
+      : (room.MaTienNghi || []).map((ma) => ({
+          name: getAmenityName(ma),
+          icon: getAmenityIcon(ma),
+        })),
+    // Ưu tiên schema KhuyenMai dạng object
     promotions: Array.isArray(room.KhuyenMai) && room.KhuyenMai.length > 0
       ? room.KhuyenMai
       : (room.MaKhuyenMai || []).map((ma) => ({
@@ -49,60 +51,58 @@ function RoomDetail({ room }) {
           TenChuongTrinh: `Khuyến mãi ${ma}`,
           LoaiGiamGia: 'Phần trăm',
           GiaTriGiam: 10,
-          TrangThai: 'Hoạt động'
-        }))
+          TrangThai: 'Hoạt động',
+        })),
   };
 
-  // Read booking dates from BookingContext so we can determine whether a promo
-  // applies to the currently selected stay range.
+  // Đọc ngày nhận/trả phòng từ context
   const { bookingDetails } = useContext(BookingContext);
   const checkIn = bookingDetails?.checkInDate ? new Date(bookingDetails.checkInDate) : null;
   const checkOut = bookingDetails?.checkOutDate ? new Date(bookingDetails.checkOutDate) : null;
 
-  // Find the first promotion that is marked 'Hoạt động' and whose date range
-  // contains today's date. We'll also check booking dates later to see if the
-  // selected stay falls inside the promo window.
+  // Chuẩn hoá danh sách khuyến mãi
   const now = new Date();
   const normalizedPromos = (roomData.promotions || []).map((p) => ({
     MaKhuyenMai: p.MaKhuyenMai || p.MaKM || p.Ma || null,
     TenChuongTrinh: p.TenChuongTrinh || p.Ten || p.TenKM || null,
-    LoaiGiamGia: p.LoaiGiamGia || p.LoaiGiam || '',
-    GiaTriGiam: p.GiaTriGiam != null ? p.GiaTriGiam : (p.GiaTri != null ? p.GiaTri : p.value),
+    LoaiGiamGia: p.LoaiGiamGia || '',
+    GiaTriGiam: p.GiaTriGiam != null ? p.GiaTriGiam : p.GiaTri || 0,
     NgayBatDau: p.NgayBatDau ? new Date(p.NgayBatDau) : null,
     NgayKetThuc: p.NgayKetThuc ? new Date(p.NgayKetThuc) : null,
-    DieuKien: p.DieuKien || p.DieuKhoan || p.Condition || '',
-    MoTa: p.MoTa || p.Description || '',
-    TrangThai: p.TrangThai || p.Status || '',
+    TrangThai: p.TrangThai || '',
+    MoTa: p.MoTa || '',
+    DieuKien: p.DieuKien || '',
   }));
 
-  const activePromo = normalizedPromos.find((p) => {
-    if (!p) return false;
-    if (String((p.TrangThai || '')).trim() !== 'Hoạt động') return false;
-    if (p.NgayBatDau && p.NgayBatDau > now) return false;
-    if (p.NgayKetThuc && p.NgayKetThuc < now) return false;
-    return true;
-  }) || null;
+  // Lọc ra khuyến mãi đang hoạt động
+  const activePromo =
+    normalizedPromos.find((p) => {
+      if (String((p.TrangThai || '')).trim() !== 'Hoạt động') return false;
+      if (p.NgayBatDau && p.NgayBatDau > now) return false;
+      if (p.NgayKetThuc && p.NgayKetThuc < now) return false;
+      return true;
+    }) || null;
 
-  // Determine whether the currently selected booking dates fall inside the
-  // promotion period. We require the entire stay to be within the promo window
-  // for the discount to apply. If no dates are selected, treat as potentially applicable.
+  // Kiểm tra ngày đặt phòng có nằm trong thời gian khuyến mãi
   let promoAppliesToSelectedDates = true;
   if (activePromo && (checkIn || checkOut)) {
-    if (activePromo.NgayBatDau && checkIn && checkIn < activePromo.NgayBatDau) promoAppliesToSelectedDates = false;
-    if (activePromo.NgayKetThuc && checkOut && checkOut > activePromo.NgayKetThuc) promoAppliesToSelectedDates = false;
+    if (activePromo.NgayBatDau && checkIn && checkIn < activePromo.NgayBatDau)
+      promoAppliesToSelectedDates = false;
+    if (activePromo.NgayKetThuc && checkOut && checkOut > activePromo.NgayKetThuc)
+      promoAppliesToSelectedDates = false;
   }
 
   return (
     <div>
-      {/* Slider ảnh */}
+      {/* Slider ảnh phòng */}
       <Swiper modules={[Navigation]} navigation loop className="mb-4 rounded-4 overflow-hidden">
         {roomData.images.map((img, index) => (
           <SwiperSlide key={index}>
-            <img 
-              src={img.url} 
-              alt={img.altText} 
-              className="img-fluid w-100" 
-              style={{ height: '500px', objectFit: 'cover' }} 
+            <img
+              src={img.url}
+              alt={img.altText}
+              className="img-fluid w-100"
+              style={{ height: '500px', objectFit: 'cover' }}
             />
           </SwiperSlide>
         ))}
@@ -112,68 +112,80 @@ function RoomDetail({ room }) {
       <h1 className="display-4 fw-normal mb-3">{roomData.title}</h1>
       <h2 className="text-primary fs-1 mb-4">
         {activePromo ? (
-          <>
-            {/* If promo applies to selected dates, show crossed price and discounted price */}
-            {promoAppliesToSelectedDates ? (
-              <>
-                <span style={{ textDecoration: 'line-through', color: '#888', fontSize: '0.9em', marginRight: 10 }}>{formatCurrency(roomData.pricePerNight)}/đêm</span>
-                <span>{formatCurrency(
-                  activePromo.LoaiGiamGia && String(activePromo.LoaiGiamGia).toLowerCase().includes('phần')
-                    ? Math.max(0, roomData.pricePerNight * (1 - (Number(activePromo.GiaTriGiam || 0) / 100)))
-                    : Math.max(0, roomData.pricePerNight - Number(activePromo.GiaTriGiam || 0))
-                )}/đêm</span>
-              </>
-            ) : (
-              <>
+          promoAppliesToSelectedDates ? (
+            <>
+              <span
+                style={{
+                  textDecoration: 'line-through',
+                  color: '#888',
+                  fontSize: '0.9em',
+                  marginRight: 10,
+                }}
+              >
                 {formatCurrency(roomData.pricePerNight)}/đêm
-                <span className="ms-3 text-warning">Chương trình không còn hiệu lực</span>
-              </>
-            )}
-            <span className="badge bg-danger ms-3">
-              {activePromo.TenChuongTrinh ? `${activePromo.TenChuongTrinh}` : (activePromo.MaKhuyenMai || 'KM')}
-            </span>
-          </>
+              </span>
+              <span>
+                {formatCurrency(
+                  activePromo.LoaiGiamGia.toLowerCase().includes('phần')
+                    ? Math.max(0, roomData.pricePerNight * (1 - activePromo.GiaTriGiam / 100))
+                    : Math.max(0, roomData.pricePerNight - activePromo.GiaTriGiam)
+                )}/đêm
+              </span>
+              <span className="badge bg-danger ms-3">
+                {activePromo.TenChuongTrinh || activePromo.MaKhuyenMai || 'Khuyến mãi'}
+              </span>
+            </>
+          ) : (
+            <>
+              {formatCurrency(roomData.pricePerNight)}/đêm
+              <span className="ms-3 text-warning">Chương trình không còn hiệu lực</span>
+            </>
+          )
         ) : (
           <>{formatCurrency(roomData.pricePerNight)}/đêm</>
         )}
       </h2>
 
-      {/* Mô tả */}
+      {/* Mô tả phòng */}
       <p className="lead mb-4">{roomData.description}</p>
 
-      {/* Chi tiết phòng */}
+      {/* Đánh giá phòng */}
+      <div className="mb-4 p-4 bg-light rounded-3 border">
+        <h5 className="mb-3">⭐ Đánh giá của khách hàng</h5>
+        <RoomRatingDisplay roomCode={room.MaPhong} showDetails />
+      </div>
+
+      {/* Thông tin chi tiết */}
       <hr className="my-4" />
       <h3 className="mb-3">Thông tin chi tiết</h3>
-      <div className="row g-4 mb-4">
-        <div className="col-md-4 text-center">
+      <div className="row g-4 mb-4 text-center">
+        <div className="col-md-4">
           <FaUsers className="text-primary fs-1 mb-2" />
           <h5>{roomData.maxGuests} người</h5>
         </div>
-        <div className="col-md-4 text-center">
+        <div className="col-md-4">
           <FaBed className="text-primary fs-1 mb-2" />
           <h5>{roomData.bedType}</h5>
         </div>
-        <div className="col-md-4 text-center">
+        <div className="col-md-4">
           <FaRulerCombined className="text-primary fs-1 mb-2" />
-          <h5>{roomData.floor}F - {roomData.roomType}</h5>
+          <h5>
+            {roomData.floor}F - {roomData.roomType}
+          </h5>
         </div>
       </div>
 
-      {/* Tiện nghi với ICON */}
+      {/* Tiện nghi */}
       <hr className="my-4" />
       <h3 className="mb-3">Tiện nghi</h3>
-        <div className="row g-3">
-          {roomData.amenities.map((amenity, index) => (
-            <div key={index} className="col-md-6 col-lg-4">
-              <div className="d-flex align-items-center">
-                <span className="text-success me-2 fs-4">
-                  {amenity.icon}
-                </span>
-                <span>{amenity.name}</span>
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="row g-3">
+        {roomData.amenities.map((amenity, index) => (
+          <div key={index} className="col-md-6 col-lg-4 d-flex align-items-center">
+            <span className="text-success me-2 fs-4">{amenity.icon}</span>
+            <span>{amenity.name}</span>
+          </div>
+        ))}
+      </div>
 
       {/* Dịch vụ đi kèm */}
       {room.extraServices?.length > 0 && (
@@ -193,16 +205,16 @@ function RoomDetail({ room }) {
         </>
       )}
 
-      {/* Khuyến mãi: hiển thị chi tiết khi có khuyến mãi đặc biệt hợp lệ */}
+      {/* Khuyến mãi */}
       {activePromo && (
         <>
           <hr className="my-4" />
           <h3 className="mb-3">Khuyến mãi</h3>
           <div className="alert alert-success">
-            <strong>{activePromo.TenChuongTrinh || activePromo.MaKhuyenMai || 'Khuyến mãi'}:</strong>{' '}
-            {activePromo.MoTa || activePromo.DieuKien || ''}
-            <br />
-            <small>Khuyến mãi đặc biệt</small>
+            <strong>
+              {activePromo.TenChuongTrinh || activePromo.MaKhuyenMai || 'Khuyến mãi'}:
+            </strong>{' '}
+            {activePromo.MoTa || activePromo.DieuKien || 'Áp dụng cho khách đặt trực tuyến.'}
           </div>
         </>
       )}
@@ -210,37 +222,32 @@ function RoomDetail({ room }) {
   );
 }
 
-// Helper functions để map mã tiện nghi
+// 🧠 Hàm phụ trợ: tên & icon tiện nghi
 const getAmenityName = (ma) => {
-  const amenityMap = {
-    'TN001': 'Wi-Fi miễn phí',
-    'TN002': 'TV màn hình phẳng',
-    'TN003': 'Điều hòa',
-    'TN004': 'Minibar',
-    'TN005': 'Phòng tắm riêng',
+  const map = {
+    TN001: 'Wi-Fi miễn phí',
+    TN002: 'TV màn hình phẳng',
+    TN003: 'Điều hòa',
+    TN004: 'Minibar',
+    TN005: 'Phòng tắm riêng',
   };
-  return amenityMap[ma] || `Tiện nghi ${ma}`;
+  return map[ma] || `Tiện nghi ${ma}`;
 };
 
 const getAmenityIcon = (ma, name) => {
-  // Return a React node (icon component). Try by code first, then by name keywords.
   switch (ma) {
     case 'TN001': return <FaWifi />;
     case 'TN002': return <FaTv />;
-    case 'TN003': return <FaSnowflake />; // điều hòa
-    case 'TN004': return <FaCocktail />; // minibar/bar
-    case 'TN005': return <FaBath />; // phòng tắm
-    default: break;
+    case 'TN003': return <FaSnowflake />;
+    case 'TN004': return <FaCocktail />;
+    case 'TN005': return <FaBath />;
   }
-
   const n = String(name || '').toLowerCase();
-  if (n.includes('wifi') || n.includes('wi-fi')) return <FaWifi />;
-  if (n.includes('tv') || n.includes('tivi')) return <FaTv />;
-  if (n.includes('điều hòa') || n.includes('đieu hoa') || n.includes('ac') || n.includes('air')) return <FaSnowflake />;
-  if (n.includes('minibar') || n.includes('bar') || n.includes('mini')) return <FaCocktail />;
-  if (n.includes('tắm') || n.includes('bath') || n.includes('bathroom')) return <FaBath />;
-
-  // fallback generic check icon
+  if (n.includes('wifi')) return <FaWifi />;
+  if (n.includes('tv')) return <FaTv />;
+  if (n.includes('điều hòa')) return <FaSnowflake />;
+  if (n.includes('minibar') || n.includes('bar')) return <FaCocktail />;
+  if (n.includes('tắm')) return <FaBath />;
   return <FaCheckCircle />;
 };
 
