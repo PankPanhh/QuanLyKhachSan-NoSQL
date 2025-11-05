@@ -20,8 +20,17 @@ const DichVuSchema = new mongoose.Schema({
 const KhuyenMaiSchema = new mongoose.Schema({
   MaKhuyenMai: { type: String },
   TenChuongTrinh: { type: String },
+  // legacy field name
   LoaiKhuyenMai: { type: String }, // "Phần trăm" hoặc "Giảm giá cố định"
+  // modern/duplicate field names to support both legacy and new code paths
+  LoaiGiamGia: { type: String },
+  // legacy numeric value
   GiaTri: { type: Number },
+  // modern numeric value
+  GiaTriGiam: { type: Number },
+  // textual condition and description fields (previously not in schema)
+  DieuKien: { type: String },
+  MoTa: { type: String },
   NgayBatDau: { type: Date },
   NgayKetThuc: { type: Date },
   TrangThai: { type: String, default: "Đang hoạt động" },

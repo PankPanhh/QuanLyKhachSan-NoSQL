@@ -32,9 +32,13 @@ export const calculateBookingTotal = (
   let subtotal = roomTotal + serviceTotal;
 
   // 3. Ap dung khuyen mai
-  if (promotion && promotion.discountPercent) {
-    const discountAmount = (subtotal * promotion.discountPercent) / 100;
-    subtotal -= discountAmount;
+  if (promotion) {
+    if (promotion.discountPercent) {
+      const discountAmount = (subtotal * promotion.discountPercent) / 100;
+      subtotal -= discountAmount;
+    } else if (promotion.discountAmount) {
+      subtotal -= Math.min(subtotal, promotion.discountAmount);
+    }
   }
   
   // TODO: Tinh thue (VAT) neu can

@@ -14,13 +14,14 @@ loadEnv();
 
 // Import routes (sau khi đã load env)
 import authRoutes from "./routes/authRoutes.js";
-import userRoutes from "./routes/userManagementRoutes.js";
+import userRoutes from "./routes/userManagementRoutes.js"; // quản lý người dùng
 import roomRoutes from "./routes/roomRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
 import serviceRoutes from "./routes/serviceRoutes.js";
+import amenitiesRoutes from "./routes/amenitiesRoutes.js"; // thêm từ nhánh cc
 import promoRoutes from "./routes/promoRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js"; // Đảm bảo reportRoutes được import
-import checkoutRoutes from "./routes/checkoutRoutes.js";
+import checkoutRoutes from "./routes/checkoutRoutes.js"; // thêm từ nhánh main
 
 const app = express();
 
@@ -40,8 +41,10 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // 2. Body Parsers
-app.use(express.json()); // Parse JSON bodies
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+// Increase limits to allow large payloads (e.g. base64-encoded avatars sent in JSON).
+// Note: For production it's better to accept file uploads via multipart/form-data and handle them with multer.
+app.use(express.json({ limit: '10mb' })); // Parse JSON bodies (allow up to 10MB)
+app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Parse URL-encoded bodies
 
 // 3. Static Files - Serve images từ assets
 // Serve room images with no-cache so overwritten files are fetched immediately by browsers
@@ -80,9 +83,11 @@ app.use("/api/v1/rooms", roomRoutes);
 app.use("/api/v1/bookings", bookingRoutes);
 app.use("/api/v1/services", serviceRoutes);
 app.use("/api/v1/promotions", promoRoutes);
-app.use("/api/v1/reports", reportRoutes); // Gắn reportRoutes
+app.use("/api/v1/reports", reportRoutes);
+app.use("/api/v1/amenities", amenitiesRoutes);
 app.use("/api/v1/checkout", checkoutRoutes);
 app.use("/api/v1/admin", userRoutes);
+
 // --- Error Handling ---
 // 404 Not Found (Phải đặt trước errorHandler)
 app.use((req, res, next) => {

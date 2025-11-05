@@ -61,6 +61,7 @@ export const createBooking = async (req, res, next) => {
       numGuests,
       numRooms,
       contactInfo,
+      promo, // Khuyen mai tu client
     } = req.body;
 
     const userId = req.user._id; // Lay tu middleware 'protect'
@@ -80,9 +81,25 @@ export const createBooking = async (req, res, next) => {
     const pricePerNight = room.GiaPhong || room.pricePerNight || 0;
     const computedTotalRoomPrice = pricePerNight * nights * (numRooms || 1);
 
-    // Use totals from client if provided (safer), otherwise computed
+    // Tinh tong tien voi khuyen mai
+    const totalWithPromo = calculateBookingTotal(
+      ciDate,
+      coDate,
+      pricePerNight,
+      numRooms || 1,
+      [], // extraServices
+      promo
+    );
+
+    // Use totals from client if provided (frontend computes totals using room price, nights and rooms)
+    // This keeps HoaDon in the backend aligned with the booking summary shown to users.
     const clientTotalRoomPrice =
-      req.body.totalRoomPrice || computedTotalRoomPrice;
+      (req.body.totalRoomPrice !== undefined && req.body.totalRoomPrice !== null)
+        ? Number(req.body.totalRoomPrice)
+        : computedTotalRoomPrice;
+
+    // Giam gia: compute discount as difference between the (client or computed) room total and the total after promo
+    const discountAmount = clientTotalRoomPrice - totalWithPromo;
 
     // Payment data from client (optional)
     const paymentMeta = req.body.paymentMeta || {};
@@ -95,12 +112,14 @@ export const createBooking = async (req, res, next) => {
     const hoaDon = {
       MaHoaDon: `HD${Date.now().toString().slice(-6)}`,
       NgayLap: now,
-      TongTienPhong: Number(clientTotalRoomPrice) || 0,
+  TongTienPhong: Number(clientTotalRoomPrice) || 0, // Original room price (prefer client-provided total to match UI)
       TongTienDichVu: 0,
-      GiamGia: 0,
-      TongTien: Number(clientTotalRoomPrice) || 0,
+  GiamGia: Number(discountAmount) || 0,
+  // Final total after discount: prefer totalWithPromo (server-calculated from room price + promo)
+  // but if client provided an explicit total (e.g., due to rounding or extra adjustments), prefer that mapping
+  TongTien: Number(totalWithPromo) || Number(clientTotalRoomPrice - discountAmount) || 0,
       TinhTrang:
-        paidAmount >= (Number(clientTotalRoomPrice) || 0)
+        paidAmount >= (Number(totalWithPromo) || 0)
           ? "Đã thanh toán"
           : paidAmount > 0
           ? "Thanh toán một phần"
