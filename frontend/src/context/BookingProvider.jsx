@@ -7,6 +7,7 @@ export const BookingProvider = ({ children }) => {
     room: null,
     roomId: null,
     promo: null,
+    DichVuDaChon: [],
     checkInDate: new Date(),
     checkOutDate: new Date(new Date().setDate(new Date().getDate() + 1)),
     checkIn: new Date().toISOString().split("T")[0],
