@@ -56,7 +56,11 @@
       "DonViTinh": "Kg",
       "_id": {
         "$oid": "6906cd66111030344ccc584e"
-      }
+      },
+      "TrangThai": "Đang hoạt động",
+      "HinhAnhDichVu": "giat_la.jpg",
+      "MoTaDichVu": "Dịch vụ abc",
+      "ThoiGianPhucVu": "08:00 - 22:00"
     },
     {
       "MaDichVu": "DV003",
@@ -92,12 +96,26 @@
       "DonViTinh": "Ngày",
       "_id": {
         "$oid": "6906cd66111030344ccc5852"
+      },
+      "TrangThai": "Đang hoạt động"
+    },
+    {
+      "MaDichVu": "DV008",
+      "TenDichVu": "Ăn tối tại phòng",
+      "GiaDichVu": 260000,
+      "DonViTinh": "Suất",
+      "HinhAnhDichVu": "n_ti_ti_phng.jpg",
+      "MoTaDichVu": "abc xyz với nhau",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "19:00 - 23:00",
+      "_id": {
+        "$oid": "69071bb88d8fa4623f101eb3"
       }
     }
   ],
   "KhuyenMai": [],
   "updatedAt": {
-    "$date": "2025-11-02T03:17:58.627Z"
+    "$date": "2025-11-05T19:38:25.048Z"
   }
 },
 {
@@ -109,7 +127,7 @@
   "LoaiPhong": "Standard",
   "Tang": 1,
   "GiaPhong": 850000,
-  "TinhTrang": "Đang dọn dẹp",
+  "TinhTrang": "Trống",
   "SoGiuong": 2,
   "LoaiGiuong": "Twin",
   "DienTich": 28,
@@ -192,11 +210,24 @@
       "MoTaDichVu": "Nhân viên quản gia riêng hỗ trợ 24/7 cho khách VIP, bao gồm dọn dẹp và phục vụ cá nhân.",
       "TrangThai": "Đang hoạt động",
       "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV008",
+      "TenDichVu": "Ăn tối tại phòng",
+      "GiaDichVu": 260000,
+      "DonViTinh": "Suất",
+      "HinhAnhDichVu": "n_ti_ti_phng.jpg",
+      "MoTaDichVu": "abc xyz với nhau",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "19:00 - 23:00",
+      "_id": {
+        "$oid": "69071bb88d8fa4623f101eb3"
+      }
     }
   ],
   "KhuyenMai": [],
   "updatedAt": {
-    "$date": "2025-11-02T02:58:45.554Z"
+    "$date": "2025-11-05T13:58:38.326Z"
   }
 },
 {
@@ -217,19 +248,21 @@
   "TienNghi": [
     {
       "MaTienNghi": "TN001",
-      "TenTienNghi": "Wi-Fi"
-    },
-    {
-      "MaTienNghi": "TN002",
-      "TenTienNghi": "TV 43 inch"
-    },
-    {
-      "MaTienNghi": "TN003",
-      "TenTienNghi": "Bồn tắm"
+      "TenTienNghi": "Wi-Fi",
+      "TrangThai": "Hoạt động"
     },
     {
       "MaTienNghi": "TN004",
-      "TenTienNghi": "Điều hòa"
+      "TenTienNghi": "Điều hòa",
+      "TrangThai": "Hoạt động"
+    },
+    {
+      "MaTienNghi": "TN007",
+      "TenTienNghi": "Ăn sáng",
+      "TrangThai": "Ngưng sử dụng",
+      "_id": {
+        "$oid": "69084d089f066d86ea0cf883"
+      }
     }
   ],
   "DichVu": [
@@ -292,17 +325,45 @@
       "MoTaDichVu": "Nhân viên quản gia riêng hỗ trợ 24/7 cho khách VIP, bao gồm dọn dẹp và phục vụ cá nhân.",
       "TrangThai": "Đang hoạt động",
       "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV008",
+      "TenDichVu": "Ăn tối tại phòng",
+      "GiaDichVu": 260000,
+      "DonViTinh": "Suất",
+      "HinhAnhDichVu": "n_ti_ti_phng.jpg",
+      "MoTaDichVu": "abc xyz với nhau",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "19:00 - 23:00",
+      "_id": {
+        "$oid": "69071bb88d8fa4623f101eb3"
+      }
     }
   ],
   "KhuyenMai": [
     {
-      "MaKhuyenMai": "KM_HE20",
-      "TenChuongTrinh": "Giảm 20% mùa hè",
-      "GiaTri": 20
+      "MaKhuyenMai": "KM_AUTO264",
+      "TenChuongTrinh": "“The Noel Retreat – Nghỉ Dưỡng Giữa Mùa Yêu Thương”",
+      "LoaiKhuyenMai": "Phần trăm",
+      "LoaiGiamGia": "Phần trăm",
+      "GiaTri": 15,
+      "GiaTriGiam": 15,
+      "DieuKien": "Không có",
+      "MoTa": "Dành cho ai muốn tìm lại sự cân bằng và bình yên dịp cuối năm. Gói bao gồm 2 đêm nghỉ + buổi massage thư giãn toàn thân + bữa sáng healthy buffet + lớp thiền nhẹ buổi sáng.",
+      "NgayBatDau": {
+        "$date": "2025-11-14T00:00:00.000Z"
+      },
+      "NgayKetThuc": {
+        "$date": "2025-11-21T00:00:00.000Z"
+      },
+      "TrangThai": "Sắp diễn ra",
+      "_id": {
+        "$oid": "690a0b4df638455a3606791f"
+      }
     }
   ],
   "updatedAt": {
-    "$date": "2025-11-02T02:58:45.554Z"
+    "$date": "2025-11-06T02:39:25.982Z"
   }
 },
 {
@@ -323,19 +384,23 @@
   "TienNghi": [
     {
       "MaTienNghi": "TN001",
-      "TenTienNghi": "Wi-Fi"
+      "TenTienNghi": "Wi-Fi",
+      "TrangThai": "Hoạt động"
     },
     {
       "MaTienNghi": "TN002",
-      "TenTienNghi": "TV"
+      "TenTienNghi": "TV",
+      "TrangThai": "Hoạt động"
     },
     {
       "MaTienNghi": "TN003",
-      "TenTienNghi": "Bồn tắm"
+      "TenTienNghi": "Bồn tắm",
+      "TrangThai": "Hoạt động"
     },
     {
       "MaTienNghi": "TN005",
-      "TenTienNghi": "Minibar"
+      "TenTienNghi": "Minibar",
+      "TrangThai": "Hoạt động"
     }
   ],
   "DichVu": [
@@ -398,11 +463,45 @@
       "MoTaDichVu": "Nhân viên quản gia riêng hỗ trợ 24/7 cho khách VIP, bao gồm dọn dẹp và phục vụ cá nhân.",
       "TrangThai": "Đang hoạt động",
       "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV008",
+      "TenDichVu": "Ăn tối tại phòng",
+      "GiaDichVu": 260000,
+      "DonViTinh": "Suất",
+      "HinhAnhDichVu": "n_ti_ti_phng.jpg",
+      "MoTaDichVu": "abc xyz với nhau",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "19:00 - 23:00",
+      "_id": {
+        "$oid": "69071bb88d8fa4623f101eb3"
+      }
     }
   ],
-  "KhuyenMai": [],
+  "KhuyenMai": [
+    {
+      "MaKhuyenMai": "KM_AUTO264",
+      "TenChuongTrinh": "“The Noel Retreat – Nghỉ Dưỡng Giữa Mùa Yêu Thương”",
+      "LoaiKhuyenMai": "Phần trăm",
+      "LoaiGiamGia": "Phần trăm",
+      "GiaTri": 15,
+      "GiaTriGiam": 15,
+      "DieuKien": "Không có",
+      "MoTa": "Dành cho ai muốn tìm lại sự cân bằng và bình yên dịp cuối năm. Gói bao gồm 2 đêm nghỉ + buổi massage thư giãn toàn thân + bữa sáng healthy buffet + lớp thiền nhẹ buổi sáng.",
+      "NgayBatDau": {
+        "$date": "2025-11-14T00:00:00.000Z"
+      },
+      "NgayKetThuc": {
+        "$date": "2025-11-21T00:00:00.000Z"
+      },
+      "TrangThai": "Sắp diễn ra",
+      "_id": {
+        "$oid": "690a0b4df638455a3606791f"
+      }
+    }
+  ],
   "updatedAt": {
-    "$date": "2025-11-02T02:58:45.554Z"
+    "$date": "2025-11-05T17:22:50.390Z"
   }
 },
 {
@@ -423,23 +522,28 @@
   "TienNghi": [
     {
       "MaTienNghi": "TN001",
-      "TenTienNghi": "Wi-Fi"
+      "TenTienNghi": "Wi-Fi",
+      "TrangThai": "Hoạt động"
     },
     {
       "MaTienNghi": "TN002",
-      "TenTienNghi": "TV"
+      "TenTienNghi": "TV",
+      "TrangThai": "Hoạt động"
     },
     {
       "MaTienNghi": "TN003",
-      "TenTienNghi": "Bồn tắm"
+      "TenTienNghi": "Bồn tắm",
+      "TrangThai": "Hoạt động"
     },
     {
       "MaTienNghi": "TN004",
-      "TenTienNghi": "Điều hòa"
+      "TenTienNghi": "Điều hòa",
+      "TrangThai": "Hoạt động"
     },
     {
       "MaTienNghi": "TN005",
-      "TenTienNghi": "Minibar"
+      "TenTienNghi": "Minibar",
+      "TrangThai": "Hoạt động"
     }
   ],
   "DichVu": [
@@ -502,17 +606,24 @@
       "MoTaDichVu": "Nhân viên quản gia riêng hỗ trợ 24/7 cho khách VIP, bao gồm dọn dẹp và phục vụ cá nhân.",
       "TrangThai": "Đang hoạt động",
       "ThoiGianPhucVu": "08:00 - 22:00"
-    }
-  ],
-  "KhuyenMai": [
+    },
     {
-      "MaKhuyenMai": "KM_HE20",
-      "TenChuongTrinh": "Giảm 20% mùa hè",
-      "GiaTri": 20
+      "MaDichVu": "DV008",
+      "TenDichVu": "Ăn tối tại phòng",
+      "GiaDichVu": 260000,
+      "DonViTinh": "Suất",
+      "HinhAnhDichVu": "n_ti_ti_phng.jpg",
+      "MoTaDichVu": "abc xyz với nhau",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "19:00 - 23:00",
+      "_id": {
+        "$oid": "69071bb88d8fa4623f101eb3"
+      }
     }
   ],
+  "KhuyenMai": [],
   "updatedAt": {
-    "$date": "2025-11-02T02:58:45.554Z"
+    "$date": "2025-11-04T14:12:10.014Z"
   }
 },
 {
@@ -524,7 +635,7 @@
   "LoaiPhong": "Suite",
   "Tang": 3,
   "GiaPhong": 2500000,
-  "TinhTrang": "Đang sử dụng",
+  "TinhTrang": "Trống",
   "SoGiuong": 1,
   "LoaiGiuong": "King",
   "DienTich": 50,
@@ -533,19 +644,23 @@
   "TienNghi": [
     {
       "MaTienNghi": "TN001",
-      "TenTienNghi": "Wi-Fi tốc độ cao"
+      "TenTienNghi": "Wi-Fi",
+      "TrangThai": "Hoạt động"
     },
     {
       "MaTienNghi": "TN002",
-      "TenTienNghi": "TV 55 inch"
+      "TenTienNghi": "TV",
+      "TrangThai": "Hoạt động"
     },
     {
       "MaTienNghi": "TN003",
-      "TenTienNghi": "Bồn tắm Jacuzzi"
+      "TenTienNghi": "Bồn tắm",
+      "TrangThai": "Hoạt động"
     },
     {
       "MaTienNghi": "TN005",
-      "TenTienNghi": "Minibar cao cấp"
+      "TenTienNghi": "Minibar",
+      "TrangThai": "Hoạt động"
     }
   ],
   "DichVu": [
@@ -608,17 +723,44 @@
       "MoTaDichVu": "Nhân viên quản gia riêng hỗ trợ 24/7 cho khách VIP, bao gồm dọn dẹp và phục vụ cá nhân.",
       "TrangThai": "Đang hoạt động",
       "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV008",
+      "TenDichVu": "Ăn tối tại phòng",
+      "GiaDichVu": 260000,
+      "DonViTinh": "Suất",
+      "HinhAnhDichVu": "n_ti_ti_phng.jpg",
+      "MoTaDichVu": "abc xyz với nhau",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "19:00 - 23:00",
+      "_id": {
+        "$oid": "69071bb88d8fa4623f101eb3"
+      }
     }
   ],
   "KhuyenMai": [
     {
-      "MaKhuyenMai": "KM_VIP10",
-      "TenChuongTrinh": "Giảm 10% cho khách VIP",
-      "GiaTri": 10
+      "MaKhuyenMai": "KM_AUTO130",
+      "TenChuongTrinh": "“Winter Glow – Đêm Giáng Sinh Rực Rỡ”",
+      "LoaiGiamGia": "Phần trăm",
+      "GiaTri": 25,
+      "GiaTriGiam": 25,
+      "DieuKien": "Không có",
+      "MoTa": "Thưởng thức đêm Giáng Sinh trọn vẹn với một đêm nghỉ tại phòng Deluxe, bữa tối Noel set menu lãng mạn, rượu vang đỏ chào mừng và quà lưu niệm đặc biệt từ khách sạn.",
+      "NgayBatDau": {
+        "$date": "2025-11-04T00:00:00.000Z"
+      },
+      "NgayKetThuc": {
+        "$date": "2025-11-07T00:00:00.000Z"
+      },
+      "TrangThai": "Hoạt động",
+      "_id": {
+        "$oid": "690b96c7553f4c76c47e7aad"
+      }
     }
   ],
   "updatedAt": {
-    "$date": "2025-11-02T02:58:45.554Z"
+    "$date": "2025-11-05T19:07:21.796Z"
   }
 },
 {
@@ -639,19 +781,23 @@
   "TienNghi": [
     {
       "MaTienNghi": "TN001",
-      "TenTienNghi": "Wi-Fi"
+      "TenTienNghi": "Wi-Fi",
+      "TrangThai": "Hoạt động"
     },
     {
       "MaTienNghi": "TN002",
-      "TenTienNghi": "TV"
+      "TenTienNghi": "TV",
+      "TrangThai": "Hoạt động"
     },
     {
       "MaTienNghi": "TN004",
-      "TenTienNghi": "Điều hòa"
+      "TenTienNghi": "Điều hòa",
+      "TrangThai": "Hoạt động"
     },
     {
       "MaTienNghi": "TN006",
-      "TenTienNghi": "Bếp mini"
+      "TenTienNghi": "Bếp mini",
+      "TrangThai": "Hoạt động"
     }
   ],
   "DichVu": [
@@ -714,11 +860,44 @@
       "MoTaDichVu": "Nhân viên quản gia riêng hỗ trợ 24/7 cho khách VIP, bao gồm dọn dẹp và phục vụ cá nhân.",
       "TrangThai": "Đang hoạt động",
       "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV008",
+      "TenDichVu": "Ăn tối tại phòng",
+      "GiaDichVu": 260000,
+      "DonViTinh": "Suất",
+      "HinhAnhDichVu": "n_ti_ti_phng.jpg",
+      "MoTaDichVu": "abc xyz với nhau",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "19:00 - 23:00",
+      "_id": {
+        "$oid": "69071bb88d8fa4623f101eb3"
+      }
     }
   ],
-  "KhuyenMai": [],
+  "KhuyenMai": [
+    {
+      "MaKhuyenMai": "KM_AUTO130",
+      "TenChuongTrinh": "“Winter Glow – Đêm Giáng Sinh Rực Rỡ”",
+      "LoaiGiamGia": "Phần trăm",
+      "GiaTri": 25,
+      "GiaTriGiam": 25,
+      "DieuKien": "Không có",
+      "MoTa": "Thưởng thức đêm Giáng Sinh trọn vẹn với một đêm nghỉ tại phòng Deluxe, bữa tối Noel set menu lãng mạn, rượu vang đỏ chào mừng và quà lưu niệm đặc biệt từ khách sạn.",
+      "NgayBatDau": {
+        "$date": "2025-11-04T00:00:00.000Z"
+      },
+      "NgayKetThuc": {
+        "$date": "2025-11-07T00:00:00.000Z"
+      },
+      "TrangThai": "Hoạt động",
+      "_id": {
+        "$oid": "690b96da553f4c76c47e7af8"
+      }
+    }
+  ],
   "updatedAt": {
-    "$date": "2025-11-02T02:58:45.554Z"
+    "$date": "2025-11-05T18:37:41.280Z"
   }
 },
 {
@@ -730,7 +909,7 @@
   "LoaiPhong": "Superior",
   "Tang": 4,
   "GiaPhong": 1100000,
-  "TinhTrang": "Hư",
+  "TinhTrang": "Trống",
   "SoGiuong": 2,
   "LoaiGiuong": "Twin",
   "DienTich": 28,
@@ -739,11 +918,13 @@
   "TienNghi": [
     {
       "MaTienNghi": "TN001",
-      "TenTienNghi": "Wi-Fi"
+      "TenTienNghi": "Wi-Fi",
+      "TrangThai": "Hoạt động"
     },
     {
       "MaTienNghi": "TN002",
-      "TenTienNghi": "TV"
+      "TenTienNghi": "TV",
+      "TrangThai": "Hoạt động"
     }
   ],
   "DichVu": [
@@ -806,11 +987,44 @@
       "MoTaDichVu": "Nhân viên quản gia riêng hỗ trợ 24/7 cho khách VIP, bao gồm dọn dẹp và phục vụ cá nhân.",
       "TrangThai": "Đang hoạt động",
       "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV008",
+      "TenDichVu": "Ăn tối tại phòng",
+      "GiaDichVu": 260000,
+      "DonViTinh": "Suất",
+      "HinhAnhDichVu": "n_ti_ti_phng.jpg",
+      "MoTaDichVu": "abc xyz với nhau",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "19:00 - 23:00",
+      "_id": {
+        "$oid": "69071bb88d8fa4623f101eb3"
+      }
     }
   ],
-  "KhuyenMai": [],
+  "KhuyenMai": [
+    {
+      "MaKhuyenMai": "KM_AUTO130",
+      "TenChuongTrinh": "“Winter Glow – Đêm Giáng Sinh Rực Rỡ”",
+      "LoaiGiamGia": "Phần trăm",
+      "GiaTri": 25,
+      "GiaTriGiam": 25,
+      "DieuKien": "Không có",
+      "MoTa": "Thưởng thức đêm Giáng Sinh trọn vẹn với một đêm nghỉ tại phòng Deluxe, bữa tối Noel set menu lãng mạn, rượu vang đỏ chào mừng và quà lưu niệm đặc biệt từ khách sạn.",
+      "NgayBatDau": {
+        "$date": "2025-11-04T00:00:00.000Z"
+      },
+      "NgayKetThuc": {
+        "$date": "2025-11-07T00:00:00.000Z"
+      },
+      "TrangThai": "Hoạt động",
+      "_id": {
+        "$oid": "690a06652f05084cbee4ebac"
+      }
+    }
+  ],
   "updatedAt": {
-    "$date": "2025-11-02T02:58:45.554Z"
+    "$date": "2025-11-05T19:45:41.749Z"
   }
 },
 {
@@ -831,15 +1045,18 @@
   "TienNghi": [
     {
       "MaTienNghi": "TN001",
-      "TenTienNghi": "Wi-Fi"
+      "TenTienNghi": "Wi-Fi",
+      "TrangThai": "Hoạt động"
     },
     {
       "MaTienNghi": "TN004",
-      "TenTienNghi": "Điều hòa"
+      "TenTienNghi": "Điều hòa",
+      "TrangThai": "Hoạt động"
     },
     {
       "MaTienNghi": "TN005",
-      "TenTienNghi": "Minibar"
+      "TenTienNghi": "Minibar",
+      "TrangThai": "Hoạt động"
     }
   ],
   "DichVu": [
@@ -902,11 +1119,44 @@
       "MoTaDichVu": "Nhân viên quản gia riêng hỗ trợ 24/7 cho khách VIP, bao gồm dọn dẹp và phục vụ cá nhân.",
       "TrangThai": "Đang hoạt động",
       "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV008",
+      "TenDichVu": "Ăn tối tại phòng",
+      "GiaDichVu": 260000,
+      "DonViTinh": "Suất",
+      "HinhAnhDichVu": "n_ti_ti_phng.jpg",
+      "MoTaDichVu": "abc xyz với nhau",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "19:00 - 23:00",
+      "_id": {
+        "$oid": "69071bb88d8fa4623f101eb3"
+      }
     }
   ],
-  "KhuyenMai": [],
+  "KhuyenMai": [
+    {
+      "MaKhuyenMai": "KM_AUTO130",
+      "TenChuongTrinh": "“Winter Glow – Đêm Giáng Sinh Rực Rỡ”",
+      "LoaiGiamGia": "Phần trăm",
+      "GiaTri": 25,
+      "GiaTriGiam": 25,
+      "DieuKien": "Không có",
+      "MoTa": "Thưởng thức đêm Giáng Sinh trọn vẹn với một đêm nghỉ tại phòng Deluxe, bữa tối Noel set menu lãng mạn, rượu vang đỏ chào mừng và quà lưu niệm đặc biệt từ khách sạn.",
+      "NgayBatDau": {
+        "$date": "2025-11-04T00:00:00.000Z"
+      },
+      "NgayKetThuc": {
+        "$date": "2025-11-07T00:00:00.000Z"
+      },
+      "TrangThai": "Hoạt động",
+      "_id": {
+        "$oid": "690a06652f05084cbee4ebac"
+      }
+    }
+  ],
   "updatedAt": {
-    "$date": "2025-11-02T02:58:45.554Z"
+    "$date": "2025-11-05T19:07:23.862Z"
   }
 },
 {
@@ -927,23 +1177,23 @@
   "TienNghi": [
     {
       "MaTienNghi": "TN001",
-      "TenTienNghi": "Wi-Fi tốc độ cao"
+      "TenTienNghi": "Wi-Fi",
+      "TrangThai": "Hoạt động"
     },
     {
       "MaTienNghi": "TN002",
-      "TenTienNghi": "TV 65 inch"
+      "TenTienNghi": "TV",
+      "TrangThai": "Hoạt động"
     },
     {
       "MaTienNghi": "TN003",
-      "TenTienNghi": "Bồn tắm Jacuzzi"
+      "TenTienNghi": "Bồn tắm",
+      "TrangThai": "Hoạt động"
     },
     {
       "MaTienNghi": "TN004",
-      "TenTienNghi": "Điều hòa trung tâm"
-    },
-    {
-      "MaTienNghi": "TN007",
-      "TenTienNghi": "Hồ bơi riêng"
+      "TenTienNghi": "Điều hòa",
+      "TrangThai": "Hoạt động"
     }
   ],
   "DichVu": [
@@ -1006,16 +1256,43 @@
       "MoTaDichVu": "Nhân viên quản gia riêng hỗ trợ 24/7 cho khách VIP, bao gồm dọn dẹp và phục vụ cá nhân.",
       "TrangThai": "Đang hoạt động",
       "ThoiGianPhucVu": "08:00 - 22:00"
+    },
+    {
+      "MaDichVu": "DV008",
+      "TenDichVu": "Ăn tối tại phòng",
+      "GiaDichVu": 260000,
+      "DonViTinh": "Suất",
+      "HinhAnhDichVu": "n_ti_ti_phng.jpg",
+      "MoTaDichVu": "abc xyz với nhau",
+      "TrangThai": "Đang hoạt động",
+      "ThoiGianPhucVu": "19:00 - 23:00",
+      "_id": {
+        "$oid": "69071bb88d8fa4623f101eb3"
+      }
     }
   ],
   "KhuyenMai": [
     {
-      "MaKhuyenMai": "KM_LUX15",
-      "TenChuongTrinh": "Giảm 15% khách VIP",
-      "GiaTri": 15
+      "MaKhuyenMai": "KM_AUTO130",
+      "TenChuongTrinh": "“Winter Glow – Đêm Giáng Sinh Rực Rỡ”",
+      "LoaiGiamGia": "Phần trăm",
+      "GiaTri": 25,
+      "GiaTriGiam": 25,
+      "DieuKien": "Không có",
+      "MoTa": "Thưởng thức đêm Giáng Sinh trọn vẹn với một đêm nghỉ tại phòng Deluxe, bữa tối Noel set menu lãng mạn, rượu vang đỏ chào mừng và quà lưu niệm đặc biệt từ khách sạn.",
+      "NgayBatDau": {
+        "$date": "2025-11-04T00:00:00.000Z"
+      },
+      "NgayKetThuc": {
+        "$date": "2025-11-07T00:00:00.000Z"
+      },
+      "TrangThai": "Hoạt động",
+      "_id": {
+        "$oid": "690b96da553f4c76c47e7af8"
+      }
     }
   ],
   "updatedAt": {
-    "$date": "2025-11-02T02:58:45.554Z"
+    "$date": "2025-11-05T18:26:34.620Z"
   }
 }]

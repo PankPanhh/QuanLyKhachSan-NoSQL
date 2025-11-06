@@ -66,6 +66,8 @@ const DashboardPage = () => {
   const [abnormalRooms, setAbnormalRooms] = useState([]);
 
   const [alerts, setAlerts] = useState([]);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -101,15 +103,7 @@ const DashboardPage = () => {
         });
 
         // Set recent bookings
-        setRecentBookings(bookingStatsData.stats.recentBookings.map(booking => ({
-          id: booking.MaDatPhong || booking._id || 'N/A',
-          customer: booking.IDKhachHang?.HoTen || booking.customerName || 'N/A',
-          room: booking.MaPhong || booking.roomCode || 'N/A',
-          checkIn: new Date(booking.NgayNhanPhong || booking.checkInDate).toLocaleDateString('vi-VN'),
-          checkOut: new Date(booking.NgayTraPhong || booking.checkOutDate).toLocaleDateString('vi-VN'),
-          status: booking.TrangThai || booking.status || 'N/A',
-          total: booking.TongTien || booking.total || 0
-        })));
+        setRecentBookings(bookingStatsData.stats.recentBookings);
 
         // Set abnormal rooms
         setAbnormalRooms(roomStatsData.stats.abnormalRooms.map(room => ({
@@ -240,6 +234,30 @@ const DashboardPage = () => {
       style: 'currency',
       currency: 'VND'
     }).format(amount);
+  };
+
+  const parseDateValue = (val) => {
+    if (!val) return null;
+    // Plain ISO string
+    if (typeof val === 'string') {
+      const d = new Date(val);
+      return isNaN(d) ? null : d;
+    }
+    // Already a Date
+    if (val instanceof Date) return val;
+    // Mongo export format: { "$date": "..." } or { "$date": { "$numberLong": "..." } }
+    if (val.$date) {
+      if (typeof val.$date === 'string') {
+        const d = new Date(val.$date);
+        return isNaN(d) ? null : d;
+      }
+      if (val.$date.$numberLong) {
+        const millis = Number(val.$date.$numberLong);
+        return isNaN(millis) ? null : new Date(millis);
+      }
+    }
+    // Mongoose-like _id / nested representations
+    return null;
   };
 
   if (loading) {
@@ -665,7 +683,13 @@ const DashboardPage = () => {
                           {formatCurrency(booking.total)}
                         </td>
                         <td className="align-middle">
-                          <button className="btn btn-sm btn-outline-primary">
+                          <button 
+                            className="btn btn-sm btn-outline-primary"
+                            onClick={() => { 
+                              setSelectedBooking(booking.fullBooking); 
+                              setShowDetailModal(true); 
+                            }}
+                          >
                             Xem chi tiết
                           </button>
                         </td>
@@ -742,6 +766,96 @@ const DashboardPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Booking Detail Modal */}
+      {selectedBooking && (
+        <div className={`modal fade ${showDetailModal ? 'show' : ''}`} style={{ display: showDetailModal ? 'block' : 'none' }} tabIndex="-1">
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Chi tiết đặt phòng</h5>
+                <button type="button" className="btn-close" onClick={() => setShowDetailModal(false)}></button>
+              </div>
+              <div className="modal-body">
+                <div className="row">
+                  <div className="col-md-6">
+                    <h6>Thông tin cơ bản</h6>
+                    <p><strong>Mã đặt phòng:</strong> {selectedBooking.MaDatPhong || 'N/A'}</p>
+                    <p><strong>Khách hàng:</strong> {selectedBooking.KhachHang?.HoTen || selectedBooking.IDKhachHang || 'N/A'}</p>
+                    <p><strong>Phòng:</strong> {selectedBooking.Phong?.TenPhong || selectedBooking.MaPhong || 'N/A'}</p>
+                    <p><strong>Số người:</strong> {selectedBooking.SoNguoi || 'N/A'}</p>
+                    <p><strong>Trạng thái:</strong> {selectedBooking.TrangThai || 'N/A'}</p>
+                    <p><strong>Ghi chú:</strong> {selectedBooking.GhiChu || 'Không có'}</p>
+                  </div>
+                  <div className="col-md-6">
+                    <h6>Thời gian</h6>
+                    <p><strong>Ngày đặt:</strong> {parseDateValue(selectedBooking.NgayDat) ? parseDateValue(selectedBooking.NgayDat).toLocaleDateString('vi-VN') : 'N/A'}</p>
+                    <p><strong>Ngày nhận phòng:</strong> {parseDateValue(selectedBooking.NgayNhanPhong) ? parseDateValue(selectedBooking.NgayNhanPhong).toLocaleDateString('vi-VN') : 'N/A'}</p>
+                    <p><strong>Ngày trả phòng:</strong> {parseDateValue(selectedBooking.NgayTraPhong) ? parseDateValue(selectedBooking.NgayTraPhong).toLocaleDateString('vi-VN') : 'N/A'}</p>
+                    <p><strong>Tiền cọc:</strong> {formatCurrency(selectedBooking.TienCoc || 0)}</p>
+                  </div>
+                </div>
+                
+                {selectedBooking.DichVuSuDung && selectedBooking.DichVuSuDung.length > 0 && (
+                  <div className="mt-3">
+                    <h6>Dịch vụ sử dụng</h6>
+                    <table className="table table-sm">
+                      <thead>
+                        <tr>
+                          <th>Mã dịch vụ</th>
+                          <th>Số lượng</th>
+                          <th>Thành tiền</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedBooking.DichVuSuDung.map((dv, index) => (
+                          <tr key={index}>
+                            <td>{dv.MaDichVu || 'N/A'}</td>
+                            <td>{dv.SoLuong || 0}</td>
+                            <td>{formatCurrency(dv.ThanhTien || 0)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                
+                {selectedBooking.HoaDon && (
+                  <div className="mt-3">
+                    <h6>Thông tin hóa đơn</h6>
+                    <p><strong>Mã hóa đơn:</strong> {selectedBooking.HoaDon.MaHoaDon || 'N/A'}</p>
+                    <p><strong>Ngày lập:</strong> {parseDateValue(selectedBooking.HoaDon.NgayLap) ? parseDateValue(selectedBooking.HoaDon.NgayLap).toLocaleDateString('vi-VN') : 'N/A'}</p>
+                    <p><strong>Tổng tiền phòng:</strong> {formatCurrency(selectedBooking.HoaDon.TongTienPhong || 0)}</p>
+                    <p><strong>Tổng tiền dịch vụ:</strong> {formatCurrency(selectedBooking.HoaDon.TongTienDichVu || 0)}</p>
+                    <p><strong>Giảm giá:</strong> {formatCurrency(selectedBooking.HoaDon.GiamGia || 0)}</p>
+                    <p><strong>Tổng tiền:</strong> {formatCurrency(selectedBooking.HoaDon.TongTien || 0)}</p>
+                    <p><strong>Tình trạng:</strong> {selectedBooking.HoaDon.TinhTrang || 'N/A'}</p>
+                    <p><strong>Ghi chú:</strong> {selectedBooking.HoaDon.GhiChu || 'Không có'}</p>
+                    
+                    {selectedBooking.HoaDon.LichSuThanhToan && selectedBooking.HoaDon.LichSuThanhToan.length > 0 && (
+                      <div className="mt-2">
+                        <strong>Lịch sử thanh toán:</strong>
+                        <ul className="list-unstyled mt-1">
+                          {selectedBooking.HoaDon.LichSuThanhToan.map((tt, index) => (
+                            <li key={index}>
+                              {parseDateValue(tt.NgayThanhToan) ? parseDateValue(tt.NgayThanhToan).toLocaleDateString('vi-VN') : 'N/A'}: 
+                              {formatCurrency(tt.SoTien || 0)} - {tt.PhuongThuc || tt.PhongThuc || 'N/A'} - {tt.TrangThai || 'N/A'}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowDetailModal(false)}>Đóng</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {showDetailModal && <div className="modal-backdrop fade show" onClick={() => setShowDetailModal(false)}></div>}
     </div>
   );
 };

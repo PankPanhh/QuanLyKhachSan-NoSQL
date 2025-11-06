@@ -1,51 +1,151 @@
 [{
   "_id": {
-    "$oid": "68fde1a7974ccf0d1cc47324"
+    "$oid": "690ba048966668b3ce7196e1"
   },
-  "MaDatPhong": "DP001",
-  "IDKhachHang": "KH001",
-  "MaPhong": "P203",
+  "MaDatPhong": "DP608313",
+  "IDKhachHang": "KH1762272202211",
+  "MaPhong": "P301",
   "NgayDat": {
-    "$date": "2025-10-26T14:30:00.000Z"
+    "$date": "2025-11-05T19:06:48.310Z"
   },
   "NgayNhanPhong": {
-    "$date": "2025-11-01T14:00:00.000Z"
+    "$date": "2025-11-05T00:00:00.000Z"
   },
   "NgayTraPhong": {
-    "$date": "2025-11-03T12:00:00.000Z"
+    "$date": "2025-11-06T00:00:00.000Z"
+  },
+  "SoNguoi": 2,
+  "TienCoc": 500000,
+  "TrangThai": "Đang sử dụng",
+  "GhiChu": "",
+  "DichVuSuDung": [
+    {
+      "MaDichVu": "DV008",
+      "SoLuong": 1,
+      "ThanhTien": 260000,
+      "_id": {
+        "$oid": "690ba048966668b3ce7196e2"
+      }
+    }
+  ],
+  "HoaDon": {
+    "MaHoaDon": "HD608313",
+    "NgayLap": {
+      "$date": "2025-11-05T19:06:48.310Z"
+    },
+    "TongTienPhong": 2500000,
+    "TongTienDichVu": 260000,
+    "GiamGia": 625000,
+    "TongTien": 2135000,
+    "TinhTrang": "Đã thanh toán",
+    "GhiChu": "",
+    "DaXuatHoaDon": false,
+    "LichSuThanhToan": [
+      {
+        "MaThanhToan": "TT608313",
+        "PhuongThuc": "Chuyển khoản",
+        "SoTien": 500000,
+        "NgayThanhToan": {
+          "$date": "2025-11-05T19:06:48.310Z"
+        },
+        "TrangThai": "Thanh toán một phần",
+        "GhiChu": "https://img.vietqr.io/image/bidv-8639699999-print.png?amount=500000&addInfo=Thanh%20to%C3%A1n%20ti%E1%BB%81n%20ph%C3%B2ng",
+        "_id": {
+          "$oid": "690ba048966668b3ce7196e4"
+        }
+      },
+      {
+        "MaThanhToan": "PT1762369636917",
+        "PhuongThuc": "Tiền mặt",
+        "SoTien": 1635000,
+        "NgayThanhToan": {
+          "$date": "2025-11-05T19:07:16.917Z"
+        },
+        "TrangThai": "Thành công",
+        "GhiChu": "",
+        "_id": {
+          "$oid": "690ba064966668b3ce719727"
+        }
+      }
+    ],
+    "_id": {
+      "$oid": "690ba048966668b3ce7196e3"
+    }
+  },
+  "createdAt": {
+    "$date": "2025-11-05T19:06:48.326Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-05T19:07:16.923Z"
+  },
+  "__v": 1
+},
+{
+  "_id": {
+    "$oid": "690ba775e9289d2746acba94"
+  },
+  "MaDatPhong": "DP445796",
+  "IDKhachHang": "KH1762272202211",
+  "MaPhong": "P302",
+  "NgayDat": {
+    "$date": "2025-11-05T19:37:25.791Z"
+  },
+  "NgayNhanPhong": {
+    "$date": "2025-11-05T00:00:00.000Z"
+  },
+  "NgayTraPhong": {
+    "$date": "2025-11-06T00:00:00.000Z"
   },
   "SoNguoi": 2,
   "TienCoc": 500000,
   "TrangThai": "Đang chờ",
-  "GhiChu": "Yêu cầu view biển",
+  "GhiChu": "",
   "DichVuSuDung": [
     {
-      "MaDichVu": "DV003",
+      "MaDichVu": "DV008",
       "SoLuong": 1,
-      "ThanhTien": 500000
+      "ThanhTien": 260000,
+      "_id": {
+        "$oid": "690ba775e9289d2746acba95"
+      }
     }
   ],
   "HoaDon": {
-    "MaHoaDon": "HD001",
-    "NgayLap": null,
-    "TongTienPhong": 3000000,
-    "TongTienDichVu": 500000,
-    "GiamGia": 600000,
-    "TongTien": 2900000,
-    "TinhTrang": "Chưa thanh toán",
-    "GhiChu": "Áp dụng KM_HE20",
+    "MaHoaDon": "HD445795",
+    "NgayLap": {
+      "$date": "2025-11-05T19:37:25.791Z"
+    },
+    "TongTienPhong": 2600000,
+    "TongTienDichVu": 260000,
+    "GiamGia": 650000,
+    "TongTien": 2210000,
+    "TinhTrang": "Thanh toán một phần",
+    "GhiChu": "",
+    "DaXuatHoaDon": false,
     "LichSuThanhToan": [
       {
-        "MaThanhToan": "TT001",
+        "MaThanhToan": "TT445795",
         "PhuongThuc": "Chuyển khoản",
         "SoTien": 500000,
         "NgayThanhToan": {
-          "$date": "2025-10-26T14:35:00.000Z"
+          "$date": "2025-11-05T19:37:25.791Z"
         },
-        "TrangThai": "Thành công",
-        "GhiChu": "Chuyển khoản VCB"
+        "TrangThai": "Thanh toán một phần",
+        "GhiChu": "https://img.vietqr.io/image/bidv-8639699999-print.png?amount=500000&addInfo=Thanh%20to%C3%A1n%20ti%E1%BB%81n%20ph%C3%B2ng",
+        "_id": {
+          "$oid": "690ba775e9289d2746acba97"
+        }
       }
-    ]
+    ],
+    "_id": {
+      "$oid": "690ba775e9289d2746acba96"
+    }
   },
-  "DanhGia": null
+  "createdAt": {
+    "$date": "2025-11-05T19:37:25.871Z"
+  },
+  "updatedAt": {
+    "$date": "2025-11-05T19:37:25.871Z"
+  },
+  "__v": 0
 }]
