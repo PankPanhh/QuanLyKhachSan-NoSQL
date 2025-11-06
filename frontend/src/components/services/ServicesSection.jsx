@@ -60,9 +60,8 @@ function ServicesSection() {
                         )}
                       </div>
                       {/* Footer with fixed height so action buttons align across cards */}
-                      <div className="service-footer mt-auto d-flex justify-content-between align-items-center" style={{ minHeight: 72 }}>
-                        <Link to={`/service/${s._id || s.MaDichVu}`} className="btn btn-sm btn-outline-primary">Xem chi tiết</Link>
-                        <Link to={`/service/${s._id || s.MaDichVu}`} className="btn btn-sm btn-primary">Đặt ngay</Link>
+                      <div className="service-footer mt-auto d-flex justify-content-end align-items-center" style={{ minHeight: 72 }}>
+                        <Link to={`/service/${s._id || s.MaDichVu}`} className="btn btn-sm btn-primary">Xem chi tiết</Link>
                       </div>
                     </div>
                   </div>

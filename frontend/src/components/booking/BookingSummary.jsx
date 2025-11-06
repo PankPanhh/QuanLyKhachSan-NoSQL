@@ -112,17 +112,15 @@ function BookingSummary() {
   // Apply promo if present
   const promo = bookingDetails.promo;
   let discount = 0;
-  let totalAfterDiscount = total;
   if (promo) {
     // Always apply if promo is selected, regardless of current date
     if (promo.discountPercent) {
       discount = Math.round((total * Number(promo.discountPercent || 0)) / 100);
     } else if (promo.discountAmount) {
       discount = Number(promo.discountAmount) || 0;
-      // don't exceed total
+      // don't exceed total room price
       if (discount > total) discount = total;
     }
-    totalAfterDiscount = total - discount;
   }
 
   // Include selected services from bookingDetails (if any)
@@ -136,7 +134,8 @@ function BookingSummary() {
     return sum + price * qty;
   }, 0);
 
-  totalAfterDiscount = total + tongTienDichVu - discount;
+  // Total = room price + service price - discount (only applied to room)
+  const totalAfterDiscount = total + tongTienDichVu - discount;
 
   return (
     <div className="p-4 border rounded" style={{ backgroundColor: "#f8f9fa" }}>

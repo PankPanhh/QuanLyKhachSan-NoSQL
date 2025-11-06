@@ -60,8 +60,7 @@ export default function ServicesListPage() {
                       <div className="small text-muted">{s.DonViTinh || ''}</div>
                     </div>
                     <div className="d-flex gap-2">
-                      <Link to={`/service/${s._id || s.MaDichVu}`} className="btn btn-sm btn-outline-primary">Xem chi tiết</Link>
-                      <Link to={`/service/${s._id || s.MaDichVu}`} className="btn btn-sm btn-primary">Đặt ngay</Link>
+                      <Link to={`/service/${s._id || s.MaDichVu}`} className="btn btn-sm btn-primary">Xem chi tiết</Link>
                     </div>
                   </div>
                 </div>

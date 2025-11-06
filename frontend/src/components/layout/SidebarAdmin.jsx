@@ -129,39 +129,6 @@ function SidebarAdmin() {
           </NavLink>
         </li>
 
-        {/* Header: Components */}
-        <li className="menu-header small text-uppercase">
-          <span className="menu-header-text">Components</span>
-        </li>
-        <li className="menu-item">
-          <a href="#" className="menu-link">
-            <i className="menu-icon tf-icons bx bx-collection"></i>
-            <div>Cards</div>
-          </a>
-        </li>
-        <li className="menu-item">
-          <a href="#" className="menu-link">
-            <i className="menu-icon tf-icons bx bx-box"></i>
-            <div>User interface</div>
-          </a>
-        </li>
-
-        {/* Header: Forms & Tables */}
-        <li className="menu-header small text-uppercase">
-          <span className="menu-header-text">Forms &amp; Tables</span>
-        </li>
-        <li className="menu-item">
-          <a href="#" className="menu-link">
-            <i className="menu-icon tf-icons bx bx-detail"></i>
-            <div>Form Elements</div>
-          </a>
-        </li>
-        <li className="menu-item">
-          <a href="#" className="menu-link">
-            <i className="menu-icon tf-icons bx bx-table"></i>
-            <div>Tables</div>
-          </a>
-        </li>
       </ul>
     </aside>
   );

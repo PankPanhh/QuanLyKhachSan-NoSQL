@@ -11,6 +11,7 @@ import CheckoutAdvancedStats from "../../components/checkout/CheckoutAdvancedSta
 import Spinner from "../../components/common/Spinner";
 import Button from "../../components/common/Button";
 import Modal from "../../components/common/Modal";
+import { isPaymentSuccessful } from "../../utils/paymentUtils";
 
 const CheckoutManager = () => {
   const [bookings, setBookings] = useState([]);
@@ -90,7 +91,7 @@ const CheckoutManager = () => {
       const totalPaid =
         fullBookingData.HoaDon?.LichSuThanhToan?.reduce(
           (sum, payment) =>
-            payment.TrangThai === "Thành công" ? sum + payment.SoTien : sum,
+            isPaymentSuccessful(payment?.TrangThai) ? sum + (payment.SoTien || 0) : sum,
           0
         ) || 0;
       const totalAmount =
@@ -144,7 +145,7 @@ const CheckoutManager = () => {
       const totalPaid =
         updatedBooking.HoaDon?.LichSuThanhToan?.reduce(
           (sum, payment) =>
-            payment.TrangThai === "Thành công" ? sum + payment.SoTien : sum,
+            isPaymentSuccessful(payment?.TrangThai) ? sum + (payment.SoTien || 0) : sum,
           0
         ) || 0;
       const remaining = (updatedBooking.HoaDon?.TongTien || 0) - totalPaid;
@@ -173,7 +174,7 @@ const CheckoutManager = () => {
       const totalPaid =
         selectedBooking.HoaDon?.LichSuThanhToan?.reduce(
           (sum, payment) =>
-            payment.TrangThai === "Thành công" ? sum + payment.SoTien : sum,
+            isPaymentSuccessful(payment?.TrangThai) ? sum + (payment.SoTien || 0) : sum,
           0
         ) || 0;
       const totalAmount = selectedBooking.HoaDon?.TongTien || 0;
@@ -574,10 +575,10 @@ const CheckoutManager = () => {
                       <strong>
                         {formatCurrency(
                           selectedBooking.HoaDon?.LichSuThanhToan?.reduce(
-                            (sum, p) =>
-                              p.TrangThai === "Thành công"
-                                ? sum + p.SoTien
-                                : sum,
+                            (sum, p) => {
+                              const isSuccess = isPaymentSuccessful(p?.TrangThai);
+                              return isSuccess ? sum + (p.SoTien || 0) : sum;
+                            },
                             0
                           ) || 0
                         )}
@@ -592,10 +593,10 @@ const CheckoutManager = () => {
                               ? 0
                               : lateFeeInfo?.lateFee || 0) -
                             (selectedBooking.HoaDon?.LichSuThanhToan?.reduce(
-                              (sum, p) =>
-                                p.TrangThai === "Thành công"
-                                  ? sum + p.SoTien
-                                  : sum,
+                              (sum, p) => {
+                                const isSuccess = isPaymentSuccessful(p?.TrangThai);
+                                return isSuccess ? sum + (p.SoTien || 0) : sum;
+                              },
                               0
                             ) || 0)
                         )}
@@ -633,8 +634,8 @@ const CheckoutManager = () => {
                           const totalPaid =
                             selectedBooking.HoaDon?.LichSuThanhToan?.reduce(
                               (sum, payment) =>
-                                payment.TrangThai === "Thành công"
-                                  ? sum + payment.SoTien
+                                isPaymentSuccessful(payment?.TrangThai)
+                                  ? sum + (payment.SoTien || 0)
                                   : sum,
                               0
                             ) || 0;
