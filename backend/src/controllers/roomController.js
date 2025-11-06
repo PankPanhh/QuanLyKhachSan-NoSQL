@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import fs from "fs/promises";
 import path from "path";
 import Booking from "../models/Booking.js";
+import { calculateRoomPriceWithDiscount } from "../utils/calculateTotal.js";
 
 // GET /api/v1/rooms - list rooms
 export const getAllRooms = async (req, res, next) => {
@@ -368,5 +369,140 @@ export const checkRoomAvailability = async (req, res) => {
       message: "Lỗi server",
       error: error.message,
     });
+  }
+};
+
+// GET /api/v1/rooms/:id/price?checkIn=YYYY-MM-DD&checkOut=YYYY-MM-DD&numRooms=1
+export const getRoomPrice = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { checkIn, checkOut, numRooms, extraServices } = req.query;
+
+    if (!checkIn || !checkOut) {
+      return res.status(400).json({
+        success: false,
+        message: "Vui lòng cung cấp checkIn và checkOut",
+      });
+    }
+
+    const ci = new Date(checkIn);
+    const co = new Date(checkOut);
+    if (isNaN(ci.getTime()) || isNaN(co.getTime())) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Ngày không hợp lệ" });
+    }
+
+    const filter = findRoomFilter(id);
+    if (!filter)
+      return res
+        .status(400)
+        .json({ success: false, message: "ID phòng không hợp lệ" });
+
+    const room = await Room.findOne(filter).lean();
+    if (!room) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy phòng" });
+    }
+
+    const nRooms = Number(numRooms) || 1;
+
+    const price = calculateRoomPriceWithDiscount(room, ci, co, nRooms);
+
+    // Process extraServices (optional) - expected as JSON stringified array of { MaDichVu, SoLuong }
+    let serviceTotal = 0;
+    let servicesDetail = [];
+    if (extraServices) {
+      try {
+        const parsed = JSON.parse(extraServices);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          for (const rs of parsed) {
+            if (!rs || !rs.MaDichVu) continue;
+            const svc = (room.DichVu || []).find(
+              (d) =>
+                d.MaDichVu === rs.MaDichVu && d.TrangThai === "Đang hoạt động"
+            );
+            if (!svc) continue;
+            const qty = Math.max(0, Number(rs.SoLuong || 1));
+            const pricePer = Number(svc.GiaDichVu || 0);
+            const line = pricePer * qty;
+            serviceTotal += line;
+            servicesDetail.push({
+              MaDichVu: svc.MaDichVu,
+              TenDichVu: svc.TenDichVu,
+              GiaDichVu: pricePer,
+              SoLuong: qty,
+              ThanhTien: line,
+            });
+          }
+        }
+      } catch (e) {
+        console.warn("Invalid extraServices param for price endpoint", e);
+      }
+    }
+
+    // Optional debug info: include promotions with normalized ranges and overlap flag
+    const debug = String(req.query.debug || "").toLowerCase();
+    if (debug === "1" || debug === "true" || debug === "yes") {
+      const stayStart = new Date(ci);
+      stayStart.setHours(0, 0, 0, 0);
+      const stayEndInclusive = new Date(co.getTime() - 1);
+      stayEndInclusive.setHours(23, 59, 59, 999);
+
+      const promos = (room.KhuyenMai || []).map((km) => {
+        const start = km.NgayBatDau ? new Date(km.NgayBatDau) : null;
+        const end = km.NgayKetThuc ? new Date(km.NgayKetThuc) : null;
+        const promoStart = start ? new Date(start) : null;
+        if (promoStart) promoStart.setHours(0, 0, 0, 0);
+        const promoEnd = end ? new Date(end) : null;
+        if (promoEnd) promoEnd.setHours(23, 59, 59, 999);
+        const overlaps =
+          (!promoStart || promoStart <= stayEndInclusive) &&
+          (!promoEnd || promoEnd >= stayStart) &&
+          km.TrangThai === "Hoạt động";
+        return {
+          MaKhuyenMai: km.MaKhuyenMai,
+          TenChuongTrinh: km.TenChuongTrinh || km.TenKM,
+          TrangThai: km.TrangThai,
+          rawStart: km.NgayBatDau || null,
+          rawEnd: km.NgayKetThuc || null,
+          promoStart: promoStart ? promoStart.toISOString() : null,
+          promoEnd: promoEnd ? promoEnd.toISOString() : null,
+          overlaps,
+          LoaiGiamGia: km.LoaiGiamGia || km.LoaiKhuyenMai || null,
+          GiaTriGiam: km.GiaTriGiam != null ? km.GiaTriGiam : km.GiaTri || null,
+        };
+      });
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          ...price,
+          serviceTotal,
+          servicesDetail,
+          grandTotal:
+            (price.discountedTotal || price.originalTotal || 0) + serviceTotal,
+        },
+        debug: { roomId: room.MaPhong || room._id, promos },
+      });
+    }
+
+    // Return price with optional service aggregation
+    return res.status(200).json({
+      success: true,
+      data: {
+        ...price,
+        serviceTotal,
+        servicesDetail,
+        grandTotal:
+          (price.discountedTotal || price.originalTotal || 0) + serviceTotal,
+      },
+    });
+  } catch (error) {
+    console.error("Error getRoomPrice:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi server", error: error.message });
   }
 };

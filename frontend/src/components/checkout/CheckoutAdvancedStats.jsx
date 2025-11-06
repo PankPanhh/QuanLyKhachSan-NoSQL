@@ -16,11 +16,15 @@ const CheckoutAdvancedStats = ({ initialTab = "late-fee" }) => {
   const [revenueData, setRevenueData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [groupBy, setGroupBy] = useState("day");
+  const formatLocalYMD = (d) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+      d.getDate()
+    ).padStart(2, "0")}`;
   const [dateRange, setDateRange] = useState({
-    start: new Date(new Date().setDate(new Date().getDate() - 29))
-      .toISOString()
-      .split("T")[0],
-    end: new Date().toISOString().split("T")[0],
+    start: formatLocalYMD(
+      new Date(new Date().setDate(new Date().getDate() - 29))
+    ),
+    end: formatLocalYMD(new Date()),
   });
 
   useEffect(() => {

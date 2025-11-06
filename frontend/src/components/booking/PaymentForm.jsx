@@ -6,7 +6,7 @@ import Spinner from "../../components/common/Spinner";
 import { BookingContext } from "../../context/BookingContext"; // SỬA: Thêm BookingContext
 import { AuthContext } from "../../context/AuthContext"; // SỬA: Thêm AuthContext
 import { createBooking } from "../../services/bookingService";
-import { getRoomById } from "../../services/roomService";
+import { getRoomById, getRoomPrice } from "../../services/roomService";
 
 function PaymentForm() {
   const navigate = useNavigate();
@@ -19,6 +19,7 @@ function PaymentForm() {
   const [bankRef, setBankRef] = useState("");
   const [roomPrice, setRoomPrice] = useState(null);
   const [totalAmount, setTotalAmount] = useState(0);
+  // serverPriceInfo intentionally not stored for now; we only prefer server totals when available
 
   // QR params for bank transfer
   // Start empty so user can type their preferred recipient name. We show the
@@ -117,7 +118,10 @@ function PaymentForm() {
     };
 
     // Include selected services (map to server expected shape)
-    if (Array.isArray(bookingDetails.DichVuDaChon) && bookingDetails.DichVuDaChon.length > 0) {
+    if (
+      Array.isArray(bookingDetails.DichVuDaChon) &&
+      bookingDetails.DichVuDaChon.length > 0
+    ) {
       bookingData.DichVuSuDung = bookingDetails.DichVuDaChon.map((d) => ({
         MaDichVu: d.MaDichVu,
         SoLuong: d.SoLuong || 1,
@@ -195,6 +199,68 @@ function PaymentForm() {
     let mounted = true;
     const compute = async () => {
       try {
+        // Try server-authoritative price first
+        if (
+          bookingDetails.roomId &&
+          bookingDetails.checkIn &&
+          bookingDetails.checkOut
+        ) {
+          try {
+            // include selected services so server returns grand total including services
+            const extra = Array.isArray(bookingDetails.DichVuDaChon)
+              ? bookingDetails.DichVuDaChon.map((d) => ({
+                  MaDichVu: d.MaDichVu,
+                  SoLuong: d.SoLuong || 1,
+                }))
+              : [];
+
+            const resp = await getRoomPrice(
+              bookingDetails.roomId,
+              bookingDetails.checkIn,
+              bookingDetails.checkOut,
+              bookingDetails.rooms || 1,
+              extra
+            );
+            const data = resp && resp.data ? resp.data : resp;
+            if (
+              mounted &&
+              data &&
+              typeof data.discountedTotal !== "undefined"
+            ) {
+              // server returns grandTotal which includes serviceTotal
+              const serverTotal =
+                typeof data.grandTotal !== "undefined"
+                  ? data.grandTotal
+                  : data.discountedTotal;
+              setTotalAmount(
+                overrideAmount !== null ? overrideAmount : serverTotal
+              );
+              // derive per-night room price if possible
+              if (
+                data.originalTotal &&
+                bookingDetails.checkIn &&
+                bookingDetails.checkOut
+              ) {
+                const ci = new Date(bookingDetails.checkIn);
+                const co = new Date(bookingDetails.checkOut);
+                const nights = Math.max(
+                  1,
+                  Math.ceil((co.getTime() - ci.getTime()) / (1000 * 3600 * 24))
+                );
+                const perNight = Math.round(data.originalTotal / nights);
+                setRoomPrice(perNight);
+              }
+              return;
+            }
+          } catch (e) {
+            console.warn(
+              "Failed to fetch server price, falling back to client calc",
+              e?.message || e
+            );
+          }
+        }
+
+        // Fallback to client-side calculation
         let price = null;
 
         if (bookingDetails.room) {
@@ -234,7 +300,9 @@ function PaymentForm() {
         const subtotal = Math.round((price || 0) * nights * roomsCount);
 
         // Include selected services into subtotal
-        const selectedServices = Array.isArray(bookingDetails.DichVuDaChon) ? bookingDetails.DichVuDaChon : [];
+        const selectedServices = Array.isArray(bookingDetails.DichVuDaChon)
+          ? bookingDetails.DichVuDaChon
+          : [];
         const servicesTotal = selectedServices.reduce((sum, s) => {
           const p = Number(s.GiaDichVu || s.Gia || 0);
           const q = Number(s.SoLuong || 0);
@@ -251,7 +319,6 @@ function PaymentForm() {
           null;
         let discount = 0;
         if (promo) {
-          // Prefer explicit percent/amount fields used by summary component
           if (promo.discountPercent != null) {
             discount = Math.round(
               (subtotal * Number(promo.discountPercent || 0)) / 100
@@ -259,7 +326,6 @@ function PaymentForm() {
           } else if (promo.discountAmount != null) {
             discount = Number(promo.discountAmount) || 0;
           } else if (promo.GiaTriGiam != null) {
-            // Heuristic: determine whether GiaTriGiam is percent or absolute
             const kind = (promo.LoaiGiamGia || promo.LoaiKhuyenMai || "")
               .toString()
               .toLowerCase();
@@ -275,10 +341,9 @@ function PaymentForm() {
           }
         }
 
-  if (discount > subtotalWithServices) discount = subtotalWithServices;
-  const totalAfterDiscount = subtotalWithServices - discount;
+        if (discount > subtotalWithServices) discount = subtotalWithServices;
+        const totalAfterDiscount = subtotalWithServices - discount;
 
-        // allow override (if user manually edits amount) unless overrideAmount === null
         setTotalAmount(
           overrideAmount !== null ? overrideAmount : totalAfterDiscount
         );

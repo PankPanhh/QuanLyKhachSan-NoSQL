@@ -94,8 +94,13 @@ function BookingForm({ roomId = null }) {
     // Nếu ở trang chủ, gọi API lấy phòng trống và hiển thị modal
     setLoading(true);
     try {
-      const startDate = checkInDate.toISOString().split("T")[0];
-      const endDate = checkOutDate.toISOString().split("T")[0];
+      const formatLocalYMD = (d) =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+          2,
+          "0"
+        )}-${String(d.getDate()).padStart(2, "0")}`;
+      const startDate = formatLocalYMD(checkInDate);
+      const endDate = formatLocalYMD(checkOutDate);
       const roomsData = await getAvailableRooms(startDate, endDate);
       setAvailableRooms(roomsData);
       setShowModal(true);

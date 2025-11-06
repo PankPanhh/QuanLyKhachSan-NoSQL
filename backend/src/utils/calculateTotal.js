@@ -76,13 +76,35 @@ export const calculateRoomPriceWithDiscount = (
   const originalPrice = room.GiaPhong || 0;
   const originalTotal = originalPrice * nights * numRooms;
 
-  // Tim khuyen mai hoat dong
-  const now = new Date();
+  // Tìm khuyến mãi áp dụng cho khoảng thời gian đặt phòng (check-in/check-out)
+  // Normalize cả khuyến mãi và khoảng lưu trú về khoảng thời gian ngày (inclusive)
+  // Promo interval: [promoStart 00:00:00, promoEnd 23:59:59.999]
+  // Stay interval: [ciDate 00:00:00, (coDate - 1ms) ] since check-out is exclusive
+  const stayStart = new Date(ciDate);
+  stayStart.setHours(0, 0, 0, 0);
+  const stayEndInclusive = new Date(coDate.getTime() - 1); // last millisecond of the previous day
+  stayEndInclusive.setHours(23, 59, 59, 999);
+
   const activePromotion = room.KhuyenMai?.find((km) => {
     if (km.TrangThai !== "Hoạt động") return false;
     const start = km.NgayBatDau ? new Date(km.NgayBatDau) : null;
     const end = km.NgayKetThuc ? new Date(km.NgayKetThuc) : null;
-    return (!start || start <= now) && (!end || end >= now);
+
+    // Nếu không có start/end thì coi như áp dụng cho mọi thời điểm (như trước)
+    if (!start && !end) return true;
+
+    // Normalize promo start to start of day, promo end to end of day
+    const promoStart = start ? new Date(start) : null;
+    if (promoStart) promoStart.setHours(0, 0, 0, 0);
+    const promoEnd = end ? new Date(end) : null;
+    if (promoEnd) promoEnd.setHours(23, 59, 59, 999);
+
+    // Overlap if promoStart <= stayEndInclusive AND promoEnd >= stayStart
+    const startsBeforeOrAtStayEnd =
+      !promoStart || promoStart <= stayEndInclusive;
+    const endsAfterOrAtStayStart = !promoEnd || promoEnd >= stayStart;
+
+    return startsBeforeOrAtStayEnd && endsAfterOrAtStayStart;
   });
 
   let discountedTotal = originalTotal;
