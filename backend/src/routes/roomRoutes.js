@@ -9,6 +9,7 @@ import {
   deleteRoom,
   getAvailableRooms,
   uploadRoomImage,
+  getRoomPrice,
   checkRoomAvailability,
 } from "../controllers/roomController.js";
 import { protect, authorize } from "../middleware/authMiddleware.js";
@@ -40,6 +41,9 @@ router
 
 // Check room availability for specific dates (Public)
 router.route("/:id/availability").get(checkRoomAvailability);
+
+// Get price for a room for given checkIn/checkOut (public)
+router.route("/:id/price").get(getRoomPrice);
 
 router
   .route("/:id")

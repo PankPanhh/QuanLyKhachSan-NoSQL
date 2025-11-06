@@ -94,7 +94,9 @@ export const createBooking = async (req, res, next) => {
     const originalRoomPrice = priceCalculation.originalTotal;
     const totalRoomPrice = originalRoomPrice; // Don't use pre-discounted price
 
-    console.log(`[bookingController] Price calculation - original: ${priceCalculation.originalTotal}, discounted by utils: ${priceCalculation.discountedTotal}, discount from calc: ${priceCalculation.discountAmount}`);
+    console.log(
+      `[bookingController] Price calculation - original: ${priceCalculation.originalTotal}, discounted by utils: ${priceCalculation.discountedTotal}, discount from calc: ${priceCalculation.discountAmount}`
+    );
 
     // Use computed totals (safer), ignore client-provided totals to prevent manipulation
     // const totalRoomPrice = computedTotalRoomPrice;
@@ -104,10 +106,14 @@ export const createBooking = async (req, res, next) => {
     let finalServices = [];
     let tongTienDichVu = 0;
     try {
-      const requested = Array.isArray(requestedServices) ? requestedServices : [];
+      const requested = Array.isArray(requestedServices)
+        ? requestedServices
+        : [];
       for (const rs of requested) {
         if (!rs || !rs.MaDichVu) continue;
-        const svc = (room.DichVu || []).find((d) => d.MaDichVu === rs.MaDichVu && d.TrangThai === 'Đang hoạt động');
+        const svc = (room.DichVu || []).find(
+          (d) => d.MaDichVu === rs.MaDichVu && d.TrangThai === "Đang hoạt động"
+        );
         if (!svc) continue; // ignore unknown or inactive services
         const soLuong = Math.max(0, Number(rs.SoLuong || 1));
         const thanhTien = Number(svc.GiaDichVu || 0) * soLuong;
@@ -121,7 +127,7 @@ export const createBooking = async (req, res, next) => {
         });
       }
     } catch (e) {
-      console.warn('Error processing requested services', e);
+      console.warn("Error processing requested services", e);
       finalServices = [];
       tongTienDichVu = 0;
     }
@@ -134,62 +140,44 @@ export const createBooking = async (req, res, next) => {
 
     // Build HoaDon per Booking schema
     const now = new Date();
-    // Apply promotion from frontend if provided, otherwise use room promotions
+    // Server-authoritative promotion calculation
+    // Use the result from calculateRoomPriceWithDiscount to determine discountAmount
+    // This prevents trusting client-provided promo that may be expired or invalid
     let giamGia = 0;
     try {
-      const now = new Date();
-      
-      if (promo && promo.GiaTriGiam) {
-        // Use promotion data from frontend (already validated)
-        const type = promo.LoaiGiamGia || '';
-        const value = Number(promo.GiaTriGiam || 0);
-        const roomPriceOnly = Number(totalRoomPrice || 0);
-        
-        console.log(`[bookingController] Using frontend promo: ${promo.title || promo.id}, type: ${type}, value: ${value}`);
-        console.log(`[bookingController] Room price only: ${roomPriceOnly}, Service total: ${tongTienDichVu}`);
-        
-        if (type && type.toLowerCase().includes('phần')) {
-          // percent - apply only to room price
-          giamGia = Math.round((roomPriceOnly * value) / 100);
-        } else {
-          // fixed amount - apply only to room price (don't exceed room price)
-          giamGia = Math.min(value, roomPriceOnly);
+      if (
+        priceCalculation &&
+        typeof priceCalculation.discountAmount === "number"
+      ) {
+        giamGia = Number(priceCalculation.discountAmount) || 0;
+        console.log(
+          `[bookingController] Applying server-calculated discount: ${giamGia}`
+        );
+        if (priceCalculation.activePromotion) {
+          console.log(
+            `[bookingController] Active promotion applied: ${
+              priceCalculation.activePromotion.MaKhuyenMai ||
+              priceCalculation.activePromotion.id ||
+              "unknown"
+            }`
+          );
         }
-        
-        console.log(`[bookingController] Calculated discount: ${giamGia} (${value}% of ${roomPriceOnly})`);
       } else {
-        // Fallback: check room promotions
-        const activePromos = (room.KhuyenMai || []).filter((k) => k.TrangThai === 'Đang hoạt động' && (!k.NgayBatDau || new Date(k.NgayBatDau) <= now) && (!k.NgayKetThuc || new Date(k.NgayKetThuc) >= now));
-        if (activePromos.length > 0) {
-          // choose the first active promo (business rule can be changed later)
-          const promo = activePromos[0];
-          const type = promo.LoaiGiamGia || promo.LoaiKhuyenMai || '';
-          const value = Number(promo.GiaTriGiam ?? promo.GiaTri ?? 0) || 0;
-          // Apply discount ONLY to room price, not services
-          const roomPriceOnly = Number(totalRoomPrice || 0);
-          if (type && type.toLowerCase().includes('phần')) {
-            // percent - apply only to room price
-            giamGia = Math.round((roomPriceOnly * value) / 100);
-          } else {
-            // fixed amount - apply only to room price (don't exceed room price)
-            giamGia = Math.min(value, roomPriceOnly);
-          }
-        }
+        giamGia = 0;
       }
-      
-      console.log(`[bookingController] Final discount amount: ${giamGia}`);
     } catch (e) {
-      console.warn('Error calculating promotion', e);
+      console.warn("Error reading server promotion calculation", e);
       giamGia = 0;
     }
 
     const hoaDon = {
       MaHoaDon: `HD${Date.now().toString().slice(-6)}`,
       NgayLap: now,
-      TongTienPhong: Number(totalRoomPrice) || 0,     // Tiền phòng trước khi giảm
-      TongTienDichVu: Number(tongTienDichVu) || 0,    // Tiền dịch vụ (không giảm giá)
-      GiamGia: Number(giamGia) || 0,                  // Giảm giá chỉ áp dụng cho phòng
-      TongTien: Number(totalRoomPrice) + Number(tongTienDichVu) - Number(giamGia), // Total = room + services - discount
+      TongTienPhong: Number(totalRoomPrice) || 0, // Tiền phòng trước khi giảm
+      TongTienDichVu: Number(tongTienDichVu) || 0, // Tiền dịch vụ (không giảm giá)
+      GiamGia: Number(giamGia) || 0, // Giảm giá chỉ áp dụng cho phòng
+      TongTien:
+        Number(totalRoomPrice) + Number(tongTienDichVu) - Number(giamGia), // Total = room + services - discount
       TinhTrang: "Chưa thanh toán", // Sẽ cập nhật sau
       GhiChu: paymentMeta.note || "",
       LichSuThanhToan: [],
@@ -219,8 +207,16 @@ export const createBooking = async (req, res, next) => {
     }
 
     // Cập nhật TinhTrang dựa trên tổng LichSuThanhToan
-    const totalPaid = hoaDon.LichSuThanhToan.reduce((sum, item) => sum + item.SoTien, 0);
-    hoaDon.TinhTrang = totalPaid >= hoaDon.TongTien ? "Đã thanh toán" : totalPaid > 0 ? "Thanh toán một phần" : "Chưa thanh toán";
+    const totalPaid = hoaDon.LichSuThanhToan.reduce(
+      (sum, item) => sum + item.SoTien,
+      0
+    );
+    hoaDon.TinhTrang =
+      totalPaid >= hoaDon.TongTien
+        ? "Đã thanh toán"
+        : totalPaid > 0
+        ? "Thanh toán một phần"
+        : "Chưa thanh toán";
 
     // Map user identifier: prefer IDKhachHang (client) or IDNguoiDung in user, else ObjectId string
     const IDKhachHang =
@@ -296,12 +292,18 @@ export const createBooking = async (req, res, next) => {
     }
 
     const booking = await Booking.create(doc);
-    console.log("[bookingController.createBooking] booking created successfully:", booking._id);
+    console.log(
+      "[bookingController.createBooking] booking created successfully:",
+      booking._id
+    );
 
     // Simple bookings count for debugging
     const simpleBookings = await Booking.find({}).limit(5);
     console.log("Simple bookings count:", simpleBookings.length);
-    console.log("First booking sample:", simpleBookings[0]?.MaDatPhong || "none");
+    console.log(
+      "First booking sample:",
+      simpleBookings[0]?.MaDatPhong || "none"
+    );
 
     // Không cập nhật trạng thái phòng khi tạo booking - chỉ thay đổi trạng thái booking
     // Room status will be updated when admin confirms the booking or during check-in/out process

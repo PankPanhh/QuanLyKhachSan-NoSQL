@@ -88,6 +88,29 @@ export const checkRoomAvailability = async (roomId, startDate, endDate) => {
   }
 };
 
+// Lấy giá phòng (original/discounted) cho khoảng thời gian
+export const getRoomPrice = async (
+  roomId,
+  checkIn,
+  checkOut,
+  numRooms = 1,
+  extraServices = []
+) => {
+  try {
+    let url = `/rooms/${roomId}/price?checkIn=${checkIn}&checkOut=${checkOut}&numRooms=${numRooms}`;
+    if (Array.isArray(extraServices) && extraServices.length > 0) {
+      const payload = encodeURIComponent(JSON.stringify(extraServices));
+      url += `&extraServices=${payload}`;
+    }
+    const response = await api.get(url);
+    if (response && response.data) return response.data;
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi lấy giá phòng:", error.message || error);
+    throw error;
+  }
+};
+
 // --- BỔ SUNG CÁC HÀM ADMIN ---
 
 // *** SỬA LỖI 404: Endpoint phải là '/rooms' ***
